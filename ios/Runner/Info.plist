@@ -51,5 +51,23 @@
     <string>We need access to your camera to take pictures.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>We need access to your photo library to select images.</string>
+    
+    <!-- Added NSAppTransportSecurity to allow HTTP connections -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+
+    <key>NSExceptionDomains</key>
+    <dict>
+        <key>driven-satyr-fully.ngrok-free.app</key>
+        <dict>
+            <key>NSExceptionAllowsInsecureHTTPLoads</key>
+            <true/>
+            <key>NSIncludesSubdomains</key>
+            <true/>
+        </dict>
+    </dict>
 </dict>
 </plist>

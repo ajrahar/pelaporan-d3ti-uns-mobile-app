@@ -2,6 +2,7 @@
     package="com.example.pelaporan_d3ti">
 
     <!-- Required Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- Add this line -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -27,7 +28,8 @@
         android:label="pelaporan_d3ti"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:requestLegacyExternalStorage="true"> <!-- For Scoped Storage -->
+        android:requestLegacyExternalStorage="true"
+        android:usesCleartextTraffic="true"> 
 
         <activity
             android:name=".MainActivity"

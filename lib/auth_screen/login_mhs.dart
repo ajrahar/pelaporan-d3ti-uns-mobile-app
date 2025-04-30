@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:pelaporan_d3ti/home_screen/home_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:pelaporan_d3ti/services/api_service.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pelaporan_d3ti/services/token_manager.dart';
+import 'dart:math' as Math;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -10,11 +16,102 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _rememberMe = false;
-  bool _isPasswordVisible = false; // Untuk toggle visibility password
-  String? _emailError; // Pesan error untuk email
-  String? _passwordError; // Pesan error untuk password
+  bool _isPasswordVisible = false;
+  String? _emailError;
+  String? _passwordError;
+  bool _isLoading = false;
+  bool _prefsInitialized = false;
 
-  bool _handleLogin() {
+  @override
+  void initState() {
+    super.initState();
+    // Use a delayed call to avoid PlatformException
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedCredentials();
+    });
+  }
+
+  // Safely get value from SharedPreferences
+  Future<T> _safeGetPrefs<T>(String key, T defaultValue,
+      Future<T?> Function(SharedPreferences, String) getter) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final value = await getter(prefs, key);
+      return value ?? defaultValue;
+    } catch (e) {
+      print('Error reading preferences: $e');
+      return defaultValue;
+    }
+  }
+
+  // Safely set value in SharedPreferences
+  Future<bool> _safeSetPrefs<T>(String key, T value,
+      Future<bool> Function(SharedPreferences, String, T) setter) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return await setter(prefs, key, value);
+    } catch (e) {
+      print('Error saving preferences: $e');
+      return false;
+    }
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Get remember me value
+      final rememberValue = prefs.getBool('remember_me');
+
+      // Only if we have a valid value
+      if (rememberValue != null) {
+        setState(() {
+          _rememberMe = rememberValue;
+
+          // If remember me is true, load saved email
+          if (_rememberMe) {
+            final savedEmail = prefs.getString('saved_email');
+            if (savedEmail != null && savedEmail.isNotEmpty) {
+              _emailController.text = savedEmail;
+            }
+          }
+
+          _prefsInitialized = true;
+        });
+      } else {
+        setState(() {
+          _prefsInitialized = true;
+        });
+      }
+    } catch (e) {
+      print('Failed to load preferences: $e');
+      setState(() {
+        _prefsInitialized = true; // Mark as initialized even if it failed
+      });
+    }
+  }
+
+  Future<void> _saveRememberMeState(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Save remember me state
+      await prefs.setBool('remember_me', value);
+
+      // If remember me is checked and we have an email, save it
+      if (value && _emailController.text.isNotEmpty) {
+        await prefs.setString('saved_email', _emailController.text);
+      }
+      // If remember me is unchecked, clear saved email
+      else if (!value) {
+        await prefs.remove('saved_email');
+      }
+    } catch (e) {
+      print('Failed to save remember me state: $e');
+    }
+  }
+
+  bool _validateInputs() {
     setState(() {
       // Validasi email
       if (_emailController.text.isEmpty) {
@@ -31,8 +128,114 @@ class _LoginPageState extends State<LoginPage> {
       }
     });
 
-    // Kembalikan true jika tidak ada error, false jika ada error
     return _emailError == null && _passwordError == null;
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_validateInputs()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final url = Uri.parse('http://10.0.2.2:8000/api/login/mahasiswa');
+
+    try {
+      // Create form data
+      final formData = {
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      };
+
+      // Add headers similar to Postman
+      final headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 Flutter App',
+      };
+
+      print("Attempting login with email: ${_emailController.text}");
+
+      // Send POST request
+      final response = await http
+          .post(
+            url,
+            headers: headers,
+            body: formData,
+          )
+          .timeout(Duration(seconds: 30));
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      print("Login response status: ${response.statusCode}");
+      print(
+          "Login response: ${response.body.substring(0, Math.min(500, response.body.length))}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Parse the JSON response
+        final jsonResponse = jsonDecode(response.body);
+
+        if (jsonResponse['status'] == true) {
+          // Extract user data and token
+          final userData = jsonResponse['data']['user'];
+          final token = jsonResponse['data']['token'];
+
+          print('Login successful! Token received');
+
+          // Save token using our TokenManager
+          await TokenManager.setToken(token);
+
+          // Handle remember me
+          if (_rememberMe) {
+            await _saveRememberMeState(true);
+          }
+
+          // Save user data using safer methods
+          await _safeSetPrefs('user_id', userData['id'],
+              (prefs, key, value) => prefs.setInt(key, value));
+          await _safeSetPrefs('user_name', userData['name'],
+              (prefs, key, value) => prefs.setString(key, value));
+          await _safeSetPrefs('user_email', userData['email'],
+              (prefs, key, value) => prefs.setString(key, value));
+          await _safeSetPrefs('user_nim', userData['nim'],
+              (prefs, key, value) => prefs.setString(key, value));
+          await _safeSetPrefs('user_no_telp', userData['no_telp'],
+              (prefs, key, value) => prefs.setString(key, value));
+          await _safeSetPrefs('is_logged_in', true,
+              (prefs, key, value) => prefs.setBool(key, value));
+
+          // Navigate to home screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+          );
+        } else {
+          _showLoginError(jsonResponse['message'] ?? 'Login failed.');
+        }
+      } else {
+        _showLoginError('Login failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Login error: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      _showLoginError(
+          'Error connecting to server: ${e.toString().split('\n')[0]}');
+    }
+  }
+
+  void _showLoginError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -191,18 +394,23 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 16),
 
-                  // Remember Me dan Forgot Password
+                  // Remember Me and Forgot Password
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
+                          // Fixed Checkbox implementation with proper error handling
                           Checkbox(
                             value: _rememberMe,
                             onChanged: (value) {
+                              // Update UI immediately
                               setState(() {
                                 _rememberMe = value ?? false;
                               });
+
+                              // Save preference in the background with error handling
+                              _saveRememberMeState(_rememberMe);
                             },
                             activeColor: Color(0xFF00A2EA),
                           ),
@@ -212,18 +420,9 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
 
-                  // Tombol Login
+                  // Tombol Login with loading indicator
                   ElevatedButton(
-                    onPressed: () {
-                      // Panggil _handleLogin dan periksa hasilnya
-                      if (_handleLogin()) {
-                        // Navigasi ke HomeScreen hanya jika validasi berhasil
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomeScreen()),
-                        );
-                      }
-                    },
+                    onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF00A2EA),
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -232,10 +431,12 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       minimumSize: Size(double.infinity, 50),
                     ),
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
+                    child: _isLoading
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            'Login',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
                   ),
                   SizedBox(height: 16),
 
