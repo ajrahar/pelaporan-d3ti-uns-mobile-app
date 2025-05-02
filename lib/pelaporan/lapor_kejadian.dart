@@ -121,7 +121,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
     for (var i = 0; i < Math.min(3, _laporan.length); i++) {
       final report = _laporan[i];
       print(
-          "Report ${i + 1}: ID: ${report.laporanId}, nama_pelapor: ${report.namaPelapor}, ni_pelapor: ${report.niPelapor}");
+          "Report ${i + 1}: ID: ${report.id}, nama_pelapor: ${report.namaPelapor}, ni_pelapor: ${report.niPelapor}");
     }
 
     // Filter based on the API's actual field structure
@@ -144,8 +144,9 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         _currentUserName!.isNotEmpty) {
       filtered = _laporan
           .where((report) =>
-              report.namaPelapor.toLowerCase() ==
-              _currentUserName!.toLowerCase())
+              report.namaPelapor != null && // Add null check
+              report.namaPelapor!.toLowerCase() == // Use null assertion
+                  _currentUserName!.toLowerCase())
           .toList();
 
       print("Filtered by nama_pelapor: found ${filtered.length} matches");
@@ -173,9 +174,11 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           _currentUserName != null &&
           _currentUserName!.isNotEmpty) {
         filtered = _laporan
-            .where((report) => report.namaPelapor
-                .toLowerCase()
-                .contains(_currentUserName!.toLowerCase()))
+            .where((report) =>
+                report.namaPelapor != null && // Add null check
+                report.namaPelapor!
+                    .toLowerCase()
+                    .contains(_currentUserName!.toLowerCase()))
             .toList();
 
         print("Partial nama_pelapor match: found ${filtered.length} matches");
@@ -258,7 +261,10 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           // Print unique users in the response for debugging
           Set<String> uniqueUsers = Set<String>();
           _laporan.forEach((report) {
-            uniqueUsers.add(report.namaPelapor);
+            // Only add non-null name values
+            if (report.namaPelapor != null) {
+              uniqueUsers.add(report.namaPelapor!);
+            }
           });
 
           print("Unique users in API response: ${uniqueUsers.join(', ')}");
@@ -309,9 +315,9 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
       final query = _searchQuery.toLowerCase();
       result = result
           .where((item) =>
-              (item.judul.toLowerCase().contains(query)) ||
-              (item.nomorLaporan.toLowerCase().contains(query)) ||
-              (item.namaPelapor.toLowerCase().contains(query)))
+              (item.judul?.toLowerCase().contains(query) ?? false) ||
+              (item.nomorLaporan?.toLowerCase().contains(query) ?? false) ||
+              (item.namaPelapor?.toLowerCase().contains(query) ?? false))
           .toList();
     }
 
@@ -343,9 +349,13 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
     // Apply date range filter
     if (_filters['startDate'] != null || _filters['endDate'] != null) {
       result = result.where((item) {
+        if (item.createdAt == null) {
+          return true; // Skip items with no date
+        }
+
         if (_filters['startDate'] != null) {
           final startDate = _filters['startDate'] as DateTime;
-          if (item.createdAt.isBefore(startDate)) {
+          if (item.createdAt!.isBefore(startDate)) {
             return false;
           }
         }
@@ -354,7 +364,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           final endDate = _filters['endDate'] as DateTime;
           final endOfDay =
               DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
-          if (item.createdAt.isAfter(endOfDay)) {
+          if (item.createdAt!.isAfter(endOfDay)) {
             return false;
           }
         }
@@ -385,8 +395,8 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           fieldB = b.status;
           break;
         default:
-          fieldA = a.laporanId;
-          fieldB = b.laporanId;
+          fieldA = a.id; // Changed from laporanId to id
+          fieldB = b.id; // Changed from laporanId to id
       }
 
       int comparison = _compareValues(fieldA, fieldB);
@@ -451,7 +461,10 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
   }
 
   // Format date for display
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime? date) {
+    if (date == null) {
+      return '-';
+    }
     final DateFormat formatter = DateFormat('dd MMM yyyy');
     return formatter.format(date);
   }
@@ -901,6 +914,21 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
   }
 
   Widget _buildCategoryDropdown() {
+    // Create a map to deduplicate categories by name
+    final Map<String, int> uniqueCategories = {};
+
+    // For each category, keep only one entry per unique category name
+    _categories.forEach((id, name) {
+      // Skip categories starting with "Kekerasan"
+      if (!name.toLowerCase().startsWith("kekerasan")) {
+        // Only add this category if we haven't seen this name yet,
+        // or if we want to replace the previous entry with this one
+        if (!uniqueCategories.containsKey(name)) {
+          uniqueCategories[name] = id;
+        }
+      }
+    });
+
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: 'Kategori',
@@ -916,10 +944,11 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           value: '',
           child: Text('Semua'),
         ),
-        ..._categories.entries.map((entry) {
+        // Map the unique categories to DropdownMenuItems
+        ...uniqueCategories.entries.map((entry) {
           return DropdownMenuItem(
-            value: entry.key.toString(),
-            child: Text(entry.value),
+            value: entry.value.toString(),
+            child: Text(entry.key),
           );
         }).toList(),
       ],
@@ -1151,18 +1180,19 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           rows: _paginatedLaporan.asMap().entries.map((entry) {
             final index = entry.key;
             final laporan = entry.value;
-            final formattedStatus = _formatStatus(laporan.status);
+            final formattedStatus =
+                _formatStatus(laporan.status ?? 'unverified');
 
             return DataRow(
               cells: [
                 DataCell(Text(((_currentPage - 1) * _itemsPerPage + index + 1)
                     .toString())),
-                DataCell(Text(laporan.nomorLaporan)),
+                DataCell(Text(laporan.nomorLaporan ?? '-')),
                 DataCell(Text(_formatDate(laporan.createdAt))),
-                DataCell(Text(laporan.judul)),
+                DataCell(Text(laporan.judul ?? '-')),
                 DataCell(Text(
                     _categories[laporan.categoryId] ?? 'Tidak ada kategori')),
-                DataCell(Text(laporan.namaPelapor)),
+                DataCell(Text(laporan.namaPelapor ?? '-')),
                 DataCell(
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1179,6 +1209,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                     ),
                   ),
                 ),
+                // Di dalam DataCell untuk tombol "Lihat"
                 DataCell(
                   IconButton(
                     icon: Icon(Icons.visibility, color: Colors.blue),
@@ -1187,14 +1218,9 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => DetailLaporanPage(
-                            laporan: {
-                              'id': laporan.laporanId,
-                              'judul': laporan.judul,
-                              'lokasi':
-                                  _categories[laporan.categoryId] ?? 'Unknown',
-                              'tanggal': DateFormat('yyyy-MM-dd')
-                                  .format(laporan.createdAt),
-                            },
+                            laporan: laporan, // Pass the entire laporan object
+                            id: laporan
+                                .id, // This is now the fixed ID (which originally came from laporan_id)
                           ),
                         ),
                       );
