@@ -114,22 +114,27 @@ class ApiService {
             // Create a fixed version of the data if needed
             Map<String, dynamic> fixedData = Map.from(data[i]);
 
-            // CRITICAL FIX: If ID is null but there's another identifier,
-            // use that as a temporary ID for display purposes
-            if (fixedData['id'] == null) {
-              // Check if there's another field we can use as an ID substitute
-              if (fixedData.containsKey('laporan_id')) {
-                fixedData['id'] = fixedData['laporan_id'];
-              } else if (fixedData.containsKey('nomor_laporan')) {
-                // Use hash code of nomor_laporan as a temporary ID
-                // (not ideal but usable for display purposes)
-                fixedData['id'] = fixedData['nomor_laporan'].hashCode;
-              }
+            // CRITICAL FIX: Check for laporan_id first, which is the primary key in the API response
+            if (fixedData.containsKey('laporan_id')) {
+              // Use laporan_id as id if it exists
+              fixedData['id'] = fixedData['laporan_id'];
+            } else if (fixedData['id'] == null &&
+                fixedData.containsKey('nomor_laporan')) {
+              // Use hash code of nomor_laporan as a temporary ID if needed
+              fixedData['id'] = fixedData['nomor_laporan'].hashCode;
+            }
 
-              // If we updated the id, log it
-              if (fixedData['id'] != null) {
-                print(
-                    "Fixed null ID for report at index $i: using ${fixedData['id']}");
+            // Process image_path if it's a JSON string
+            if (fixedData.containsKey('image_path') &&
+                fixedData['image_path'] is String &&
+                fixedData['image_path'].startsWith('[') &&
+                fixedData['image_path'].endsWith(']')) {
+              try {
+                List<dynamic> images = json.decode(fixedData['image_path']);
+                fixedData['image_path'] =
+                    images.isNotEmpty ? images.join(',') : null;
+              } catch (e) {
+                print("Error parsing image_path JSON: $e");
               }
             }
 
@@ -184,7 +189,27 @@ class ApiService {
         // Log the received data structure
         print("Detail response fields: ${data.keys.join(', ')}");
 
-        return Laporan.fromJson(data);
+        // Check if we need to handle laporan_id vs id
+        Map<String, dynamic> fixedData = Map.from(data);
+        if (fixedData.containsKey('laporan_id')) {
+          fixedData['id'] = fixedData['laporan_id'];
+        }
+
+        // Process image_path if it's a JSON string
+        if (fixedData.containsKey('image_path') &&
+            fixedData['image_path'] is String &&
+            fixedData['image_path'].startsWith('[') &&
+            fixedData['image_path'].endsWith(']')) {
+          try {
+            List<dynamic> images = json.decode(fixedData['image_path']);
+            fixedData['image_path'] =
+                images.isNotEmpty ? images.join(',') : null;
+          } catch (e) {
+            print("Error parsing image_path JSON in detail: $e");
+          }
+        }
+
+        return Laporan.fromJson(fixedData);
       } else if (response.statusCode == 401) {
         throw Exception('Authentication failed. Please log in again.');
       } else if (response.statusCode == 404) {
@@ -213,9 +238,11 @@ class ApiService {
         Uri.parse('$baseUrl/laporan/update_status/$laporanId'),
       );
 
-      // Tambahkan headers
+      // Tambahkan headers (kecuali Content-Type yang akan diatur secara otomatis oleh MultipartRequest)
       headers.forEach((key, value) {
-        request.headers[key] = value;
+        if (key != 'Content-Type') {
+          request.headers[key] = value;
+        }
       });
 
       // Tambahkan field form
@@ -226,11 +253,15 @@ class ApiService {
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
+      print(
+          "Update tanggapan response: ${response.statusCode} - ${response.body}");
+
       if (response.statusCode != 200) {
         throw Exception(
             'Failed to update laporan: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
+      print('Error in updateLaporanTanggapan: $e');
       throw Exception('Failed to update tanggapan: $e');
     }
   }
@@ -246,9 +277,11 @@ class ApiService {
         Uri.parse('$baseUrl/laporan/update_status/$laporanId'),
       );
 
-      // Tambahkan headers
+      // Tambahkan headers (kecuali Content-Type yang akan diatur secara otomatis oleh MultipartRequest)
       headers.forEach((key, value) {
-        request.headers[key] = value;
+        if (key != 'Content-Type') {
+          request.headers[key] = value;
+        }
       });
 
       // Tambahkan field form
@@ -259,11 +292,15 @@ class ApiService {
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
+      print(
+          "Update status response: ${response.statusCode} - ${response.body}");
+
       if (response.statusCode != 200) {
         throw Exception(
             'Failed to update status: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
+      print('Error in updateLaporanStatus: $e');
       throw Exception('Failed to update status: $e');
     }
   }

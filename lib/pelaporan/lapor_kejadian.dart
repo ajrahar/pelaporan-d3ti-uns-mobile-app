@@ -1214,16 +1214,29 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                   IconButton(
                     icon: Icon(Icons.visibility, color: Colors.blue),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DetailLaporanPage(
-                            laporan: laporan, // Pass the entire laporan object
-                            id: laporan
-                                .id, // This is now the fixed ID (which originally came from laporan_id)
+                      // Check if laporan.id is not null before navigating
+                      if (laporan.id != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailLaporanPage(
+                              laporan:
+                                  laporan, // Pass the entire laporan object
+                              id: laporan
+                                  .id!, // Use the non-null assertion operator to convert int? to int
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      } else {
+                        // Handle the null id case
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Tidak dapat melihat detail, ID laporan tidak valid'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     },
                   ),
                 ),

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:pelaporan_d3ti/services/token_manager.dart';
 import '../services/api_service.dart';
 import '../models/laporan.dart';
 
 class DetailLaporanPage extends StatefulWidget {
-  final Laporan laporan;
-  final int? id;
+  final Laporan? laporan;
+  final int id;
 
   const DetailLaporanPage({
     Key? key,
-    required this.laporan,
+    this.laporan,
     required this.id,
   }) : super(key: key);
 
@@ -28,11 +30,61 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
   TextEditingController tanggapanController = TextEditingController();
   Map<int, String> categories = {};
   final ApiService _apiService = ApiService();
+  String? currentUser;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Initialize laporan with the provided value if available
+    laporan = widget.laporan;
+    // Initialize date formatting for Indonesia locale
+    initializeDateFormatting('id_ID', null).then((_) {
+      _loadData();
+    });
+
+    // Get current user info
+    _getCurrentUser();
+  }
+
+  // Get current username from token or other source
+  Future<void> _getCurrentUser() async {
+    try {
+      // Get token from TokenManager
+      final token = await TokenManager.getToken();
+
+      if (token != null && token.isNotEmpty) {
+        // Parse the token to get user information
+        // JWT tokens are in format: header.payload.signature
+        final parts = token.split('.');
+        if (parts.length >= 2) {
+          // Decode the payload part (middle part)
+          String normalizedPayload = base64Url.normalize(parts[1]);
+          final payloadJson = utf8.decode(base64Url.decode(normalizedPayload));
+          final payload = json.decode(payloadJson);
+
+          // Extract username from token payload
+          // Check what field your JWT token uses for username
+          currentUser =
+              payload['username'] ?? payload['name'] ?? payload['email'];
+
+          if (currentUser == null) {
+            // Fallback if username is not in standard fields
+            currentUser =
+                "miftahul01"; // Using placeholder until you have a clear structure
+          }
+        }
+      }
+
+      if (currentUser == null) {
+        // Fallback if token parsing fails
+        currentUser = "miftahul01";
+      }
+
+      print("Current user set to: $currentUser");
+    } catch (e) {
+      print('Error getting current user: $e');
+      currentUser = "miftahul01"; // Default fallback
+    }
   }
 
   Future<void> _loadData() async {
@@ -68,31 +120,24 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
 
   Future<void> _fetchLaporanDetail() async {
     try {
-      // Tambahkan method getLaporanById ke ApiService
-      // dan panggil di sini
-      final List<Laporan> allLaporan = await _apiService.getLaporan();
+      // Use the dedicated API method to get laporan by ID
+      final fetchedLaporan = await _apiService.getLaporanById(widget.id);
 
-      // Cari laporan dengan ID yang sesuai
-      final filteredLaporan =
-          allLaporan.where((l) => l.id == widget.laporan).toList();
+      setState(() {
+        laporan = fetchedLaporan;
+        isLoading = false;
+      });
 
-      if (filteredLaporan.isNotEmpty) {
-        setState(() {
-          laporan = filteredLaporan.first;
-          isLoading = false;
-        });
-
-        // Proses data tanggapan jika ada
-        _processTanggapanData();
-      } else {
-        setState(() {
-          error = "Laporan dengan ID ${widget.laporan} tidak ditemukan";
-          isLoading = false;
-        });
-      }
+      // Proses data tanggapan jika ada
+      _processTanggapanData();
     } catch (e) {
       setState(() {
-        error = "Gagal memuat detail laporan: $e";
+        // If we have a previous laporan object from the constructor, keep using it
+        if (laporan == null) {
+          error = "Gagal memuat detail laporan: $e";
+        } else {
+          _showErrorMessage("Gagal memperbarui detail terbaru: $e");
+        }
         isLoading = false;
       });
     }
@@ -127,11 +172,17 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     });
 
     try {
+      // Get current date time in GMT+7 (Indonesia)
+      final now = DateTime.now().toUtc().add(Duration(hours: 7));
+
+      // Get current username, fallback if not available
+      final username = currentUser ?? "miftahul01";
+
       // Persiapkan data tanggapan baru
       final newTanggapan = {
         'text': tanggapanController.text,
-        'timestamp': DateTime.now().toIso8601String(),
-        'user': 'miftahul01' // Gunakan user login yang sedang aktif
+        'timestamp': now.toIso8601String(),
+        'user': username // Use dynamic username
       };
 
       // Persiapkan array tanggapan
@@ -145,7 +196,8 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
           // Konversi format lama (string) ke format baru (array)
           tanggapanArray.add({
             'text': existingTanggapan,
-            'timestamp': laporan!.updatedAt ?? DateTime.now().toIso8601String(),
+            'timestamp':
+                laporan!.updatedAt?.toIso8601String() ?? now.toIso8601String(),
             'user': 'Admin'
           });
         } else if (existingTanggapan is List) {
@@ -156,12 +208,12 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
       // Tambahkan tanggapan baru
       tanggapanArray.add(newTanggapan);
 
-      // Tambahkan method updateLaporanTanggapan ke ApiService
-      // dan panggil di sini
+      // Use the API service to update tanggapan
+      await _apiService.updateLaporanTanggapan(widget.id, tanggapanArray);
 
-      // Update data lokal sementara
+      // Update data lokal
       setState(() {
-        laporan = laporan!.copyWith(tanggapan: tanggapanArray);
+        laporan = laporan!.copyWith(tanggapan: tanggapanArray, updatedAt: now);
         tanggapanController.clear();
         showTanggapanModal = false;
       });
@@ -206,12 +258,15 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
         isLoading = true;
       });
 
-      // Tambahkan method updateLaporanStatus ke ApiService
-      // dan panggil di sini
+      // Get current date time in GMT+7 (Indonesia)
+      final now = DateTime.now().toUtc().add(Duration(hours: 7));
 
-      // Update status lokal sementara
+      // Call the API to update status
+      await _apiService.updateLaporanStatus(widget.id, 'finished');
+
+      // Update local status
       setState(() {
-        laporan = laporan!.copyWith(status: 'finished');
+        laporan = laporan!.copyWith(status: 'finished', updatedAt: now);
         isLoading = false;
       });
 
@@ -251,13 +306,36 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
       DateTime date;
       if (dateString.contains(' ') && !dateString.contains('T')) {
         date = DateTime.parse(dateString.replaceAll(' ', 'T'));
-        date = date
-            .add(Duration(hours: 7)); // Adjust for Indonesia timezone (GMT+7)
       } else {
         date = DateTime.parse(dateString);
       }
 
-      return DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(date);
+      // Ensure we're adding the +7 GMT adjustment for Indonesia timezone
+      final indonesiaDate = date.toLocal();
+
+      // Using dd-MM-yyyy HH:mm:ss format for dates in Status Laporan and tanggapan
+      return DateFormat('dd-MM-yyyy HH:mm:ss').format(indonesiaDate);
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  String formatDateKejadian(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return '-';
+
+    try {
+      DateTime date;
+      if (dateString.contains(' ') && !dateString.contains('T')) {
+        date = DateTime.parse(dateString.replaceAll(' ', 'T'));
+      } else {
+        date = DateTime.parse(dateString);
+      }
+
+      // Ensure we're adding the +7 GMT adjustment for Indonesia timezone
+      final indonesiaDate = date.toLocal();
+
+      // Using dd MMMM yyyy, HH:mm format for kejadian dates
+      return DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(indonesiaDate);
     } catch (e) {
       return dateString;
     }
@@ -319,7 +397,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : error != null
+          : error != null && laporan == null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -416,7 +494,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                   _buildInfoGrid([
                     {
                       'label': 'Tanggal dan Waktu Kejadian',
-                      'value': formatDate(laporan!.tanggalKejadian),
+                      'value': formatDateKejadian(laporan!.tanggalKejadian),
                     },
                     {
                       'label': 'Kategori Kejadian',
@@ -424,10 +502,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                           laporan!.jenisKejadian ??
                           '-',
                     },
-                    {
-                      'label': 'Lokasi Kejadian',
-                      'value': laporan!.lokasi ?? '-',
-                    },
+                    // Lokasi Kejadian removed as requested
                   ]),
                 ],
               ),
@@ -568,12 +643,23 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                   'value':
                       laporan!.nomorTelepon ?? laporan!.teleponPelapor ?? '-',
                 },
+                {
+                  'label': 'Profesi',
+                  'value': laporan!.profesi ?? '-',
+                },
+                {
+                  'label': 'Jenis Kelamin',
+                  'value': laporan!.jenisKelamin ?? '-',
+                },
+                {
+                  'label': 'Kelompok Umur',
+                  'value': laporan!.umurPelapor ?? '-',
+                },
               ]),
             ),
 
             SizedBox(height: 16),
 
-            // Card for Status
             // Card for Status
             _buildCard(
               title: 'Status Laporan',
@@ -599,14 +685,40 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                 },
                 {
                   'label': 'Tanggal Laporan',
-                  'value': formatDate(laporan!.createdAt?.toString()),
+                  'value': formatDate(laporan!.createdAt?.toIso8601String()),
                 },
                 {
                   'label': 'Terakhir Diperbarui',
-                  'value': formatDate(laporan!.updatedAt?.toString()),
+                  'value': formatDate(laporan!.updatedAt?.toIso8601String()),
                 },
               ]),
             ),
+
+            // Additional bukti pelanggaran section if available
+            if (laporan!.buktiPelanggaran != null &&
+                laporan!.buktiPelanggaran!.isNotEmpty) ...[
+              SizedBox(height: 16),
+              _buildCard(
+                title: 'Bukti Pelanggaran',
+                icon: Icons.assignment_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: laporan!.buktiPelanggaran!.map((bukti) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle_outline,
+                              color: Colors.green, size: 18),
+                          SizedBox(width: 8),
+                          Text(bukti),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
 
             // Tanggapan section
             if (hasTanggapan) ...[
@@ -746,6 +858,12 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     String? image = imagePath ?? fotoKejadian;
     if (image == null) return '';
 
+    // If it contains a comma, it might be a list of images
+    if (image.contains(',')) {
+      // Just use the first image for display
+      image = image.split(',').first.trim();
+    }
+
     // Jika sudah URL lengkap
     if (image.startsWith('http')) {
       return image;
@@ -823,7 +941,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                 item['widget']
               else
                 Text(
-                  item['value'],
+                  item['value'] ?? '-',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                   ),
@@ -883,7 +1001,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    item['text'],
+                    item['text'] ?? '',
                     style: TextStyle(height: 1.5),
                   ),
                 ],

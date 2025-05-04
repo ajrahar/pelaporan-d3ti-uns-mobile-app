@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Laporan {
   final int? id;
   final String? judul;
@@ -17,9 +19,16 @@ class Laporan {
   final String? jenisKejadian;
   final String? imagePath;
   final String? fotoKejadian;
-  final DateTime? createdAt; // Changed from String? to DateTime?
-  final DateTime? updatedAt; // Changed from String? to DateTime?
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   dynamic tanggapan;
+  final String? profesi;
+  final String? jenisKelamin;
+  final String? umurPelapor;
+  final List<String>? buktiPelanggaran;
+  final dynamic terlapor;
+  final dynamic saksi;
+  final String? lampiranLink;
 
   Laporan({
     required this.id,
@@ -43,11 +52,32 @@ class Laporan {
     this.createdAt,
     this.updatedAt,
     this.tanggapan,
+    this.profesi,
+    this.jenisKelamin,
+    this.umurPelapor,
+    this.buktiPelanggaran,
+    this.terlapor,
+    this.saksi,
+    this.lampiranLink,
   });
 
   factory Laporan.fromJson(Map<String, dynamic> json) {
+    // Process image_path - could be a JSON string containing array
+    String? processedImagePath = json['image_path'];
+    if (processedImagePath != null &&
+        processedImagePath.startsWith("[") &&
+        processedImagePath.endsWith("]")) {
+      try {
+        // This will handle cases where image_path is a JSON string containing an array
+        List<dynamic> images = jsonDecode(processedImagePath);
+        processedImagePath = images.isNotEmpty ? images.join(',') : null;
+      } catch (e) {
+        // If parsing fails, keep the original string
+      }
+    }
+
     return Laporan(
-      id: json['id'],
+      id: json['laporan_id'] ?? json['id'],
       judul: json['judul'],
       deskripsi: json['deskripsi'],
       deskripsiKejadian: json['deskripsi_kejadian'],
@@ -63,7 +93,7 @@ class Laporan {
       nomorLaporan: json['nomor_laporan'],
       categoryId: json['category_id'],
       jenisKejadian: json['jenis_kejadian'],
-      imagePath: json['image_path'],
+      imagePath: processedImagePath,
       fotoKejadian: json['foto_kejadian'],
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
@@ -72,6 +102,15 @@ class Laporan {
           ? DateTime.parse(json['updated_at'])
           : null,
       tanggapan: json['tanggapan'],
+      profesi: json['profesi'],
+      jenisKelamin: json['jenis_kelamin'],
+      umurPelapor: json['umur_pelapor'],
+      buktiPelanggaran: json['bukti_pelanggaran'] != null
+          ? List<String>.from(json['bukti_pelanggaran'])
+          : null,
+      terlapor: json['terlapor'],
+      saksi: json['saksi'],
+      lampiranLink: json['lampiran_link'],
     );
   }
 
@@ -95,9 +134,16 @@ class Laporan {
       'jenis_kejadian': jenisKejadian,
       'image_path': imagePath,
       'foto_kejadian': fotoKejadian,
-      'created_at': createdAt?.toIso8601String(), // Convert DateTime to String
-      'updated_at': updatedAt?.toIso8601String(), // Convert DateTime to String
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
       'tanggapan': tanggapan,
+      'profesi': profesi,
+      'jenis_kelamin': jenisKelamin,
+      'umur_pelapor': umurPelapor,
+      'bukti_pelanggaran': buktiPelanggaran,
+      'terlapor': terlapor,
+      'saksi': saksi,
+      'lampiran_link': lampiranLink,
     };
   }
 
@@ -106,6 +152,7 @@ class Laporan {
     String? status,
     dynamic tanggapan,
     DateTime? updatedAt,
+    String? lampiranLink,
   }) {
     return Laporan(
       id: this.id,
@@ -129,6 +176,13 @@ class Laporan {
       createdAt: this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       tanggapan: tanggapan ?? this.tanggapan,
+      profesi: this.profesi,
+      jenisKelamin: this.jenisKelamin,
+      umurPelapor: this.umurPelapor,
+      buktiPelanggaran: this.buktiPelanggaran,
+      terlapor: this.terlapor,
+      saksi: this.saksi,
+      lampiranLink: lampiranLink ?? this.lampiranLink,
     );
   }
 }
