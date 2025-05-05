@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
             AddLaporKejadianPage(), // Rute untuk halaman utama
         '/regismhs': (context) => RegisterMhsPage(), // Rute untuk halaman utama
         '/laporanks': (context) =>
-            LaporKekerasanSeksualPage(), // Rute untuk halaman utama
+            LaporKekerasanPage(), // Rute untuk halaman utama
         '/addlaporks': (context) => AddLaporKsPage(),
       },
     );

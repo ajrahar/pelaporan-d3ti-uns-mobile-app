@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:pelaporan_d3ti/models/laporan_kekerasan.dart';
 import 'dart:math' as Math;
 import '../models/laporan.dart';
 import 'token_manager.dart';
@@ -309,6 +312,149 @@ class ApiService {
     } catch (e) {
       print('Error in updateLaporanStatus: $e');
       throw Exception('Failed to update status: $e');
+    }
+  }
+
+  // Get laporan kekerasan
+  Future<List<LaporanKekerasan>> getLaporanKekerasan() async {
+    try {
+      final token = await getAuthToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/laporan_kekerasan'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => LaporanKekerasan.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load laporan kekerasan');
+      }
+    } catch (e) {
+      throw Exception('Error getting laporan kekerasan: $e');
+    }
+  }
+
+  // Get detail of laporan kekerasan by id
+  Future<LaporanKekerasan> getLaporanKekerasanById(int id) async {
+    try {
+      final token = await getAuthToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/laporan_kekerasan/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic data = json.decode(response.body);
+        return LaporanKekerasan.fromJson(data);
+      } else {
+        throw Exception('Failed to load laporan kekerasan detail');
+      }
+    } catch (e) {
+      throw Exception('Error getting laporan kekerasan detail: $e');
+    }
+  }
+
+  // Submit the report
+  Future<Map<String, dynamic>> submitLaporanKekerasan({
+    required String title,
+    required int categoryId,
+    required String description,
+    required String tanggalKejadian,
+    required String namaPelapor,
+    required String nimPelapor,
+    required String nomorTelepon,
+    String? lampiranLink,
+    required List<String> buktiPelanggaran,
+    required List<Map<String, dynamic>> terlapor,
+    required List<Map<String, dynamic>> saksi,
+    required List<File> imageFiles,
+    required bool agreement,
+  }) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/laporan_kekerasan/add_laporan'),
+      );
+
+      // Add text fields
+      request.fields['judul'] = title;
+      request.fields['category_id'] = categoryId.toString();
+      request.fields['deskripsi'] = description;
+      request.fields['tanggal_kejadian'] = tanggalKejadian;
+      request.fields['nama_pelapor'] = namaPelapor;
+      request.fields['nim_pelapor'] = nimPelapor;
+      request.fields['nomor_telepon'] = nomorTelepon;
+      request.fields['current_datetime'] = DateTime.now().toUtc().toString();
+      request.fields['username'] = nimPelapor;
+
+      if (lampiranLink != null && lampiranLink.isNotEmpty) {
+        request.fields['lampiran_link'] = lampiranLink;
+      }
+
+      // Add bukti_pelanggaran as array
+      for (var i = 0; i < buktiPelanggaran.length; i++) {
+        request.fields['bukti_pelanggaran[$i]'] = buktiPelanggaran[i];
+      }
+
+      // Add terlapor with proper array format for Laravel
+      for (var i = 0; i < terlapor.length; i++) {
+        terlapor[i].forEach((key, value) {
+          if (value != null && value.toString().isNotEmpty) {
+            request.fields['terlapor[$i][$key]'] = value.toString();
+          }
+        });
+      }
+
+      // Add saksi with proper array format for Laravel
+      for (var i = 0; i < saksi.length; i++) {
+        saksi[i].forEach((key, value) {
+          if (value != null && value.toString().isNotEmpty) {
+            request.fields['saksi[$i][$key]'] = value.toString();
+          }
+        });
+      }
+
+      // Add agreement field
+      request.fields['agreement'] = agreement.toString();
+
+      // Add image files
+      for (var i = 0; i < imageFiles.length; i++) {
+        final file = imageFiles[i];
+        final fileName = file.path.split('/').last;
+        final fileExtension = fileName.split('.').last.toLowerCase();
+
+        var contentType = MediaType('image', fileExtension);
+
+        request.files.add(
+          http.MultipartFile(
+            'image_path[]',
+            file.readAsBytes().asStream(),
+            file.lengthSync(),
+            filename: fileName,
+            contentType: contentType,
+          ),
+        );
+      }
+
+      // Send the request
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(responseData);
+      } else {
+        throw Exception(
+            'Failed to submit report: ${response.statusCode}\n$responseData');
+      }
+    } catch (e) {
+      throw Exception('Error submitting report: $e');
     }
   }
 }

@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       LaporKejadianPage(), // Halaman Lapor Kejadian
       _HomePageContent(greeting: getGreeting()), // Halaman Utama (Home)
-      LaporKekerasanSeksualPage(), // Halaman Lapor Kekerasan Seksual
+      LaporKekerasanPage(), // Halaman Lapor Kekerasan Seksual
     ];
   }
 
