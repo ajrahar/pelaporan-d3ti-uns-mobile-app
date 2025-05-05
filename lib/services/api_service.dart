@@ -5,7 +5,14 @@ import '../models/laporan.dart';
 import 'token_manager.dart';
 
 class ApiService {
-  final String baseUrl = 'http://10.0.2.2:8000/api';
+  // Change from final to non-final so it can be updated
+  String baseUrl = 'http://10.0.2.2:8000/api';
+
+  // Method to update the base URL at runtime
+  void updateBaseUrl(String newUrl) {
+    baseUrl = newUrl;
+    print("ApiService baseUrl updated to: $baseUrl");
+  }
 
   // This will now use our TokenManager
   Future<String?> getAuthToken() async {
