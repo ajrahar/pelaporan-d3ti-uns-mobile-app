@@ -140,7 +140,9 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
-    final url = Uri.parse('http://10.0.2.2:8000/api/login/mahasiswa');
+    // Updated API URL to match the new endpoint
+    final url =
+        Uri.parse('https://v3422040.mhs.d3tiuns.com/api/login/mahasiswa');
 
     try {
       // Create form data

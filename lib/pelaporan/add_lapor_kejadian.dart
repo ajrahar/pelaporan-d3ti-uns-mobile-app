@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pelaporan_d3ti/services/api_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AddLaporKejadianPage extends StatefulWidget {
   const AddLaporKejadianPage({Key? key}) : super(key: key);
@@ -12,6 +15,9 @@ class AddLaporKejadianPage extends StatefulWidget {
 }
 
 class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
+  // API service instance
+  final ApiService _apiService = ApiService();
+
   // GlobalKey untuk mengelola form
   final _formKey = GlobalKey<FormState>();
 
@@ -47,6 +53,8 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
 
   // Status loading dan errors
   bool _isLoading = false;
+  bool _isLoadingCategories = true;
+  String? _categoryError;
   Map<String, dynamic> _errors = {};
 
   // Variabel untuk menyimpan tanggal dan waktu
@@ -57,14 +65,7 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
   List<File> _imageFiles = [];
 
   // Daftar kategori dan kategori yang dipilih
-  final List<Map<String, dynamic>> _kategoriList = [
-    {'id': 1, 'nama': 'Kehilangan Barang'},
-    {'id': 2, 'nama': 'Kerusakan Fasilitas'},
-    {'id': 3, 'nama': 'Kekerasan Verbal'}, // Akan difilter keluar
-    {'id': 4, 'nama': 'Kekerasan Fisik'}, // Akan difilter keluar
-    {'id': 5, 'nama': 'Kecelakaan'},
-    {'id': 6, 'nama': 'Lainnya'}
-  ];
+  List<Map<String, dynamic>> _kategoriList = [];
   int? _selectedKategori;
 
   // Daftar bukti pelanggaran
@@ -91,13 +92,65 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
   void initState() {
     super.initState();
     _loadUserData();
+    _fetchCategories();
+  }
+
+  Future<void> _fetchCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+      _categoryError = null;
+    });
+
+    try {
+      final Map<int, String> categories = await _apiService.getCategories();
+
+      if (categories.isNotEmpty) {
+        // Track category names we've already added
+        Set<String> addedCategoryNames = {};
+        List<Map<String, dynamic>> categoryList = [];
+
+        categories.forEach((id, name) {
+          // Only add this category if we haven't seen this name before
+          if (!addedCategoryNames.contains(name.toLowerCase())) {
+            categoryList.add({'id': id, 'nama': name});
+            addedCategoryNames.add(name.toLowerCase());
+          }
+        });
+
+        setState(() {
+          _kategoriList = categoryList;
+          _isLoadingCategories = false;
+        });
+
+        print('Categories loaded (deduplicated): ${_kategoriList.length}');
+      } else {
+        setState(() {
+          _categoryError = 'Tidak ada kategori yang tersedia';
+          _isLoadingCategories = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching categories: $e');
+      setState(() {
+        _categoryError = 'Gagal memuat kategori: $e';
+        _isLoadingCategories = false;
+
+        // Fallback to default categories if API fails
+        _kategoriList = [
+          {'id': 1, 'nama': 'Kehilangan Barang'},
+          {'id': 2, 'nama': 'Kerusakan Fasilitas'},
+          {'id': 5, 'nama': 'Kecelakaan'},
+          {'id': 6, 'nama': 'Lainnya'}
+        ];
+      });
+    }
   }
 
   // Filter kategori sesuai permintaan (tidak menampilkan kategori yang berawalan "Kekerasan")
   List<Map<String, dynamic>> get filteredKategori {
     return _kategoriList
-        .where(
-            (kategori) => !kategori['nama'].toString().startsWith('Kekerasan'))
+        .where((kategori) =>
+            !kategori['nama'].toString().toLowerCase().startsWith('kekerasan'))
         .toList();
   }
 
@@ -303,7 +356,7 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
     return isValid;
   }
 
-  // Fungsi untuk menyimpan data laporan
+  // Fungsi untuk menyimpan data laporan ke API
   Future<void> _saveLaporan() async {
     // Validasi form
     if (!_validateForm()) {
@@ -379,53 +432,125 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
           .where((item) => item != null)
           .toList();
 
-      // Simpan data laporan (bisa dikirim ke API atau database)
-      final Map<String, dynamic> newLaporan = {
-        'judul': _judulController.text,
-        'image_paths': _imageFiles.map((file) => file.path).toList(),
-        'category_id': _selectedKategori,
-        'deskripsi': _deskripsiController.text,
-        'tanggal_kejadian': formattedDateTime,
-        'lampiran_link': _lampiranLinkController.text,
-        'nomor_telepon': _nomorTeleponController.text,
-        'nama_pelapor': _namaPelaporController.text,
-        'nim_pelapor': _nimPelaporController.text,
-        'profesi': _profesi,
-        'jenis_kelamin': _jenisKelamin,
-        'umur_pelapor': _umurPelapor,
-        'bukti_pelanggaran': _selectedBuktiPelanggaran,
-        'terlapor': terlapor,
-        'saksi': saksi,
-        'status': 'unverified',
-      };
+      // Get token for authentication
+      final token = await _apiService.getAuthToken();
 
-      // Simulate API call delay
-      await Future.delayed(Duration(seconds: 2));
+      // Create multipart request
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${_apiService.baseUrl}/laporan/add_laporan'),
+      );
+
+      // Add headers
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.headers['Accept'] = 'application/json';
+
+      // Add text fields
+      request.fields['judul'] = _judulController.text;
+      request.fields['category_id'] = _selectedKategori.toString();
+      request.fields['deskripsi'] = _deskripsiController.text;
+      request.fields['tanggal_kejadian'] = formattedDateTime;
+      request.fields['nama_pelapor'] = _namaPelaporController.text;
+      request.fields['ni_pelapor'] = _nimPelaporController.text;
+      request.fields['no_telp'] = _nomorTeleponController.text;
+      request.fields['profesi'] = _profesi ?? '';
+      request.fields['jenis_kelamin'] = _jenisKelamin ?? '';
+      request.fields['umur_pelapor'] = _umurPelapor ?? '';
+
+      if (_lampiranLinkController.text.isNotEmpty) {
+        request.fields['lampiran_link'] = _lampiranLinkController.text;
+      }
+
+      // Add bukti pelanggaran
+      for (int i = 0; i < _selectedBuktiPelanggaran.length; i++) {
+        request.fields['bukti_pelanggaran[$i]'] = _selectedBuktiPelanggaran[i];
+      }
+
+      // Add terlapor
+      for (int i = 0; i < terlapor.length; i++) {
+        terlapor[i]?.forEach((key, value) {
+          if (value != null && value.toString().isNotEmpty) {
+            request.fields['terlapor[$i][$key]'] = value.toString();
+          }
+        });
+      }
+
+      // Add saksi
+      for (int i = 0; i < saksi.length; i++) {
+        saksi[i]?.forEach((key, value) {
+          if (value != null && value.toString().isNotEmpty) {
+            request.fields['saksi[$i][$key]'] = value.toString();
+          }
+        });
+      }
+
+      // Add image files
+      for (int i = 0; i < _imageFiles.length; i++) {
+        final file = _imageFiles[i];
+        final stream = http.ByteStream(file.openRead());
+        final length = await file.length();
+        final fileName = file.path.split('/').last;
+
+        final multipartFile = http.MultipartFile('image_path[]', stream, length,
+            filename: fileName);
+        request.files.add(multipartFile);
+      }
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('API Response (${response.statusCode}): ${response.body}');
 
       // Reset loading state
       setState(() {
         _isLoading = false;
       });
 
-      // Tampilkan dialog sukses
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Berhasil!'),
-          content: Text('Laporan berhasil disimpan dan akan diproses.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pop(context, newLaporan); // Kembali dengan data
-              },
-              child: Text('OK'),
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = json.decode(response.body);
+
+        if (jsonResponse['status'] == true) {
+          // Tampilkan dialog sukses
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Berhasil!'),
+              content: Text('Laporan berhasil disimpan dan akan diproses.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pop(context); // Kembali ke halaman sebelumnya
+                  },
+                  child: Text('OK'),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          );
+        } else {
+          // Show error message from API
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text(jsonResponse['message'] ?? 'Gagal menyimpan laporan'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        // Handle error response
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan laporan: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } catch (e) {
-      // Handle error
+      // Handle exception
       setState(() {
         _isLoading = false;
       });
@@ -472,27 +597,33 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
                     const SizedBox(height: 16),
 
                     _buildLabel('Kategori', isRequired: true),
-                    DropdownButtonFormField<int>(
-                      value: _selectedKategori,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        errorText: _errors['category_id'],
-                      ),
-                      items: filteredKategori.map((kategori) {
-                        return DropdownMenuItem<int>(
-                          value: kategori['id'],
-                          child: Text(kategori['nama']),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedKategori = value;
-                        });
-                      },
-                      hint: Text('Pilih kategori'),
-                    ),
+                    _isLoadingCategories
+                        ? Center(
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : _categoryError != null
+                            ? Text(_categoryError!,
+                                style: TextStyle(color: Colors.red))
+                            : DropdownButtonFormField<int>(
+                                value: _selectedKategori,
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  errorText: _errors['category_id'],
+                                ),
+                                items: filteredKategori.map((kategori) {
+                                  return DropdownMenuItem<int>(
+                                    value: kategori['id'],
+                                    child: Text(kategori['nama']),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedKategori = value;
+                                  });
+                                },
+                                hint: Text('Pilih kategori'),
+                              ),
                     const SizedBox(height: 16),
 
                     _buildLabel('Lampiran Link', isRequired: false),

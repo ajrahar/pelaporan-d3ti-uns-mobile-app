@@ -216,13 +216,6 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
 
   // Dummy data for testing when API is not available
   void _loadDummyData() {
-    _categories = {
-      1: 'Kerusakan Fasilitas',
-      2: 'Kehilangan Barang',
-      3: 'Kecelakaan',
-      4: 'Lainnya'
-    };
-
     // Filter to only show current user's reports
     _filterUserLaporan();
 

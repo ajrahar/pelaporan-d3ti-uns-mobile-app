@@ -8,8 +8,8 @@ import '../models/laporan.dart';
 import 'token_manager.dart';
 
 class ApiService {
-  // Change from final to non-final so it can be updated
-  String baseUrl = 'http://10.0.2.2:8000/api';
+  // Changed the default baseUrl to the new URL
+  String baseUrl = 'https://v3422040.mhs.d3tiuns.com/api';
 
   // Method to update the base URL at runtime
   void updateBaseUrl(String newUrl) {
@@ -41,7 +41,6 @@ class ApiService {
     return headers;
   }
 
-  // Get all categories - should work even without auth
   Future<Map<int, String>> getCategories() async {
     try {
       final headers = {
@@ -61,11 +60,26 @@ class ApiService {
       print("Categories API Response Status: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final responseJson = json.decode(response.body);
+        List<dynamic> data;
+
+        // Handle both direct array and { status, data } structures
+        if (responseJson is List) {
+          data = responseJson;
+        } else if (responseJson is Map && responseJson.containsKey('data')) {
+          data = responseJson['data'];
+        } else {
+          throw Exception('Unexpected API response format');
+        }
+
         final Map<int, String> categories = {};
 
         for (var category in data) {
-          categories[category['category_id']] = category['nama'];
+          // Support both 'category_id' and 'id' fields
+          int id = category['category_id'] ?? category['id'];
+          // Support both 'nama' and 'nama_kategori' fields
+          String name = category['nama'] ?? category['nama_kategori'];
+          categories[id] = name;
         }
 
         return categories;
