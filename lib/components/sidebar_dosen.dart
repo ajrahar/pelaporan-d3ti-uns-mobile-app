@@ -254,7 +254,7 @@ class _SidebarDosenState extends State<SidebarDosen> {
                       icon: Icons.dashboard,
                       title: 'Dashboard',
                       onTap: () {
-                        Navigator.pushReplacementNamed(context, '/dosen-home');
+                        Navigator.pushReplacementNamed(context, '/homedosen');
                       },
                       gradientColors: [
                         Colors.indigo[400]!,
