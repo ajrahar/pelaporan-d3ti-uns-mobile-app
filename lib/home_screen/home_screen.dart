@@ -346,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: () async {
           await _loadUserData();
           await _fetchReports();
-          await _fetchKekerasanReports();
+          await _fetchKekerasanReports(); // Make sure to call this
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -357,11 +357,11 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildWelcomeCard(),
               const SizedBox(height: 24),
 
-              // Urgent report button moved here, before statistics
+              // Urgent report button
               _buildUrgentReportButton(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-              // Sexual harassment report button added here
+              // Sexual harassment report button
               _buildSexualHarassmentReportButton(),
               const SizedBox(height: 24),
 
@@ -369,8 +369,12 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildDashboardStats(),
               const SizedBox(height: 24),
 
-              // Recent activity section
+              // Recent regular activity section
               _buildRecentActivity(),
+              const SizedBox(height: 24),
+
+              // Recent sexual harassment activity section
+              _buildRecentKekerasanActivity(),
             ],
           ),
         ),
@@ -995,6 +999,247 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Recent activity section for sexual harassment reports
+  Widget _buildRecentKekerasanActivity() {
+    return Card(
+      elevation: 4,
+      color: Colors.red[50],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Icon(Icons.privacy_tip_outlined,
+                      color: Colors.red, size: 24),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Aktivitas Terbaru',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[800],
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Pelaporan Kekerasan Seksual',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _isLoadingKekerasanReports
+                ? Center(child: CircularProgressIndicator(color: Colors.red))
+                : _userLaporanKekerasan.isNotEmpty
+                    ? Column(
+                        children: _getSortedRecentKekerasanActivities()
+                            .take(3) // Only show 3 most recent reports
+                            .map(
+                                (report) => _buildKekerasanActivityItem(report))
+                            .toList(),
+                      )
+                    : Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24.0),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.folder_open,
+                                size: 48,
+                                color: Colors.red[300],
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Tidak ada laporan kekerasan seksual',
+                                style: TextStyle(
+                                  color: Colors.red[400],
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+            const SizedBox(height: 16),
+            // Button to view all reports
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/violence-reports');
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                ),
+                child: const Text(
+                  'Lihat Semua Laporan Kekerasan Seksual',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+// Helper method to sort sexual harassment reports by date
+  List<LaporanKekerasan> _getSortedRecentKekerasanActivities() {
+    // Make a copy of the list to avoid modifying the original
+    final sortedReports = List<LaporanKekerasan>.from(_userLaporanKekerasan);
+
+    // Sort by created_at date, most recent first
+    sortedReports.sort((a, b) {
+      if (a.createdAt == null) return 1; // Null dates go to the end
+      if (b.createdAt == null) return -1;
+      return b.createdAt!.compareTo(a.createdAt!); // Descending order
+    });
+
+    return sortedReports;
+  }
+
+// Item for displaying sexual harassment report in the activity list
+  Widget _buildKekerasanActivityItem(LaporanKekerasan report) {
+    // Format the date relative to current time
+    String formattedDate = 'No date';
+    if (report.createdAt != null) {
+      final now = DateTime.now();
+      final difference = now.difference(report.createdAt!);
+
+      if (difference.inDays == 0) {
+        if (difference.inHours == 0) {
+          formattedDate = '${difference.inMinutes} menit yang lalu';
+        } else {
+          formattedDate = '${difference.inHours} jam yang lalu';
+        }
+      } else if (difference.inDays < 7) {
+        formattedDate = '${difference.inDays} hari yang lalu';
+      } else {
+        formattedDate = DateFormat('dd MMM yyyy').format(report.createdAt!);
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: InkWell(
+        onTap: () {
+          if (report.id != null) {
+            Navigator.pushNamed(
+              context,
+              '/violence-reports',
+            );
+          }
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.red.shade200),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.privacy_tip,
+                  color: Colors.red,
+                  size: 24,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      report.judul ?? 'Laporan Kekerasan Seksual',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time,
+                            size: 12, color: Colors.grey[600]),
+                        SizedBox(width: 4),
+                        Text(
+                          formattedDate,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        "Laporan Tertutup",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: Colors.grey,
+              ),
+            ],
+          ),
         ),
       ),
     );
