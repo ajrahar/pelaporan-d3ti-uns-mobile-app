@@ -181,8 +181,8 @@ class _LoginDosenPageState extends State<LoginDosenPage> {
         final jsonResponse = jsonDecode(response.body);
 
         if (jsonResponse['status'] == true) {
-          // Extract user data and token
-          final userData = jsonResponse['data']['user'];
+          // Extract user data and token - the key is 'dosen' not 'user'
+          final dosenData = jsonResponse['data']['dosen'];
           final token = jsonResponse['data']['token'];
 
           print('Login successful! Token received');
@@ -195,21 +195,31 @@ class _LoginDosenPageState extends State<LoginDosenPage> {
             await _saveRememberMeState(true);
           }
 
-          // Save user data using safer methods
-          await _safeSetPrefs('user_id', userData['id'],
+          // Save dosen data using safer methods
+          await _safeSetPrefs('user_id', dosenData['id'],
               (prefs, key, value) => prefs.setInt(key, value));
-          await _safeSetPrefs('user_name', userData['name'],
+          await _safeSetPrefs('user_name', dosenData['name'],
               (prefs, key, value) => prefs.setString(key, value));
-          await _safeSetPrefs('user_email', userData['email'],
+          await _safeSetPrefs('user_email', dosenData['email'],
               (prefs, key, value) => prefs.setString(key, value));
-          await _safeSetPrefs('user_nidn', userData['nidn'] ?? '',
+          await _safeSetPrefs('user_nik', dosenData['nik'],
               (prefs, key, value) => prefs.setString(key, value));
-          await _safeSetPrefs('user_no_telp', userData['no_telp'] ?? '',
+          await _safeSetPrefs('user_no_telp', dosenData['no_telp'],
               (prefs, key, value) => prefs.setString(key, value));
+
+          // Save jabatan information
+          final jabatanSekarang = jsonResponse['data']['jabatan_sekarang'];
+          if (jabatanSekarang != null) {
+            await _safeSetPrefs('jabatan_id', jabatanSekarang['id'],
+                (prefs, key, value) => prefs.setInt(key, value));
+            await _safeSetPrefs('jabatan_name', jabatanSekarang['name'],
+                (prefs, key, value) => prefs.setString(key, value));
+          }
+
           await _safeSetPrefs('is_logged_in', true,
               (prefs, key, value) => prefs.setBool(key, value));
-          await _safeSetPrefs('user_role', 'dosen',
-              (prefs, key, value) => prefs.setString(key, value));
+          await _safeSetPrefs('is_dosen', true,
+              (prefs, key, value) => prefs.setBool(key, value));
 
           // Navigate to home screen
           Navigator.pushReplacement(
