@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pelaporan_d3ti/services/token_manager.dart';
-import '../services/api_service.dart';
-import '../models/laporan.dart';
+import '../../services/api_service.dart';
+import '../../models/laporan.dart';
 
 class DetailLaporanPage extends StatefulWidget {
   final Laporan? laporan;
