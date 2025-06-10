@@ -453,8 +453,6 @@ class _LaporKekerasanPageState extends State<LaporKekerasanPage> {
             onPressed: _fetchData,
           ),
         ],
-        backgroundColor:
-            Color(0xFF00A2EA), // Use the same blue color as sidebar
       ),
       // Use your existing Sidebar without parameters
       drawer: Sidebar(),
@@ -690,10 +688,19 @@ class _LaporKekerasanPageState extends State<LaporKekerasanPage> {
                 onPressed: () {
                   Navigator.pushNamed(context, '/addlaporks');
                 },
-                icon: Icon(Icons.add),
-                label: Text('Tambah Laporan'),
+                icon: Icon(Icons.add, color: Colors.white),
+                label: Text(
+                  'Tambah Laporan',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
+                  foregroundColor:
+                      Colors.white, // This sets the default text/icon color
                   padding: EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
