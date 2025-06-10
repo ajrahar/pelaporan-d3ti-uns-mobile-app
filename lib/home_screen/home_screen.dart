@@ -5,6 +5,7 @@ import 'package:pelaporan_d3ti/services/token_manager.dart';
 import 'package:pelaporan_d3ti/components/sidebar.dart';
 import 'package:intl/intl.dart';
 import 'package:pelaporan_d3ti/models/laporan.dart';
+import 'package:pelaporan_d3ti/models/laporan_kekerasan.dart'; // Make sure this import exists
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -40,11 +41,18 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _currentUserNim;
   String? _currentUserName;
 
+  // Add these variables to your _HomeScreenState class
+  List<LaporanKekerasan> _laporanKekerasan = [];
+  List<LaporanKekerasan> _userLaporanKekerasan = [];
+  int _totalLaporanKekerasan = 0;
+  bool _isLoadingKekerasanReports = true;
+
   @override
   void initState() {
     super.initState();
     _loadUserData();
     _fetchReports();
+    _fetchKekerasanReports();
   }
 
   Future<void> _loadUserData() async {
@@ -134,6 +142,32 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Add a new method to fetch kekerasan reports
+  Future<void> _fetchKekerasanReports() async {
+    setState(() {
+      _isLoadingKekerasanReports = true;
+    });
+
+    try {
+      // Fetch reports from API using ApiService
+      final laporanResponse = await _apiService.getLaporanKekerasan();
+
+      if (laporanResponse.isNotEmpty) {
+        _laporanKekerasan = laporanResponse;
+        _filterUserLaporanKekerasan();
+      }
+
+      setState(() {
+        _isLoadingKekerasanReports = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingKekerasanReports = false;
+      });
+      print('Error fetching kekerasan reports: $e');
+    }
+  }
+
   // Filter laporan to show only current user's reports - copied from lapor_kejadian.dart
   void _filterUserLaporan() {
     if (_currentUserName == null && _currentUserNim == null) {
@@ -209,6 +243,47 @@ class _HomeScreenState extends State<HomeScreen> {
         'Filtered ${_laporan.length} reports down to ${_userLaporan.length} for user $_currentUserName');
   }
 
+  // Filter kekerasan reports to show only current user's
+  void _filterUserLaporanKekerasan() {
+    if (_currentUserName == null && _currentUserNim == null) {
+      setState(() {
+        _userLaporanKekerasan = [];
+        _totalLaporanKekerasan = 0;
+      });
+      return;
+    }
+
+    // Filter by nim_pelapor or nama_pelapor
+    List<LaporanKekerasan> filtered = [];
+
+    // First try to match by NIM
+    if (_currentUserNim != null && _currentUserNim!.isNotEmpty) {
+      filtered = _laporanKekerasan
+          .where((report) =>
+              report.nimPelapor != null &&
+              report.nimPelapor!.toLowerCase() ==
+                  _currentUserNim!.toLowerCase())
+          .toList();
+    }
+
+    // If no matches by nim, try by name
+    if (filtered.isEmpty &&
+        _currentUserName != null &&
+        _currentUserName!.isNotEmpty) {
+      filtered = _laporanKekerasan
+          .where((report) =>
+              report.namaPelapor != null &&
+              report.namaPelapor!.toLowerCase() ==
+                  _currentUserName!.toLowerCase())
+          .toList();
+    }
+
+    setState(() {
+      _userLaporanKekerasan = filtered;
+      _totalLaporanKekerasan = filtered.length;
+    });
+  }
+
   // Calculate statistics from reports - similar to lapor_kejadian.dart
   void _calculateStats(List<Laporan> reports) {
     int pending = 0;
@@ -255,6 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               _fetchReports();
               _loadUserData();
+              _fetchKekerasanReports();
             },
           ),
         ],
@@ -270,6 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: () async {
           await _loadUserData();
           await _fetchReports();
+          await _fetchKekerasanReports();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -355,7 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDashboardStats() {
-    if (_isLoadingReports) {
+    if (_isLoadingReports || _isLoadingKekerasanReports) {
       return Center(
         child: CircularProgressIndicator(),
       );
@@ -385,6 +462,73 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4.0, bottom: 16.0),
+          child: Text(
+            'Statistik Laporan',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        // Add the kekerasan sexual report stat card
+        Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(16.0),
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.privacy_tip_rounded,
+                        color: Colors.red,
+                        size: 28,
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Laporan Kekerasan Seksual',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Total Laporan: $_totalLaporanKekerasan',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.only(left: 4.0, bottom: 16.0),
           child: Text(
@@ -710,10 +854,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildUrgentReportButton() {
     return Card(
       elevation: 4,
-      color: Colors.red.shade50,
+      color: Colors.purple.shade50,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.red.shade200, width: 1),
+        side: BorderSide(color: Colors.purple.shade200, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -723,7 +867,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(
                   Icons.warning_rounded,
-                  color: Colors.red,
+                  color: Colors.purple,
                   size: 30,
                 ),
                 SizedBox(width: 12),
@@ -760,7 +904,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.purple,
                   foregroundColor: Colors.white,
                   elevation: 3,
                 ),
@@ -785,10 +929,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSexualHarassmentReportButton() {
     return Card(
       elevation: 4,
-      color: Colors.purple.shade50,
+      color: Colors.red.shade50,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.purple.shade200, width: 1),
+        side: BorderSide(color: Colors.red.shade200, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -798,7 +942,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(
                   Icons.privacy_tip_rounded,
-                  color: Colors.purple,
+                  color: Colors.red,
                   size: 30,
                 ),
                 SizedBox(width: 12),
@@ -835,7 +979,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  backgroundColor: Colors.purple,
+                  backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                   elevation: 3,
                 ),
