@@ -4,6 +4,7 @@ import 'package:pelaporan_d3ti/auth_screen/login_dosen.dart';
 import 'package:pelaporan_d3ti/auth_screen/login_mhs.dart';
 import 'package:pelaporan_d3ti/auth_screen/register_mhs.dart';
 import 'package:pelaporan_d3ti/dosen/home/home_screen_dosen.dart';
+import 'package:pelaporan_d3ti/dosen/pelaporan_kejadian_dosen/lapor_pk_dosen.dart';
 import 'package:pelaporan_d3ti/mahasiswa/home_screen/home_screen.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan%20kekerasan%20seksual/add_lapor_ks.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan%20kekerasan%20seksual/lapor_ks.dart';
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomeScreen(), // Route for main page
 
         '/homedosen': (context) => HomeScreenDosen(),
+        '/laporpkdosen': (context) => LaporKejadianDosenPage(),
 
         // Reports routes - aligned with HomeScreen navigation
         '/reports': (context) => LaporKejadianPage(), // Route for reports list

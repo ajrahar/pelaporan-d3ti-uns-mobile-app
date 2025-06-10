@@ -263,50 +263,29 @@ class _SidebarDosenState extends State<SidebarDosen> {
                     ),
                     _buildMenuItem(
                       icon: Icons.assignment,
-                      title: 'Kelola Laporan',
+                      title: 'Laporan Kejadian',
                       onTap: () {
-                        Navigator.pushNamed(context, '/manage-reports');
+                        Navigator.pushNamed(context, '/laporpkdosen');
                       },
                       gradientColors: [Colors.amber[600]!, Colors.amber[800]!],
                     ),
                     _buildMenuItem(
                       icon: Icons.people,
-                      title: 'Data Mahasiswa',
+                      title: 'Laporan Kekerasan Seksual',
                       onTap: () {
                         Navigator.pushNamed(context, '/manage-students');
                       },
-                      gradientColors: [Colors.teal[400]!, Colors.teal[600]!],
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.analytics,
-                      title: 'Statistik Laporan',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/report-statistics');
-                      },
-                      gradientColors: [
-                        Colors.purple[400]!,
-                        Colors.purple[600]!
-                      ],
+                      gradientColors: [Colors.red[400]!, Colors.red[600]!],
                     ),
                     Divider(thickness: 1),
-                    _buildMenuItem(
-                      icon: Icons.settings,
-                      title: 'Pengaturan',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/settings');
-                      },
-                      gradientColors: [
-                        Colors.blueGrey[400]!,
-                        Colors.blueGrey[600]!
-                      ],
-                    ),
                     _buildMenuItem(
                       icon: Icons.logout,
                       title: 'Logout',
                       onTap: () async {
                         try {
                           await TokenManager.clearToken();
-                          Navigator.pushReplacementNamed(context, '/login');
+                          Navigator.pushReplacementNamed(
+                              context, '/logindosen');
                         } catch (e) {
                           print('Error during logout: $e');
                           ScaffoldMessenger.of(context).showSnackBar(

@@ -115,11 +115,9 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
       _isLoadingReports = true;
       _error = null;
     });
-
     try {
       // Fetch all reports
       final laporanResponse = await _apiService.getLaporan();
-
       if (laporanResponse.isNotEmpty) {
         // Debug: Print dates before sorting
         print(
@@ -142,19 +140,10 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
 
         setState(() {
           _laporan = laporanResponse;
-
-          // Filter reports where namaPelapor matches the current user's name
-          if (_currentUserName != null && _currentUserName!.isNotEmpty) {
-            _userMatchingReports = laporanResponse
-                .where((report) =>
-                    report.namaPelapor?.toLowerCase() ==
-                    _currentUserName?.toLowerCase())
-                .toList();
-            _countMatchingReports = _userMatchingReports.length;
-          }
-
-          _calculateStats(laporanResponse);
         });
+
+        // Filter reports for the current user and update statistics
+        _filterUserReports();
       }
 
       setState(() {
@@ -241,6 +230,55 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
       _selesai = completed;
       _ditolak = rejected;
     });
+  }
+
+  // In _HomeScreenDosenState class, update or add this method:
+
+  void _filterUserReports() {
+    if (_currentUserName == null && _currentUserNip == null) {
+      setState(() {
+        _userMatchingReports = [];
+        _countMatchingReports = 0;
+      });
+      print("No user info available. Not filtering reports.");
+      return;
+    }
+
+    print(
+        "Filtering reports for dosen: $_currentUserName (NIP: $_currentUserNip)");
+
+    // Filter based on the current logged-in user's information
+    List<Laporan> filteredReports = _laporan.where((report) {
+      bool matchesByNip = false;
+      bool matchesByName = false;
+
+      if (_currentUserNip != null &&
+          _currentUserNip!.isNotEmpty &&
+          report.niPelapor != null) {
+        matchesByNip =
+            report.niPelapor!.toLowerCase() == _currentUserNip!.toLowerCase();
+      }
+
+      if (_currentUserName != null &&
+          _currentUserName!.isNotEmpty &&
+          report.namaPelapor != null) {
+        matchesByName = report.namaPelapor!.toLowerCase() ==
+            _currentUserName!.toLowerCase();
+      }
+
+      return matchesByNip || matchesByName;
+    }).toList();
+
+    setState(() {
+      _userMatchingReports = filteredReports;
+      _countMatchingReports = filteredReports.length;
+
+      // Update the statistics based on the filtered reports for the current user
+      _calculateStats(_userMatchingReports);
+    });
+
+    print(
+        'Filtered ${_laporan.length} reports down to ${_userMatchingReports.length} for user $_currentUserName');
   }
 
   @override
@@ -761,10 +799,8 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
   }
 
   Widget _buildPendingVerificationSection() {
-    final pendingReports = _laporan
-        .where((report) => report.status == 'unverified')
-        .take(3)
-        .toList();
+    // Filter reports to only show those created by the current user
+    final userReports = _userMatchingReports.take(3).toList();
 
     return Card(
       elevation: 4,
@@ -775,15 +811,15 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Laporan Memerlukan Verifikasi',
+              'Laporan Kejadian',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
             _isLoadingReports
                 ? Center(child: CircularProgressIndicator())
-                : pendingReports.isNotEmpty
+                : userReports.isNotEmpty
                     ? Column(
-                        children: pendingReports
+                        children: userReports
                             .map((report) => _buildReportItem(report))
                             .toList(),
                       )
@@ -793,13 +829,13 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                           child: Column(
                             children: [
                               Icon(
-                                Icons.check_circle_outline,
+                                Icons.info_outline,
                                 size: 48,
-                                color: Colors.green,
+                                color: Colors.blue,
                               ),
                               SizedBox(height: 12),
                               Text(
-                                'Tidak ada laporan yang perlu diverifikasi',
+                                'Belum ada laporan yang Anda buat',
                                 style: TextStyle(color: Colors.grey),
                               ),
                             ],
@@ -811,7 +847,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/verify-reports');
+                  Navigator.pushNamed(context, '/my-reports');
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -820,7 +856,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                   elevation: 2,
                 ),
                 child: const Text(
-                  'Lihat Semua Laporan untuk Verifikasi',
+                  'Lihat Semua Laporan Anda',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
