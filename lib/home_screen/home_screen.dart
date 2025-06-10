@@ -279,8 +279,20 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildWelcomeCard(),
               const SizedBox(height: 24),
+
+              // Urgent report button moved here, before statistics
+              _buildUrgentReportButton(),
+              const SizedBox(height: 24),
+
+              // Sexual harassment report button added here
+              _buildSexualHarassmentReportButton(),
+              const SizedBox(height: 24),
+
+              // Statistics section
               _buildDashboardStats(),
               const SizedBox(height: 24),
+
+              // Recent activity section
               _buildRecentActivity(),
             ],
           ),
@@ -376,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Padding(
           padding: const EdgeInsets.only(left: 4.0, bottom: 16.0),
           child: Text(
-            'Statistik Laporan',
+            'Statistik Laporan Kejadian',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -507,13 +519,31 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-            const SizedBox(height: 16),
-            Center(
+            const SizedBox(height: 24),
+
+            // Only "View All Reports" button remains here
+            SizedBox(
+              width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/reports');
                 },
-                child: const Text('Lihat Semua Laporan'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  backgroundColor:
+                      Colors.blue, // Set the button background to blue
+                  foregroundColor: Colors.white, // Set the text color to white
+                  elevation: 2, // Slight elevation for depth
+                ),
+                child: const Text(
+                  'Lihat Semua Laporan',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ],
@@ -671,6 +701,156 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Create a new method for the urgent report button
+  Widget _buildUrgentReportButton() {
+    return Card(
+      elevation: 4,
+      color: Colors.red.shade50,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.red.shade200, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.warning_rounded,
+                  color: Colors.red,
+                  size: 30,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Terjadi Kejadian Darurat dan Mendesak?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Segera laporkan kejadian darurat dan mendesak yang membutuhkan penanganan cepat',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/addlaporkejadianmendesak');
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                ),
+                child: const Text(
+                  'Tambah Laporan Mendesak',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Create a method for the sexual harassment report button
+  Widget _buildSexualHarassmentReportButton() {
+    return Card(
+      elevation: 4,
+      color: Colors.purple.shade50,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.purple.shade200, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.privacy_tip_rounded,
+                  color: Colors.purple,
+                  size: 30,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Melaporkan Kasus Kekerasan Seksual',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Laporkan dengan aman dan privasi terjaga. Semua laporan ditangani dengan kerahasiaan penuh',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/addlaporks');
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                ),
+                child: const Text(
+                  'Laporkan Kekerasan Seksual',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
