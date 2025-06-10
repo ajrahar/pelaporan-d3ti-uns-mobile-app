@@ -271,7 +271,7 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacementNamed(context, '/laporkejadian_dosen');
+            Navigator.pushReplacementNamed(context, '/laporpkdosen');
           },
         ),
       ),

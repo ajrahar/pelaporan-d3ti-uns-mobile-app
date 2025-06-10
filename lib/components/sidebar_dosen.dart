@@ -273,7 +273,7 @@ class _SidebarDosenState extends State<SidebarDosen> {
                       icon: Icons.people,
                       title: 'Laporan Kekerasan Seksual',
                       onTap: () {
-                        Navigator.pushNamed(context, '/manage-students');
+                        Navigator.pushNamed(context, '/laporksdosen');
                       },
                       gradientColors: [Colors.red[400]!, Colors.red[600]!],
                     ),
