@@ -370,195 +370,111 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Use similar layout to lapor_kejadian.dart for stats cards
-    return LayoutBuilder(builder: (context, constraints) {
-      // For small screens, stack cards vertically
-      if (constraints.maxWidth < 600) {
-        return Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4.0, bottom: 16.0),
+          child: Text(
+            'Statistik Laporan',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        // 2x2 Grid for statistics cards
+        GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12.0,
+          mainAxisSpacing: 12.0,
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
           children: [
             _buildStatCard(
               icon: Icons.description,
               iconColor: Colors.blue,
               title: 'Total Laporan',
               count: _totalLaporan,
-              fullWidth: true,
             ),
-            SizedBox(height: 12),
             _buildStatCard(
               icon: Icons.hourglass_empty,
               iconColor: Colors.grey,
               title: 'Belum Diverifikasi',
               count: _belumDiverifikasi,
-              fullWidth: true,
             ),
-            SizedBox(height: 12),
             _buildStatCard(
               icon: Icons.pending_actions,
               iconColor: Colors.orange,
               title: 'Dalam Proses',
               count: _dalamProses,
-              fullWidth: true,
             ),
-            SizedBox(height: 12),
             _buildStatCard(
               icon: Icons.check_circle,
               iconColor: Colors.green,
               title: 'Selesai',
               count: _selesai,
-              fullWidth: true,
             ),
           ],
-        );
-      } else {
-        // For larger screens, use rows
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildStatCard(
-                    icon: Icons.description,
-                    iconColor: Colors.blue,
-                    title: 'Total Laporan',
-                    count: _totalLaporan,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    icon: Icons.hourglass_empty,
-                    iconColor: Colors.grey,
-                    title: 'Belum Diverifikasi',
-                    count: _belumDiverifikasi,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    icon: Icons.pending_actions,
-                    iconColor: Colors.orange,
-                    title: 'Dalam Proses',
-                    count: _dalamProses,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    icon: Icons.check_circle,
-                    iconColor: Colors.green,
-                    title: 'Selesai',
-                    count: _selesai,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    icon: Icons.cancel,
-                    iconColor: Colors.red,
-                    title: 'Ditolak',
-                    count: _ditolak,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      }
-    });
+        ),
+      ],
+    );
   }
 
-  // Copied and adapted from lapor_kejadian.dart
+  // Updated stat card with square aspect ratio
   Widget _buildStatCard({
     required IconData icon,
     required Color iconColor,
     required String title,
     required int count,
-    bool fullWidth = false,
   }) {
     return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: fullWidth
-            ? Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: iconColor,
-                      size: 24,
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        count.toString(),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: iconColor,
-                      size: 24,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    count.toString(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 28,
+              ),
+            ),
+            Spacer(),
+            Text(
+              count.toString(),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  // Updated to sort activities by date (most recent first)
   Widget _buildRecentActivity() {
     return Card(
       elevation: 4,
@@ -577,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? Center(child: CircularProgressIndicator())
                 : _userLaporan.isNotEmpty
                     ? Column(
-                        children: _userLaporan
+                        children: _getSortedRecentActivities()
                             .take(3) // Only show 3 most recent reports
                             .map((report) => _buildActivityItem(report))
                             .toList(),
@@ -606,6 +522,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Helper method to sort reports by date
+  List<Laporan> _getSortedRecentActivities() {
+    // Make a copy of the list to avoid modifying the original
+    final sortedReports = List<Laporan>.from(_userLaporan);
+
+    // Sort by created_at date, most recent first
+    sortedReports.sort((a, b) {
+      if (a.createdAt == null) return 1; // Null dates go to the end
+      if (b.createdAt == null) return -1;
+      return b.createdAt!.compareTo(a.createdAt!); // Descending order
+    });
+
+    return sortedReports;
+  }
+
+  // Updated activity item with improved date display
   Widget _buildActivityItem(Laporan report) {
     // Format status for display
     String statusText = 'Belum Diverifikasi';
@@ -631,6 +563,25 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
+    // Format the date relative to current time
+    String formattedDate = 'No date';
+    if (report.createdAt != null) {
+      final now = DateTime.now();
+      final difference = now.difference(report.createdAt!);
+
+      if (difference.inDays == 0) {
+        if (difference.inHours == 0) {
+          formattedDate = '${difference.inMinutes} menit yang lalu';
+        } else {
+          formattedDate = '${difference.inHours} jam yang lalu';
+        }
+      } else if (difference.inDays < 7) {
+        formattedDate = '${difference.inDays} hari yang lalu';
+      } else {
+        formattedDate = DateFormat('dd MMM yyyy').format(report.createdAt!);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: InkWell(
@@ -639,72 +590,87 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.pushNamed(
               context,
               '/reports',
-              // You could pass arguments here to show the specific report
             );
           }
         },
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.article,
+                  color: Colors.blue,
+                  size: 24,
+                ),
               ),
-              child: Icon(
-                Icons.article,
-                color: Colors.blue,
-                size: 24,
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    report.judul ?? 'No Title',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Laporan #${report.id} · ${report.createdAt != null ? DateFormat('dd MMM yyyy').format(report.createdAt!) : 'No date'}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      statusText,
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      report.judul ?? 'No Title',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: statusColor,
                         fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time,
+                            size: 12, color: Colors.grey[600]),
+                        SizedBox(width: 4),
+                        Text(
+                          formattedDate,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: Colors.grey,
-            ),
-          ],
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: Colors.grey,
+              ),
+            ],
+          ),
         ),
       ),
     );
