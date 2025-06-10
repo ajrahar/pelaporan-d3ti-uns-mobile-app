@@ -1,407 +1,711 @@
 import 'package:flutter/material.dart';
-import 'package:pelaporan_d3ti/components/bottom_navbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pelaporan_d3ti/services/api_service.dart';
+import 'package:pelaporan_d3ti/services/token_manager.dart';
 import 'package:pelaporan_d3ti/components/sidebar.dart';
-import 'package:pelaporan_d3ti/pelaporan%20kekerasan%20seksual/lapor_ks.dart';
-import 'package:pelaporan_d3ti/pelaporan/lapor_kejadian.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-// Add this class for the quote model
-class Quote {
-  final String text;
-  final String author;
-
-  Quote({required this.text, required this.author});
-
-  factory Quote.fromJson(Map<String, dynamic> json) {
-    return Quote(
-      text: json['q'] ?? '',
-      author: json['a'] ?? '',
-    );
-  }
-}
+import 'package:intl/intl.dart';
+import 'package:pelaporan_d3ti/models/laporan.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 1; // Default index untuk halaman Home
+  final ApiService _apiService = ApiService();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Daftar judul untuk setiap halaman
-  final List<String> _pageTitles = [
-    'Lapor Kejadian',
-    'Halaman Utama',
-    'Lapor Kekerasan Seksual',
-  ];
+  // User info
+  String _userName = "";
+  String? _userEmail;
+  String? _userRole;
+  bool _isLoadingUser = true;
 
-  // Fungsi untuk mendapatkan salam berdasarkan waktu
-  String getGreeting() {
-    var hour = DateTime.now().hour;
+  // Loading states
+  bool _isLoadingReports = true;
+  String? _error;
 
-    if (hour < 12) {
-      return 'Selamat Pagi';
-    } else if (hour < 18) {
-      return 'Selamat Siang';
-    } else {
-      return 'Selamat Malam';
-    }
-  }
+  // Dashboard statistics (similar to lapor_kejadian.dart)
+  int _totalLaporan = 0;
+  int _dalamProses = 0;
+  int _selesai = 0;
+  int _belumDiverifikasi = 0;
+  int _ditolak = 0;
 
-  // Daftar halaman yang akan ditampilkan
-  late final List<Widget> _pages;
+  // Report data
+  List<Laporan> _laporan = [];
+  List<Laporan> _userLaporan = [];
+  String? _currentUserNim;
+  String? _currentUserName;
 
   @override
   void initState() {
     super.initState();
-    _pages = [
-      LaporKejadianPage(), // Halaman Lapor Kejadian
-      _HomePageContent(greeting: getGreeting()), // Halaman Utama (Home)
-      LaporKekerasanPage(), // Halaman Lapor Kekerasan Seksual
-    ];
+    _loadUserData();
+    _fetchReports();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoadingUser = true;
+    });
+
+    try {
+      // First check if we have cached user data
+      final prefs = await SharedPreferences.getInstance();
+      final userData = prefs.getString('user_data');
+
+      // Get the user name and NIM, similar to lapor_kejadian.dart
+      _currentUserName = prefs.getString('user_name');
+      _currentUserNim = prefs.getString('user_nim');
+
+      if (_currentUserName == null || _currentUserName!.isEmpty) {
+        _currentUserName = "User";
+      }
+
+      if (userData != null) {
+        // Use cached data
+        Map<String, dynamic> data = {};
+        try {
+          data = Map<String, dynamic>.from(DateTime.fromMillisecondsSinceEpoch(
+                      0)
+                  .toUtc()
+                  .isAtSameMomentAs(
+                    DateTime.fromMillisecondsSinceEpoch(1),
+                  )
+              ? {} // This line will never execute, it's to avoid linter warning
+              : await prefs.getString('user_data') != null
+                  ? (await prefs.getString('user_data') as Map<String, dynamic>)
+                  : {});
+        } catch (e) {
+          // If we can't parse, we'll just use empty map
+          print("Error parsing user data: $e");
+        }
+
+        setState(() {
+          _userName = _currentUserName ?? "User";
+          _userEmail = data['email'] ?? prefs.getString('user_email');
+          _userRole = data['role'] ?? prefs.getString('user_role');
+          _isLoadingUser = false;
+        });
+      } else {
+        setState(() {
+          _userName = _currentUserName ?? "User";
+          _userEmail = prefs.getString('user_email');
+          _userRole = prefs.getString('user_role');
+          _isLoadingUser = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        _userName = "User";
+        _isLoadingUser = false;
+      });
+    }
+  }
+
+  Future<void> _fetchReports() async {
+    setState(() {
+      _isLoadingReports = true;
+      _error = null;
+    });
+
+    try {
+      // Fetch reports from API using ApiService
+      final laporanResponse = await _apiService.getLaporan();
+
+      if (laporanResponse.isNotEmpty) {
+        _laporan = laporanResponse;
+        _filterUserLaporan();
+      }
+
+      setState(() {
+        _isLoadingReports = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = "Gagal memuat data: $e";
+        _isLoadingReports = false;
+      });
+      print('Error fetching reports: $e');
+    }
+  }
+
+  // Filter laporan to show only current user's reports - copied from lapor_kejadian.dart
+  void _filterUserLaporan() {
+    if (_currentUserName == null && _currentUserNim == null) {
+      setState(() {
+        _userLaporan = [];
+        _calculateStats(
+            _laporan); // Calculate stats from all reports if no user filter
+      });
+      print("No user info available. Using all reports for stats.");
+      return;
+    }
+
+    print(
+        "Filtering reports for user: $_currentUserName (NIM: $_currentUserNim)");
+
+    // Filter based on the API's actual field structure
+    List<Laporan> filtered = [];
+
+    // First try to match by ni_pelapor (NIM)
+    if (_currentUserNim != null && _currentUserNim!.isNotEmpty) {
+      filtered = _laporan
+          .where((report) =>
+              report.niPelapor != null &&
+              report.niPelapor!.toLowerCase() == _currentUserNim!.toLowerCase())
+          .toList();
+    }
+
+    // If no matches by nim, try by name
+    if (filtered.isEmpty &&
+        _currentUserName != null &&
+        _currentUserName!.isNotEmpty) {
+      filtered = _laporan
+          .where((report) =>
+              report.namaPelapor != null &&
+              report.namaPelapor!.toLowerCase() ==
+                  _currentUserName!.toLowerCase())
+          .toList();
+    }
+
+    // If still no matches, try partial matches as fallback
+    if (filtered.isEmpty) {
+      // Try partial NIM match
+      if (_currentUserNim != null && _currentUserNim!.isNotEmpty) {
+        filtered = _laporan
+            .where((report) =>
+                report.niPelapor != null &&
+                report.niPelapor!
+                    .toLowerCase()
+                    .contains(_currentUserNim!.toLowerCase()))
+            .toList();
+      }
+
+      // Try partial name match if still empty
+      if (filtered.isEmpty &&
+          _currentUserName != null &&
+          _currentUserName!.isNotEmpty) {
+        filtered = _laporan
+            .where((report) =>
+                report.namaPelapor != null &&
+                report.namaPelapor!
+                    .toLowerCase()
+                    .contains(_currentUserName!.toLowerCase()))
+            .toList();
+      }
+    }
+
+    setState(() {
+      _userLaporan = filtered;
+      _calculateStats(filtered); // Calculate stats from filtered reports
+    });
+
+    print(
+        'Filtered ${_laporan.length} reports down to ${_userLaporan.length} for user $_currentUserName');
+  }
+
+  // Calculate statistics from reports - similar to lapor_kejadian.dart
+  void _calculateStats(List<Laporan> reports) {
+    int pending = 0;
+    int processed = 0;
+    int completed = 0;
+    int rejected = 0;
+
+    for (var report in reports) {
+      if (report.status == 'unverified') {
+        pending++;
+      } else if (report.status == 'verified') {
+        processed++;
+      } else if (report.status == 'finished') {
+        completed++;
+      } else if (report.status == 'rejected') {
+        rejected++;
+      }
+    }
+
+    setState(() {
+      _totalLaporan = reports.length;
+      _belumDiverifikasi = pending;
+      _dalamProses = processed;
+      _selesai = completed;
+      _ditolak = rejected;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
-        title: Text(_pageTitles[
-            _currentIndex]), // Menggunakan judul dari daftar sesuai index
-        backgroundColor: Color(0xFF00A2EA), // Warna biru untuk AppBar
+        title: const Text('Dashboard'),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () {
+            _scaffoldKey.currentState?.openDrawer();
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              _fetchReports();
+              _loadUserData();
+            },
+          ),
+        ],
       ),
-      drawer: Sidebar(), // Tambahkan sidebar sebagai drawer
-      body: _pages[_currentIndex], // Tampilkan halaman berdasarkan index
-      bottomNavigationBar: FloatingBottomNavbar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index; // Ubah halaman saat tombol ditekan
-          });
+      drawer: Sidebar(),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await _loadUserData();
+          await _fetchReports();
         },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildWelcomeCard(),
+              const SizedBox(height: 24),
+              _buildDashboardStats(),
+              const SizedBox(height: 24),
+              _buildRecentActivity(),
+            ],
+          ),
+        ),
       ),
     );
   }
-}
 
-// Widget untuk konten halaman utama
-class _HomePageContent extends StatefulWidget {
-  final String greeting;
-
-  // Konstruktor untuk menerima salam dari _HomeScreenState
-  const _HomePageContent({required this.greeting});
-
-  @override
-  _HomePageContentState createState() => _HomePageContentState();
-}
-
-class _HomePageContentState extends State<_HomePageContent> {
-  bool _isLoading = true;
-  Quote? _quote;
-  bool _useAlternateSource = false; // Track which API source to use
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchQuote();
+  Widget _buildWelcomeCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.blue,
+                  child: Icon(Icons.person, color: Colors.white, size: 30),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _isLoadingUser ? "Loading..." : "Welcome, $_userName",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      Text(
+                        _userRole != null
+                            ? "Role: $_userRole"
+                            : "Selamat datang di dashboard pelaporan",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Today is ${DateFormat('EEEE, dd MMMM yyyy').format(DateTime.now())}',
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Future<void> _fetchQuote() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Try primary source first or alternate based on flag
-    if (!_useAlternateSource) {
-      try {
-        final response =
-            await http.get(Uri.parse('https://zenquotes.io/api/random'));
-
-        if (response.statusCode == 200) {
-          final List<dynamic> data = jsonDecode(response.body);
-          setState(() {
-            _quote = Quote.fromJson(data[0]);
-            _isLoading = false;
-          });
-          return;
-        } else {
-          print(
-              'Failed to load quote from primary source: ${response.statusCode}');
-          // Try alternate source if primary fails
-          _useAlternateSource = true;
-        }
-      } catch (e) {
-        print('Error fetching quote from primary source: $e');
-        // Try alternate source if primary fails
-        _useAlternateSource = true;
-      }
+  Widget _buildDashboardStats() {
+    if (_isLoadingReports) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
-    // Try alternate source (quotable.io)
-    if (_useAlternateSource) {
-      try {
-        final response =
-            await http.get(Uri.parse('https://api.quotable.io/random'));
-
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> data = jsonDecode(response.body);
-          setState(() {
-            // Map quotable.io response to our Quote model
-            _quote = Quote(
-              text: data['content'] ?? '',
-              author: data['author'] ?? '',
-            );
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _isLoading = false;
-          });
-          print(
-              'Failed to load quote from alternate source: ${response.statusCode}');
-        }
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        print('Error fetching quote from alternate source: $e');
-      }
-    }
-  }
-
-  // Add a refresh function to get a new quote
-  void _refreshQuote() {
-    // Toggle source for variety
-    _useAlternateSource = !_useAlternateSource;
-    _fetchQuote();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Greeting and Welcome Card
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${widget.greeting}, Miftahul!',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF222222),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Selamat datang di aplikasi pelaporan D3 TI UNS',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF222222),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          SizedBox(height: 16),
-
-          // Quote of the Day Card
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Quote of the Day',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF00A2EA),
-                    ),
-                  ),
-                  SizedBox(height: 12),
-                  _isLoading
-                      ? Center(child: CircularProgressIndicator())
-                      : _quote != null
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '"${_quote!.text}"',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontStyle: FontStyle.italic,
-                                    color: Color(0xFF222222),
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Text(
-                                    '- ${_quote!.author}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF666666),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Text('Failed to load quote. Try again later.'),
-                ],
-              ),
-            ),
-          ),
-
-          SizedBox(height: 16),
-
-          // Dua card untuk statistik terlapor dan belum terverifikasi
-          Row(
+    if (_error != null) {
+      return Card(
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
             children: [
-              // Card Jumlah Kejadian Terlapor (Kiri)
-              Expanded(
-                child: Card(
-                  elevation: 4,
-                  color: Color(0xFF00A2EA),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Jumlah Kejadian Terlapor',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          '25',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              // Card Jumlah Laporan Belum Terverifikasi (Kanan)
-              Expanded(
-                child: Card(
-                  elevation: 4,
-                  color: Color(0xFFFFA500),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Jumlah Laporan Belum Terverifikasi',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          '10',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              Icon(Icons.error_outline, color: Colors.red, size: 48),
+              SizedBox(height: 16),
+              Text(_error!, textAlign: TextAlign.center),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _fetchReports,
+                child: Text('Coba Lagi'),
               ),
             ],
           ),
+        ),
+      );
+    }
 
-          SizedBox(height: 16),
-
-          // Card Laporan Tertangani
-          Card(
-            elevation: 4,
-            color: Color(0xFF34C759),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+    // Use similar layout to lapor_kejadian.dart for stats cards
+    return LayoutBuilder(builder: (context, constraints) {
+      // For small screens, stack cards vertically
+      if (constraints.maxWidth < 600) {
+        return Column(
+          children: [
+            _buildStatCard(
+              icon: Icons.description,
+              iconColor: Colors.blue,
+              title: 'Total Laporan',
+              count: _totalLaporan,
+              fullWidth: true,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            SizedBox(height: 12),
+            _buildStatCard(
+              icon: Icons.hourglass_empty,
+              iconColor: Colors.grey,
+              title: 'Belum Diverifikasi',
+              count: _belumDiverifikasi,
+              fullWidth: true,
+            ),
+            SizedBox(height: 12),
+            _buildStatCard(
+              icon: Icons.pending_actions,
+              iconColor: Colors.orange,
+              title: 'Dalam Proses',
+              count: _dalamProses,
+              fullWidth: true,
+            ),
+            SizedBox(height: 12),
+            _buildStatCard(
+              icon: Icons.check_circle,
+              iconColor: Colors.green,
+              title: 'Selesai',
+              count: _selesai,
+              fullWidth: true,
+            ),
+          ],
+        );
+      } else {
+        // For larger screens, use rows
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: _buildStatCard(
+                    icon: Icons.description,
+                    iconColor: Colors.blue,
+                    title: 'Total Laporan',
+                    count: _totalLaporan,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.hourglass_empty,
+                    iconColor: Colors.grey,
+                    title: 'Belum Diverifikasi',
+                    count: _belumDiverifikasi,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.pending_actions,
+                    iconColor: Colors.orange,
+                    title: 'Dalam Proses',
+                    count: _dalamProses,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.check_circle,
+                    iconColor: Colors.green,
+                    title: 'Selesai',
+                    count: _selesai,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.cancel,
+                    iconColor: Colors.red,
+                    title: 'Ditolak',
+                    count: _ditolak,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      }
+    });
+  }
+
+  // Copied and adapted from lapor_kejadian.dart
+  Widget _buildStatCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required int count,
+    bool fullWidth = false,
+  }) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: fullWidth
+            ? Row(
                 children: [
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: iconColor,
+                      size: 24,
+                    ),
+                  ),
+                  SizedBox(width: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Jumlah Kejadian Tertangani',
+                        title,
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
+                          color: Colors.grey[600],
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Sudah diproses dan ditindaklanjuti',
+                        count.toString(),
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
+                  )
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: iconColor,
+                      size: 24,
+                    ),
                   ),
+                  SizedBox(height: 16),
                   Text(
-                    '15',
+                    title,
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    count.toString(),
+                    style: TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Aktivitas Terbaru',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            _isLoadingReports
+                ? Center(child: CircularProgressIndicator())
+                : _userLaporan.isNotEmpty
+                    ? Column(
+                        children: _userLaporan
+                            .take(3) // Only show 3 most recent reports
+                            .map((report) => _buildActivityItem(report))
+                            .toList(),
+                      )
+                    : Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24.0),
+                          child: Text(
+                            'Belum ada aktivitas',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+            const SizedBox(height: 16),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/reports');
+                },
+                child: const Text('Lihat Semua Laporan'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityItem(Laporan report) {
+    // Format status for display
+    String statusText = 'Belum Diverifikasi';
+    Color statusColor = Colors.grey;
+
+    if (report.status != null) {
+      switch (report.status!.toLowerCase()) {
+        case 'verified':
+          statusText = 'Diproses';
+          statusColor = Colors.orange;
+          break;
+        case 'finished':
+          statusText = 'Selesai';
+          statusColor = Colors.green;
+          break;
+        case 'rejected':
+          statusText = 'Ditolak';
+          statusColor = Colors.red;
+          break;
+        default:
+          statusText = 'Belum Diverifikasi';
+          statusColor = Colors.grey;
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: InkWell(
+        onTap: () {
+          if (report.id != null) {
+            Navigator.pushNamed(
+              context,
+              '/reports',
+              // You could pass arguments here to show the specific report
+            );
+          }
+        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.article,
+                color: Colors.blue,
+                size: 24,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    report.judul ?? 'No Title',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Laporan #${report.id} · ${report.createdAt != null ? DateFormat('dd MMM yyyy').format(report.createdAt!) : 'No date'}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-
-          // Add your statistics cards and other content below
-          SizedBox(height: 16),
-          // Rest of your content...
-        ],
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: Colors.grey,
+            ),
+          ],
+        ),
       ),
     );
   }

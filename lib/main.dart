@@ -8,6 +8,8 @@ import 'package:pelaporan_d3ti/pelaporan%20kekerasan%20seksual/add_lapor_ks.dart
 import 'package:pelaporan_d3ti/pelaporan%20kekerasan%20seksual/lapor_ks.dart';
 import 'package:pelaporan_d3ti/pelaporan/add_lapor_kejadian.dart';
 import 'package:pelaporan_d3ti/pelaporan/lapor_kejadian.dart';
+import 'package:pelaporan_d3ti/pelaporan/add_lapor_kejadian_mendesak.dart';
+import 'package:pelaporan_d3ti/settings/settings_screen.dart'; // You'll need to create this
 import 'splash_screen/splash_screen.dart';
 
 void main() {
@@ -18,22 +20,32 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Hilangkan banner debug
-      initialRoute: '/', // Rute awal adalah splash screen
+      debugShowCheckedModeBanner: false, // Hide debug banner
+      initialRoute: '/', // Initial route is splash screen
       routes: {
-        '/': (context) => SplashScreen(), // Splash screen sebagai halaman awal
-        '/login': (context) => LoginPage(), // Rute untuk halaman login
-        '/logindosen': (context) =>
-            LoginDosenPage(), // Rute untuk halaman login
-        '/home': (context) => HomeScreen(), // Rute untuk halaman utama
-        '/laporkejadian': (context) =>
-            LaporKejadianPage(), // Rute untuk halaman utama
+        '/': (context) => SplashScreen(), // Splash screen as initial page
+        '/login': (context) => LoginPage(), // Route for login page
+        '/logindosen': (context) => LoginDosenPage(), // Route for faculty login
+        '/home': (context) => HomeScreen(), // Route for main page
+
+        // Reports routes - aligned with HomeScreen navigation
+        '/reports': (context) => LaporKejadianPage(), // Route for reports list
+        '/violence-reports': (context) =>
+            LaporKekerasanPage(), // Route for violence reports
+
+        // Form routes
         '/addlaporkejadian': (context) =>
-            AddLaporKejadianPage(), // Rute untuk halaman utama
-        '/regismhs': (context) => RegisterMhsPage(), // Rute untuk halaman utama
-        '/laporanks': (context) =>
-            LaporKekerasanPage(), // Rute untuk halaman utama
-        '/addlaporks': (context) => AddLaporKsPage(),
+            AddLaporKejadianPage(), // Route for adding reports
+        '/regismhs': (context) =>
+            RegisterMhsPage(), // Route for student registration
+        '/addlaporks': (context) =>
+            AddLaporKsPage(), // Route for adding violence reports
+        '/addlaporkejadianmendesak': (context) =>
+            AddLaporKejadianMendesak(), // Route for urgent reports
+
+        // Additional routes used in HomeScreen navigation
+        '/settings': (context) =>
+            SettingsScreen(), // You'll need to create this screen
       },
     );
   }
