@@ -641,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Aktivitas Terbaru',
+              'Aktivitas Terbaru Pelaporan Kejadian',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
