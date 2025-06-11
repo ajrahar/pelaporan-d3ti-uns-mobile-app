@@ -9,9 +9,12 @@ import 'package:flutter/services.dart';
 import 'package:pelaporan_d3ti/services/api_service.dart';
 // Conditional imports for web-only libraries
 import 'package:webview_flutter/webview_flutter.dart';
-// Import flutter_web_plugins conditionally
-import 'package:flutter_web_plugins/flutter_web_plugins.dart'
-    if (dart.library.io) 'package:flutter/material.dart' as web_plugins;
+
+// Define a function to safely import dart:html only on web
+// ignore: uri_does_not_exist
+import 'dart:html' if (dart.library.io) 'stub_html.dart' as html;
+// ignore: uri_does_not_exist
+import 'dart:ui_web' if (dart.library.io) 'stub_ui_web.dart' as ui_web;
 
 // Create stub classes for non-web platforms
 class HtmlElementPlaceholder {
@@ -112,7 +115,8 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
             var element = html.IFrameElement()
               ..style.height = '100%'
               ..style.width = '100%'
-              ..src = 'recaptcha.html'
+              ..src =
+                  'assets/recaptcha.html' // Make sure this HTML file exists in your assets folder
               ..style.border = 'none';
             return element;
           },

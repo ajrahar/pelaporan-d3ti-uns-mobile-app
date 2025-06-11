@@ -1,10 +1,11 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>reCAPTCHA</title>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   </head>
-  <body style="margin: 0; padding: 0;">
-    <div style="height: 10px;"></div>
+  <body>
+    <div style='height: 60px;'></div>
     <form action="?" method="POST">
       <div class="g-recaptcha" 
         data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
@@ -12,10 +13,18 @@
     </form>
     <script>
       function captchaCallback(response) {
-        if (window.parent) {
-          window.parent.postMessage(response, "*");
+        // Send the token to Flutter
+        if (typeof window.parent !== "undefined") {
+          window.parent.postMessage(response, '*');
         }
       }
+
+      // Listen for reset message from Flutter
+      window.addEventListener('message', function(event) {
+        if (event.data === 'reset') {
+          grecaptcha.reset();
+        }
+      });
     </script>
   </body>
 </html>
