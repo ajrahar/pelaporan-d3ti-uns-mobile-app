@@ -451,6 +451,28 @@ class _LoginDosenPageState extends State<LoginDosenPage> {
                           ),
                   ),
                   SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            Navigator.pushNamed(context, '/addkspublic');
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 234, 0, 0),
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      minimumSize: Size(double.infinity, 50),
+                    ),
+                    child: _isLoading
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            'Lapor Kekerasan Seksual',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                  ),
+                  SizedBox(height: 16),
                 ],
               ),
             ),
