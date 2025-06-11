@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <title>reCAPTCHA</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  </head>
+  <body style="margin: 0; padding: 0;">
+    <div style="height: 10px;"></div>
+    <form action="?" method="POST">
+      <div class="g-recaptcha" 
+        data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+        data-callback="captchaCallback"></div>
+    </form>
+    <script>
+      function captchaCallback(response) {
+        if (window.parent) {
+          window.parent.postMessage(response, "*");
+        }
+      }
+    </script>
+  </body>
+</html>
