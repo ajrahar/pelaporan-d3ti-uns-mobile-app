@@ -634,11 +634,12 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
         _isLoading = false;
       });
 
+      // In _saveLaporan() method
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = json.decode(response.body);
 
         if (jsonResponse['status'] == true) {
-          // Show success notification
+          // SUCCESS CASE - Only show success notification
           await _showNotification(
             title: 'Laporan Berhasil!',
             body:
@@ -646,7 +647,7 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
             payload: 'report_success',
           );
 
-          // Tampilkan dialog sukses
+          // Success dialog
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -656,31 +657,34 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    Navigator.pop(context); // Kembali ke halaman sebelumnya
+                    Navigator.pop(context); // Return to previous page
                   },
                   child: Text('OK'),
                 ),
               ],
             ),
           );
+          // Don't show any other notifications/messages in success case
+          return; // Exit early to avoid showing any error messages
         } else {
-          // Show error message from API
+          // API returned success HTTP code but status:false in response body
           _showNotification(
-            title: 'Gagal Mengirim',
+            title: 'Perhatian',
             body: jsonResponse['message'] ?? 'Gagal menyimpan laporan',
-            payload: 'api_error',
+            payload: 'api_logic_error',
           );
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content:
                   Text(jsonResponse['message'] ?? 'Gagal menyimpan laporan'),
-              backgroundColor: Colors.red,
+              backgroundColor:
+                  Colors.orange, // Use warning color instead of error
             ),
           );
         }
       } else {
-        // Handle error response
+        // Clear HTTP error case
         _showNotification(
           title: 'Error',
           body: 'Gagal mengirim laporan (Status: ${response.statusCode})',
