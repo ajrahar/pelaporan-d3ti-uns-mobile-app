@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_init;
 
 class AddLaporKejadianMendesak extends StatefulWidget {
   const AddLaporKejadianMendesak({Key? key}) : super(key: key);
@@ -17,6 +20,10 @@ class AddLaporKejadianMendesak extends StatefulWidget {
 class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
   // Form key for validation
   final _formKey = GlobalKey<FormState>();
+
+  // Notifications
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   // Form data
   final TextEditingController _judulController = TextEditingController();
@@ -46,6 +53,88 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
     super.initState();
     _fetchCategories();
     _loadUserData();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    // Initialize timezone
+    tz_init.initializeTimeZones();
+
+    // Initialize notification settings for Android
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // Initialize notification settings for iOS
+    final DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    // Complete initialization settings
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
+
+    // Initialize plugin
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse:
+          (NotificationResponse notificationResponse) async {
+        // Handle notification tap
+        if (notificationResponse.payload != null) {
+          debugPrint('Notification payload: ${notificationResponse.payload}');
+          // Navigate to specific screen or perform an action based on payload
+        }
+      },
+    );
+
+    // Request permission for iOS and Android 13+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+
+  Future<void> _showNotification(String title, String body) async {
+    // Define Android notification details
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'laporan_channel_id',
+      'Laporan Notifications',
+      channelDescription: 'Notifications related to reports',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+      enableVibration: true,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    // Define iOS notification details
+    const DarwinNotificationDetails darwinNotificationDetails =
+        DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    // Create platform-specific notification details
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidNotificationDetails,
+      iOS: darwinNotificationDetails,
+    );
+
+    // Show notification
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      notificationDetails,
+      payload: 'laporan_submitted',
+    );
   }
 
   Future<void> _loadUserData() async {
@@ -237,7 +326,12 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
 
       // Check response
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // Success
+        // Success - Show notification
+        await _showNotification(
+          'Laporan Berhasil Dikirim',
+          'Laporan kejadian mendesak "${_judulController.text}" telah berhasil dikirim',
+        );
+
         _showSuccessDialog();
       } else {
         // Error

@@ -13,10 +13,21 @@ import 'package:pelaporan_d3ti/mahasiswa/pelaporan%20kekerasan%20seksual/lapor_k
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan/add_lapor_kejadian.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan/lapor_kejadian.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan/add_lapor_kejadian_mendesak.dart';
+import 'package:pelaporan_d3ti/services/notification_service.dart';
 import 'package:pelaporan_d3ti/settings/settings_screen.dart'; // You'll need to create this
 import 'splash_screen/splash_screen.dart';
+import 'package:timezone/data/latest.dart' as tz_init;
 
-void main() {
+void main() async {
+  // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize timezone data
+  tz_init.initializeTimeZones();
+
+  // Initialize notification service
+  await NotificationService().initialize();
+
   runApp(MyApp());
 }
 
