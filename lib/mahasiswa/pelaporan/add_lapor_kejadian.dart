@@ -6,6 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pelaporan_d3ti/services/api_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_init;
 
 class AddLaporKejadianPage extends StatefulWidget {
   const AddLaporKejadianPage({Key? key}) : super(key: key);
@@ -15,6 +18,10 @@ class AddLaporKejadianPage extends StatefulWidget {
 }
 
 class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
+  // Local notifications plugin
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   // API service instance
   final ApiService _apiService = ApiService();
 
@@ -93,6 +100,89 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
     super.initState();
     _loadUserData();
     _fetchCategories();
+    _initializeNotifications();
+  }
+
+  // Initialize the notification plugin
+  Future<void> _initializeNotifications() async {
+    // Initialize timezone
+    tz_init.initializeTimeZones();
+
+    // Initialize Android settings
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // Initialize iOS settings
+    final DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    // Complete initialization settings
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
+
+    // Initialize the plugin
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        // Handle notification tap
+        if (response.payload != null) {
+          debugPrint('Notification payload: ${response.payload}');
+          // You can handle navigation here when notification is tapped
+        }
+      },
+    );
+
+    // Request permissions for Android 13+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+
+  // Show immediate notification
+  Future<void> _showNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'laporan_channel',
+      'Laporan Notifications',
+      channelDescription: 'Notifications for laporan submission status',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+      color: Color(0xFF2196F3), // Blue color for notification
+      icon: '@mipmap/ic_launcher',
+      enableVibration: true,
+    );
+
+    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      DateTime.now().millisecond, // unique ID based on current time
+      title,
+      body,
+      notificationDetails,
+      payload: payload,
+    );
   }
 
   Future<void> _fetchCategories() async {
@@ -143,6 +233,13 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
           {'id': 6, 'nama': 'Lainnya'}
         ];
       });
+
+      // Show notification for category loading error
+      _showNotification(
+        title: 'Peringatan',
+        body: 'Gagal memuat kategori. Menggunakan kategori default.',
+        payload: 'category_error',
+      );
     }
   }
 
@@ -166,6 +263,14 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
       });
     } catch (e) {
       print('Error loading user data: $e');
+
+      // Show notification if user data can't be loaded
+      _showNotification(
+        title: 'Info',
+        body:
+            'Data pengguna tidak dapat dimuat. Silakan isi form secara manual.',
+        payload: 'user_data_error',
+      );
     }
   }
 
@@ -202,16 +307,25 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
 
   // Fungsi untuk memilih gambar dari galeri atau kamera
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: source,
-      imageQuality: 80, // Kompresi kualitas gambar
-    );
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 80, // Kompresi kualitas gambar
+      );
 
-    if (pickedFile != null) {
-      setState(() {
-        _imageFiles.add(File(pickedFile.path));
-      });
+      if (pickedFile != null) {
+        setState(() {
+          _imageFiles.add(File(pickedFile.path));
+        });
+      }
+    } catch (e) {
+      // Show notification if image picking fails
+      _showNotification(
+        title: 'Peringatan',
+        body: 'Tidak dapat mengambil gambar: ${e.toString()}',
+        payload: 'image_error',
+      );
     }
   }
 
@@ -353,6 +467,17 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
     }
 
     setState(() {}); // Update UI dengan error
+
+    if (!isValid) {
+      // Show validation error notification
+      _showNotification(
+        title: 'Periksa Kembali',
+        body:
+            'Formulir berisi kesalahan. Silakan periksa bagian yang ditandai.',
+        payload: 'validation_error',
+      );
+    }
+
     return isValid;
   }
 
@@ -513,6 +638,14 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
         final jsonResponse = json.decode(response.body);
 
         if (jsonResponse['status'] == true) {
+          // Show success notification
+          await _showNotification(
+            title: 'Laporan Berhasil!',
+            body:
+                'Laporan "${_judulController.text}" telah berhasil dikirim dan akan diproses.',
+            payload: 'report_success',
+          );
+
           // Tampilkan dialog sukses
           showDialog(
             context: context,
@@ -532,6 +665,12 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
           );
         } else {
           // Show error message from API
+          _showNotification(
+            title: 'Gagal Mengirim',
+            body: jsonResponse['message'] ?? 'Gagal menyimpan laporan',
+            payload: 'api_error',
+          );
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content:
@@ -542,6 +681,12 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
         }
       } else {
         // Handle error response
+        _showNotification(
+          title: 'Error',
+          body: 'Gagal mengirim laporan (Status: ${response.statusCode})',
+          payload: 'http_error_${response.statusCode}',
+        );
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal menyimpan laporan: ${response.statusCode}'),
@@ -554,6 +699,12 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
       setState(() {
         _isLoading = false;
       });
+
+      _showNotification(
+        title: 'Error',
+        body: 'Terjadi kesalahan: ${e.toString()}',
+        payload: 'exception',
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -834,6 +985,7 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
                       ),
                     const SizedBox(height: 24),
 
+                    // Rest of the widget code remains the same
                     // SECTION 2: INFORMASI PELAPOR
                     _buildSectionHeader('Informasi Pelapor'),
                     const SizedBox(height: 16),
@@ -1588,7 +1740,7 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
 
   @override
   void dispose() {
-    // Dispose all controllers
+    // Dispose of controllers
     _judulController.dispose();
     _deskripsiController.dispose();
     _nomorTeleponController.dispose();
@@ -1596,14 +1748,14 @@ class _AddLaporKejadianPageState extends State<AddLaporKejadianPage> {
     _nimPelaporController.dispose();
     _lampiranLinkController.dispose();
 
-    // Dispose terlapor controllers
+    // Dispose of terlapor controllers
     for (var terlapor in _terlaporList) {
       terlapor['nama_lengkap'].dispose();
       terlapor['email'].dispose();
       terlapor['nomor_telepon'].dispose();
     }
 
-    // Dispose saksi controllers
+    // Dispose of saksi controllers
     for (var saksi in _saksiList) {
       saksi['nama_lengkap'].dispose();
       saksi['email'].dispose();

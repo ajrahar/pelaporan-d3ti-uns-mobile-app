@@ -391,7 +391,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacementNamed(context, '/laporkejadian');
+            Navigator.pushReplacementNamed(context, '/reports');
           },
         ),
       ),
