@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
+import 'package:pelaporan_d3ti/services/api_service.dart';
 // Conditional imports for web-only libraries
 import 'package:webview_flutter/webview_flutter.dart';
 // Import flutter_web_plugins conditionally
@@ -79,6 +80,8 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
     // Initialize an empty terlapor and saksi
     addTerduga();
     addSaksi();
+
+    loadCategories();
 
     // Web-specific initialization
     if (kIsWeb) {
@@ -223,11 +226,48 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
     }
   }
 
+  Future<void> loadCategories() async {
+    try {
+      final apiService = ApiService();
+      final categoryData = await apiService.getCategories();
+      setState(() {
+        categories = categoryData.entries
+            .map((entry) => {
+                  'category_id': entry.key, // Change from 'id' to 'category_id'
+                  'nama': entry.value
+                })
+            .toList();
+        print("Categories loaded: ${categories.length}");
+      });
+    } catch (e) {
+      print("Error loading categories: $e");
+      // Show error to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load categories: $e')),
+      );
+    }
+  }
+
+// Add this function to filter for categories starting with "Kekerasan"
   List<Map<String, dynamic>> getFilteredCategories() {
-    return categories.where((category) {
-      return category['nama'] != null &&
-          category['nama'].toString().startsWith('Kekerasan');
-    }).toList();
+    if (categories == null || categories.isEmpty) {
+      print("Categories is empty or null");
+      return [];
+    }
+
+    try {
+      // Filter categories that start with 'Kekerasan'
+      List<Map<String, dynamic>> filtered = categories
+          .where(
+              (category) => category['nama'].toString().startsWith('Kekerasan'))
+          .toList();
+
+      print("Filtered categories count: ${filtered.length}");
+      return filtered;
+    } catch (e) {
+      print("Error in getFilteredCategories: $e");
+      return [];
+    }
   }
 
   void addTerduga() {
@@ -702,6 +742,7 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red[600],
+                          foregroundColor: Colors.white,
                         ),
                         onPressed: () async {
                           const url = 'https://satgasppk.uns.ac.id/';
