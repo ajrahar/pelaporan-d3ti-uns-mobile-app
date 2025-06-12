@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pelaporan_d3ti/services/token_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import '../../models/laporan.dart';
 
@@ -46,44 +47,52 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     _getCurrentUser();
   }
 
-  // Get current username from token or other source
+  // Simpler version
+  // Improved version that also checks SharedPreferences
   Future<void> _getCurrentUser() async {
     try {
-      // Get token from TokenManager
+      // First attempt: Get token from TokenManager
       final token = await TokenManager.getToken();
 
       if (token != null && token.isNotEmpty) {
         // Parse the token to get user information
-        // JWT tokens are in format: header.payload.signature
         final parts = token.split('.');
         if (parts.length >= 2) {
-          // Decode the payload part (middle part)
           String normalizedPayload = base64Url.normalize(parts[1]);
           final payloadJson = utf8.decode(base64Url.decode(normalizedPayload));
           final payload = json.decode(payloadJson);
 
           // Extract username from token payload
-          // Check what field your JWT token uses for username
           currentUser =
               payload['username'] ?? payload['name'] ?? payload['email'];
-
-          if (currentUser == null) {
-            // Fallback if username is not in standard fields
-            currentUser =
-                "miftahul01"; // Using placeholder until you have a clear structure
-          }
         }
       }
 
-      if (currentUser == null) {
-        // Fallback if token parsing fails
-        currentUser = "miftahul01";
+      // Second attempt: If token method fails, try SharedPreferences
+      if (currentUser == null || currentUser!.isEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        final userName = prefs.getString('user_name');
+
+        if (userName != null && userName.isNotEmpty) {
+          currentUser = userName;
+          print("Current user set from SharedPreferences: $currentUser");
+          return;
+        }
       }
 
-      print("Current user set to: $currentUser");
+      // Last resort: Use hardcoded fallback
+      // Last resort: Use hardcoded fallback
+      if (currentUser == null || currentUser!.isEmpty) {
+        currentUser = "Pelapor"; // The fallback user
+        print("Using fallback user: $currentUser");
+      } else {
+        print("Current user set to: $currentUser");
+      }
     } catch (e) {
       print('Error getting current user: $e');
-      currentUser = "miftahul01"; // Default fallback
+      // Set default value in case of error
+      currentUser = "Pelapor";
+      print("Error occurred, using fallback user: $currentUser");
     }
   }
 
@@ -208,8 +217,10 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
       // Tambahkan tanggapan baru
       tanggapanArray.add(newTanggapan);
 
-      // Use the API service to update tanggapan
-      await _apiService.updateLaporanTanggapan(widget.id, tanggapanArray);
+      // Use the API service to update tanggapan, passing the current status
+      await _apiService.updateLaporanTanggapan(widget.id, tanggapanArray,
+          status: laporan!.status ?? 'verified' // Pass the current status
+          );
 
       // Update data lokal
       setState(() {

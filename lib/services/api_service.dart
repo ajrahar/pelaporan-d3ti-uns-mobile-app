@@ -248,7 +248,8 @@ class ApiService {
   }
 
   // Update tanggapan laporan
-  Future<void> updateLaporanTanggapan(int laporanId, dynamic tanggapan) async {
+  Future<void> updateLaporanTanggapan(int laporanId, dynamic tanggapan,
+      {String status = 'verified'}) async {
     try {
       final headers = await getHeaders();
 
@@ -272,6 +273,8 @@ class ApiService {
       // Tambahkan field form
       request.fields['_method'] = 'PUT';
       request.fields['tanggapan'] = tanggapanStr;
+      request.fields['status'] =
+          status; // Use the status parameter with default value
 
       // Kirim request
       var streamedResponse = await request.send();
