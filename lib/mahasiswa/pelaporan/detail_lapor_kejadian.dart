@@ -852,7 +852,8 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
   }
 
   String _getImageUrl(String? imagePath, String? fotoKejadian) {
-    final String baseUrl = 'http://10.0.2.2:8000/storage/laporan/';
+    final String baseUrl =
+        'https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporan/';
 
     // Pilih gambar yang tersedia
     String? image = imagePath ?? fotoKejadian;
