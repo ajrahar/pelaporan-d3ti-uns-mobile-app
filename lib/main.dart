@@ -7,6 +7,7 @@ import 'package:pelaporan_d3ti/dosen/home/home_screen_dosen.dart';
 import 'package:pelaporan_d3ti/dosen/pelaporan_kejadian_dosen/lapor_pk_dosen.dart';
 import 'package:pelaporan_d3ti/dosen/pelaporan_kekerasan_seksual_dosen/lapor_ks_dosen.dart';
 import 'package:pelaporan_d3ti/kekerasan_seksual/add_ks_public.dart';
+import 'package:pelaporan_d3ti/kekerasan_seksual/test_page.dart';
 import 'package:pelaporan_d3ti/mahasiswa/home_screen/home_screen.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan%20kekerasan%20seksual/add_lapor_ks.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan%20kekerasan%20seksual/lapor_ks.dart';
@@ -50,6 +51,9 @@ class MyApp extends StatelessWidget {
 
         '/addkspublic': (context) =>
             AddKSPublicPage(), // Route for adding public violence reports
+
+        '/recaptchatestpage': (context) =>
+            RecaptchaTestPage(), // Route for reCAPTCHA test page
 
         // Reports routes - aligned with HomeScreen navigation
         '/reports': (context) => LaporKejadianPage(), // Route for reports list

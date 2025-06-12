@@ -43,6 +43,9 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
   RecaptchaV2Controller recaptchaV2Controller = RecaptchaV2Controller();
   bool recaptchaVerified = false;
 
+  // Focus node for the reCAPTCHA section
+  final FocusNode recaptchaFocusNode = FocusNode();
+
   // Form Data
   Map<String, dynamic> report = {
     'title': '',
@@ -80,6 +83,13 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
   List<XFile>? selectedFiles;
   List<Uint8List> imagePreviewBytes = [];
   late WebViewController webViewController;
+
+  @override
+  void dispose() {
+    // Dispose focus node
+    recaptchaFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -202,8 +212,9 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
     return jsonResponse['success'] == true;
   }
 
+  // Override the resetRecaptcha method
   void resetRecaptcha() {
-    // The library uses reload() instead of show/hide
+    // Use reload() to reset the reCAPTCHA
     recaptchaV2Controller.reload();
     setState(() {
       recaptchaVerified = false;
@@ -660,10 +671,10 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
               ),
               SizedBox(height: 16),
 
-              // The RecaptchaV2 widget needs to be directly embedded
+              // Directly display the reCAPTCHA widget in the form itself
               Container(
                 width: double.infinity,
-                constraints: BoxConstraints(maxHeight: 120),
+                height: 120, // Fixed height to contain the widget
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey[300]!),
                   borderRadius: BorderRadius.circular(4),
@@ -672,20 +683,18 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
                   apiKey: "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
                   apiSecret: "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
                   controller: recaptchaV2Controller,
+                  padding: EdgeInsets.all(8),
                   onVerifiedSuccessfully: (success) {
                     setState(() {
                       recaptchaVerified = success;
                       recaptchaError = null;
                     });
+
                     if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                             content: Text('Verifikasi reCAPTCHA berhasil')),
                       );
-                    } else {
-                      setState(() {
-                        recaptchaError = 'Verifikasi gagal';
-                      });
                     }
                   },
                   onVerifiedError: (err) {
@@ -695,8 +704,6 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
                       recaptchaError = 'Verifikasi gagal: $err';
                     });
                   },
-                  // Add padding to position the reCAPTCHA better
-                  padding: EdgeInsets.all(8),
                 ),
               ),
 
@@ -1487,39 +1494,6 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
               ),
             ),
           ),
-
-          // Add the RecaptchaV2 widget (will be hidden by default)
-          if (!kIsWeb) // Only use flutter_recaptcha_v2_compat on mobile platforms
-            RecaptchaV2(
-              apiKey:
-                  "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI", // Google's test site key
-              apiSecret:
-                  "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe", // Google's test secret key
-              controller: recaptchaV2Controller,
-              // Remove the unsupported parameters (theme and size)
-              onVerifiedSuccessfully: (success) {
-                setState(() {
-                  recaptchaVerified = success;
-                  recaptchaError = null;
-                });
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Verifikasi reCAPTCHA berhasil')),
-                  );
-                } else {
-                  setState(() {
-                    recaptchaError = 'Verifikasi gagal';
-                  });
-                }
-              },
-              onVerifiedError: (err) {
-                print("reCAPTCHA error: $err");
-                setState(() {
-                  recaptchaVerified = false;
-                  recaptchaError = 'Verifikasi gagal: $err';
-                });
-              },
-            ),
         ],
       ),
     );
