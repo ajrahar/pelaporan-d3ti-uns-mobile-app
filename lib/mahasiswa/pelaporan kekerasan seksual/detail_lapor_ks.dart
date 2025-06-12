@@ -252,34 +252,35 @@ class _DetailLaporanKekerasanPageState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    _laporan!.judul ?? 'Tidak ada judul',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    _categories[_laporan!.categoryId] ?? 'Kekerasan Seksual',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+            // Title first (full width)
+            Text(
+              _laporan!.judul ?? 'Tidak ada judul',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+
+            // Small spacing after title
+            SizedBox(height: 8),
+
+            // Category badge below the title
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                _categories[_laporan!.categoryId] ?? 'Kekerasan Seksual',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            // Other report information
             SizedBox(height: 12),
             Text(
               'Nomor Laporan: ${_laporan!.nomorLaporanKekerasan ?? "-"}',
@@ -451,9 +452,9 @@ class _DetailLaporanKekerasanPageState
                   final int index = entry.key;
                   final String fileName = entry.value;
 
-                  // Construct full image URL - adjust base URL to match your API
+                  // Update the base URL to the production URL
                   final String baseUrl =
-                      'http://10.0.2.2:8000/storage/laporan_kekerasan/';
+                      'https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporankekerasan/';
                   final String imageUrl = '$baseUrl$fileName';
 
                   return Column(
@@ -474,10 +475,6 @@ class _DetailLaporanKekerasanPageState
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
-                          constraints: BoxConstraints(
-                            maxHeight: 300,
-                          ),
-                          width: double.infinity,
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(8),
@@ -510,7 +507,8 @@ class _DetailLaporanKekerasanPageState
                                           },
                                           errorBuilder:
                                               (context, error, stackTrace) {
-                                            print("Image error: $error");
+                                            print(
+                                                "Full image error: $error for URL: $imageUrl");
                                             return Center(
                                               child: Column(
                                                 mainAxisAlignment:
@@ -547,46 +545,96 @@ class _DetailLaporanKekerasanPageState
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, progress) {
-                                    if (progress == null) return child;
-                                    return Container(
-                                      height: 200,
-                                      width: double.infinity,
-                                      alignment: Alignment.center,
-                                      child: CircularProgressIndicator(
-                                        value: progress.expectedTotalBytes !=
-                                                null
-                                            ? progress.cumulativeBytesLoaded /
-                                                progress.expectedTotalBytes!
-                                            : null,
+                                // Fixed height container for the image
+                                Container(
+                                  height: 180, // Fixed height for all images
+                                  width: double.infinity,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      // Thumbnail image with consistent size
+                                      Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        height: 180,
+                                        width: double.infinity,
+                                        loadingBuilder:
+                                            (context, child, progress) {
+                                          if (progress == null) return child;
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value: progress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? progress
+                                                          .cumulativeBytesLoaded /
+                                                      progress
+                                                          .expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          print(
+                                              "Thumbnail error: $error for URL: $imageUrl");
+                                          return Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.image_not_supported,
+                                                    size: 40,
+                                                    color: Colors.grey),
+                                                SizedBox(height: 8),
+                                                Text(
+                                                  'File: $fileName',
+                                                  style:
+                                                      TextStyle(fontSize: 12),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
                                       ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    print("Thumbnail error: $error");
-                                    return Container(
-                                      height: 100,
-                                      width: double.infinity,
-                                      alignment: Alignment.center,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.image_not_supported,
-                                              size: 40, color: Colors.grey),
-                                          SizedBox(height: 8),
-                                          Text(
-                                            'File: $fileName',
-                                            style: TextStyle(fontSize: 12),
+
+                                      // Overlay to indicate image is clickable
+                                      Positioned(
+                                        right: 8,
+                                        bottom: 8,
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black54,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
-                                        ],
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.zoom_in,
+                                                color: Colors.white,
+                                                size: 16,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Perbesar',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                    );
-                                  },
+                                    ],
+                                  ),
                                 ),
+
+                                // File name footer
                                 Container(
                                   padding: EdgeInsets.all(8),
                                   width: double.infinity,
@@ -604,8 +652,14 @@ class _DetailLaporanKekerasanPageState
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      Icon(Icons.touch_app,
-                                          size: 16, color: Colors.grey[700]),
+                                      Text(
+                                        'Klik untuk memperbesar',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey[700],
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
