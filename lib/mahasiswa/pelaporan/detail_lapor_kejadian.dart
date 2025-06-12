@@ -181,16 +181,22 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     });
 
     try {
-      // Get current date time in GMT+7 (Indonesia)
-      final now = DateTime.now().toUtc().add(Duration(hours: 7));
+      // Get current date time using the local device time which should respect the device timezone
+      // instead of manually adding 7 hours to UTC
+      final now = DateTime.now();
 
-      // Get current username, fallback if not available
-      final username = currentUser ?? "miftahul01";
+      // Format to ensure we're getting the correct time
+      print(
+          "Current local time: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(now)}");
+
+      // Get current username, using the specified username from the context
+      final username = currentUser ?? "Pelapor"; // Changed from "miftahul01"
 
       // Persiapkan data tanggapan baru
       final newTanggapan = {
         'text': tanggapanController.text,
-        'timestamp': now.toIso8601String(),
+        'timestamp':
+            now.toIso8601String(), // Using standard ISO format for storing
         'user': username // Use dynamic username
       };
 
@@ -269,8 +275,8 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
         isLoading = true;
       });
 
-      // Get current date time in GMT+7 (Indonesia)
-      final now = DateTime.now().toUtc().add(Duration(hours: 7));
+      // Get current date time using device's local time
+      final now = DateTime.now();
 
       // Call the API to update status
       await _apiService.updateLaporanStatus(widget.id, 'finished');
@@ -321,12 +327,14 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
         date = DateTime.parse(dateString);
       }
 
-      // Ensure we're adding the +7 GMT adjustment for Indonesia timezone
-      final indonesiaDate = date.toLocal();
+      // Use device's local timezone settings instead of manual adjustment
+      // The toLocal() method will convert to the device's timezone
+      final localDate = date.toLocal();
 
       // Using dd-MM-yyyy HH:mm:ss format for dates in Status Laporan and tanggapan
-      return DateFormat('dd-MM-yyyy HH:mm:ss').format(indonesiaDate);
+      return DateFormat('dd-MM-yyyy HH:mm:ss').format(localDate);
     } catch (e) {
+      print('Error formatting date: $e for string: $dateString');
       return dateString;
     }
   }
