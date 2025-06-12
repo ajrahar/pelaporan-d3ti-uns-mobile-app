@@ -444,7 +444,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
       case 'Belum Diverifikasi':
         return Colors.grey;
       case 'Diproses':
-        return Colors.orange;
+        return Colors.blue;
       case 'Ditolak':
         return Colors.red;
       case 'Selesai':
