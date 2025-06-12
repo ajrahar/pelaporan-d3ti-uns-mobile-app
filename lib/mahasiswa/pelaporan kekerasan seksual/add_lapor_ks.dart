@@ -884,8 +884,17 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Verifikasi reCAPTCHA',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+          ),
+          child: Text(
+            'Verifikasi reCAPTCHA',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
         SizedBox(height: 16),
         Container(
           padding: EdgeInsets.all(16),
@@ -897,33 +906,87 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Verifikasi bahwa Anda bukan robot',
-                  style: TextStyle(fontSize: 14)),
-              SizedBox(height: 10),
-              SizedBox(
+              Text(
+                'Verifikasi bahwa Anda bukan robot sebelum mengirimkan laporan',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 16),
+
+              // Direct RecaptchaV2 widget
+              Container(
                 height: 150,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(4),
+                ),
                 child: RecaptchaV2(
                   apiKey:
-                      "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI", // Replace with your site key
+                      "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI", // Test key
                   apiSecret:
-                      "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe", // Replace with your secret key
+                      "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe", // Test key
                   controller: recaptchaV2Controller,
                   onVerifiedError: (err) {
                     setState(() {
                       recaptchaVerified = false;
                       recaptchaError = err;
                     });
+                    print("reCAPTCHA error: $err");
                   },
                   onVerifiedSuccessfully: (success) {
                     setState(() {
                       recaptchaVerified = success;
                       recaptchaError = null;
+                      recaptchaToken =
+                          "verified_successfully"; // Placeholder token
                     });
+
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text('Verifikasi reCAPTCHA berhasil')),
+                      );
+                    }
                   },
                 ),
               ),
+
+              SizedBox(height: 10),
+              Center(
+                child: recaptchaVerified
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text(
+                            'Verifikasi berhasil',
+                            style: TextStyle(color: Colors.green),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.info, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text(
+                            'Harap selesaikan verifikasi reCAPTCHA',
+                            style: TextStyle(color: Colors.orange),
+                          ),
+                        ],
+                      ),
+              ),
+
               if (recaptchaError != null)
-                Text(recaptchaError!, style: TextStyle(color: Colors.red)),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    recaptchaError!,
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
             ],
           ),
         ),
