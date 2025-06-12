@@ -1648,6 +1648,55 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
             ),
             SizedBox(height: 16),
 
+            // Rentang Umur Terduga
+            Text(
+              'Rentang Umur *',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                children: [
+                  RadioListTile<String>(
+                    title: Text('Kurang dari 20 tahun'),
+                    value: '<20',
+                    groupValue: terduga['umur_terlapor'],
+                    onChanged: (value) {
+                      setState(() => terduga['umur_terlapor'] = value!);
+                    },
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    dense: true,
+                  ),
+                  RadioListTile<String>(
+                    title: Text('20 - 40 tahun'),
+                    value: '20-40',
+                    groupValue: terduga['umur_terlapor'],
+                    onChanged: (value) {
+                      setState(() => terduga['umur_terlapor'] = value!);
+                    },
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    dense: true,
+                  ),
+                  RadioListTile<String>(
+                    title: Text('Lebih dari 40 tahun'),
+                    value: '40<',
+                    groupValue: terduga['umur_terlapor'],
+                    onChanged: (value) {
+                      setState(() => terduga['umur_terlapor'] = value!);
+                    },
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    dense: true,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+
             // Status Warga
             DropdownButtonFormField<String>(
               decoration: _inputDecoration('Status Warga', isRequired: true),
