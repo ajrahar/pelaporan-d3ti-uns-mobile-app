@@ -1,30 +1,45 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>reCAPTCHA</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  </head>
-  <body>
-    <div style='height: 60px;'></div>
-    <form action="?" method="POST">
-      <div class="g-recaptcha" 
-        data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-        data-callback="captchaCallback"></div>
-    </form>
-    <script>
-      function captchaCallback(response) {
-        // Send the token to Flutter
-        if (typeof window.parent !== "undefined") {
-          window.parent.postMessage(response, '*');
-        }
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="g-recaptcha" 
+       data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+       data-callback="onSuccess"
+       data-expired-callback="onExpired"
+       data-error-callback="onError"></div>
+  
+  <script>
+    function onSuccess(token) {
+      window.parent.postMessage({ type: 'recaptcha-success', token: token }, '*');
+    }
+    
+    function onExpired() {
+      window.parent.postMessage({ type: 'recaptcha-expired' }, '*');
+    }
+    
+    function onError() {
+      window.parent.postMessage({ type: 'recaptcha-error' }, '*');
+    }
+    
+    // Add this to reset when requested
+    window.addEventListener('message', function(event) {
+      if (event.data === 'reset') {
+        grecaptcha.reset();
       }
-
-      // Listen for reset message from Flutter
-      window.addEventListener('message', function(event) {
-        if (event.data === 'reset') {
-          grecaptcha.reset();
-        }
-      });
-    </script>
-  </body>
+    });
+  </script>
+</body>
 </html>

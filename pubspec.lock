@@ -238,6 +238,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.26"
+  flutter_recaptcha_v2_compat:
+    dependency: "direct main"
+    description:
+      name: flutter_recaptcha_v2_compat
+      sha256: "4d5823c5f937a22d00a5f66975eed7a4269d89230f719f2eb59b3d79bf7e40b3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3+3"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -846,5 +854,5 @@ packages:
     source: hosted
     version: "6.5.0"
 sdks:
-  dart: ">=3.5.4 <4.0.0"
+  dart: ">=3.5.4 <3.16.8"
   flutter: ">=3.24.0"
