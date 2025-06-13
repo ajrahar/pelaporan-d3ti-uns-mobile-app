@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pelaporan_d3ti/services/token_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import '../../models/laporan.dart';
 
@@ -46,17 +47,16 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
     _getCurrentUser();
   }
 
-  // Get current username from token or other source
+  // Improved version that also checks SharedPreferences
   Future<void> _getCurrentUser() async {
     try {
-      // Get token from TokenManager
+      // First attempt: Get token from TokenManager
       final token = await TokenManager.getToken();
 
       if (token != null && token.isNotEmpty) {
         // Parse the token to get user information
         final parts = token.split('.');
         if (parts.length >= 2) {
-          // Decode the payload part (middle part)
           String normalizedPayload = base64Url.normalize(parts[1]);
           final payloadJson = utf8.decode(base64Url.decode(normalizedPayload));
           final payload = json.decode(payloadJson);
@@ -65,20 +65,31 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
           currentUser =
               payload['username'] ?? payload['name'] ?? payload['email'];
 
-          if (currentUser == null) {
-            currentUser = "dosen"; // Default placeholder for dosen
+          if (currentUser != null) {
+            print("Current user set from token: $currentUser");
+            return;
           }
         }
       }
 
-      if (currentUser == null) {
-        currentUser = "dosen"; // Default fallback
+      // Second attempt: If token method fails, try SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userName = prefs.getString('user_name');
+
+      if (userName != null && userName.isNotEmpty) {
+        currentUser = userName;
+        print("Current user set from SharedPreferences: $currentUser");
+        return;
       }
 
-      print("Current dosen user set to: $currentUser");
+      // Last resort: Use hardcoded fallback
+      currentUser = "miftahul01"; // Using the provided username from context
+      print("Using fallback user: $currentUser");
     } catch (e) {
       print('Error getting current user: $e');
-      currentUser = "dosen"; // Default fallback
+      // Set default value in case of error
+      currentUser = "miftahul01"; // Using the provided username from context
+      print("Error occurred, using fallback user: $currentUser");
     }
   }
 
@@ -159,6 +170,79 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
     }
   }
 
+  // Add save tanggapan function
+  Future<void> saveTanggapan() async {
+    if (tanggapanController.text.isEmpty || laporan == null) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Get current date time using the local device time
+      final now = DateTime.now();
+
+      // Format to ensure we're getting the correct time
+      print(
+          "Current local time: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(now)}");
+
+      // Get current username from the context
+      final username =
+          currentUser ?? "miftahul01"; // Using the provided username
+
+      // Prepare new tanggapan data
+      final newTanggapan = {
+        'text': tanggapanController.text,
+        'timestamp':
+            now.toIso8601String(), // Using standard ISO format for storing
+        'user': username // Use dynamic username
+      };
+
+      // Prepare tanggapan array
+      List<dynamic> tanggapanArray = [];
+
+      // If there are previous responses
+      if (laporan!.tanggapan != null) {
+        var existingTanggapan = laporan!.tanggapan;
+
+        if (existingTanggapan is String && existingTanggapan.isNotEmpty) {
+          // Convert old format (string) to new format (array)
+          tanggapanArray.add({
+            'text': existingTanggapan,
+            'timestamp':
+                laporan!.updatedAt?.toIso8601String() ?? now.toIso8601String(),
+            'user': 'Admin'
+          });
+        } else if (existingTanggapan is List) {
+          tanggapanArray = List<dynamic>.from(existingTanggapan);
+        }
+      }
+
+      // Add new response
+      tanggapanArray.add(newTanggapan);
+
+      // Use API service to update tanggapan, passing the current status
+      await _apiService.updateLaporanTanggapan(widget.id, tanggapanArray,
+          status: laporan!.status ?? 'verified' // Pass the current status
+          );
+
+      // Update local data
+      setState(() {
+        laporan = laporan!.copyWith(tanggapan: tanggapanArray, updatedAt: now);
+        tanggapanController.clear();
+        showTanggapanModal = false;
+      });
+
+      _showSuccessMessage('Tanggapan berhasil disimpan');
+    } catch (e) {
+      _showErrorMessage('Gagal menyimpan tanggapan: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -190,12 +274,13 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
         date = DateTime.parse(dateString);
       }
 
-      // Ensure we're adding the +7 GMT adjustment for Indonesia timezone
-      final indonesiaDate = date.toLocal();
+      // Use device's local timezone settings
+      final localDate = date.toLocal();
 
       // Using dd-MM-yyyy HH:mm:ss format for dates in Status Laporan and tanggapan
-      return DateFormat('dd-MM-yyyy HH:mm:ss').format(indonesiaDate);
+      return DateFormat('dd-MM-yyyy HH:mm:ss').format(localDate);
     } catch (e) {
+      print('Error formatting date: $e for string: $dateString');
       return dateString;
     }
   }
@@ -211,7 +296,7 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
         date = DateTime.parse(dateString);
       }
 
-      // Ensure we're adding the +7 GMT adjustment for Indonesia timezone
+      // Use device's local time
       final indonesiaDate = date.toLocal();
 
       // Using dd MMMM yyyy, HH:mm format for kejadian dates
@@ -294,6 +379,88 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
               : laporan == null
                   ? Center(child: Text('Data laporan tidak ditemukan'))
                   : _buildDetailContent(),
+      // Add floating action button for adding responses
+      floatingActionButton: laporan != null && laporan!.status != 'finished'
+          ? FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  showTanggapanModal = true;
+                });
+
+                // Show bottom sheet for adding tanggapan
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (context) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                        left: 16,
+                        right: 16,
+                        top: 16,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Tambah Tanggapan',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.close),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                          TextField(
+                            controller: tanggapanController,
+                            decoration: InputDecoration(
+                              hintText: 'Masukkan tanggapan anda di sini...',
+                              border: OutlineInputBorder(),
+                            ),
+                            maxLines: 5,
+                          ),
+                          SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text('Batal'),
+                              ),
+                              SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  saveTanggapan();
+                                },
+                                child: Text('Simpan Tanggapan'),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+              tooltip: 'Tambah Tanggapan',
+              child: Icon(Icons.comment),
+            )
+          : null,
     );
   }
 
