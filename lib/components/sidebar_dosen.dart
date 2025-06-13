@@ -17,6 +17,7 @@ class _SidebarDosenState extends State<SidebarDosen> {
   String _userName = "Dosen";
   String? _userEmail;
   String? _userRole;
+  String? _userNik;
   bool _isLoading = true;
 
   @override
@@ -35,9 +36,10 @@ class _SidebarDosenState extends State<SidebarDosen> {
       final prefs = await SharedPreferences.getInstance();
       final userData = prefs.getString('user_data');
 
-      // Get user name and NIP from shared preferences
+      // Get user name, NIP and NIK from shared preferences
       final String? currentUserName = prefs.getString('user_name');
       String? currentUserNip = prefs.getString('user_nip');
+      _userNik = prefs.getString('user_nik'); // Get NIK from preferences
 
       if (currentUserName != null && currentUserName.isNotEmpty) {
         _userName = currentUserName;
@@ -49,6 +51,13 @@ class _SidebarDosenState extends State<SidebarDosen> {
           setState(() {
             _userEmail = data['email'] ?? prefs.getString('user_email');
             _userRole = data['role'] ?? prefs.getString('user_role');
+
+            // Look for NIK in cached data
+            if (data['nik'] != null) {
+              _userNik = data['nik'];
+              prefs.setString('user_nik', _userNik!);
+            }
+
             // Extract NIP if available in cached data
             if (data['nip'] != null) {
               currentUserNip = data['nip'];
@@ -58,57 +67,71 @@ class _SidebarDosenState extends State<SidebarDosen> {
         } catch (e) {
           print("Error parsing user data: $e");
         }
-      } else {
-        // Try to get user info from API if no cached data
-        final token = await TokenManager.getToken();
+      }
 
-        if (token != null && token.isNotEmpty) {
-          try {
-            final headers = {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token'
-            };
+      // Always try to refresh data from API regardless of cache
+      final token = await TokenManager.getToken();
 
-            // This would be your user profile endpoint
-            final response = await http.get(
-              Uri.parse('${_apiService.baseUrl}/user/profile'),
-              headers: headers,
-            );
+      if (token != null && token.isNotEmpty) {
+        try {
+          final headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token'
+          };
 
-            if (response.statusCode == 200) {
-              final responseData = json.decode(response.body);
+          // This would be your user profile endpoint
+          final response = await http.get(
+            Uri.parse('${_apiService.baseUrl}/user/profile'),
+            headers: headers,
+          );
 
-              // Check if data is nested under 'data' and then 'user'
-              final userData = responseData['data'] != null &&
-                      responseData['data']['user'] != null
-                  ? responseData['data']['user']
-                  : responseData;
+          print("API Response Status: ${response.statusCode}");
+          if (response.statusCode == 200) {
+            final responseData = json.decode(response.body);
+            print("API Response Body: ${response.body}");
 
+            // Extract NIK directly from the response first
+            if (responseData['data'] != null &&
+                responseData['data']['dosen'] != null &&
+                responseData['data']['dosen']['nik'] != null) {
               setState(() {
-                _userName = userData['name'] ??
-                    userData['username'] ??
-                    currentUserName ??
-                    "Dosen";
-                _userEmail = userData['email'];
-                _userRole = userData['role'];
-
-                // Extract and save NIP
-                if (userData['nip'] != null) {
-                  currentUserNip = userData['nip'];
-                  prefs.setString('user_nip', currentUserNip!);
-                }
-
-                // Save to preferences for future use
-                prefs.setString('user_name', _userName);
-                if (_userEmail != null)
-                  prefs.setString('user_email', _userEmail!);
-                if (_userRole != null) prefs.setString('user_role', _userRole!);
-                prefs.setString('user_data', json.encode(userData));
+                _userNik = responseData['data']['dosen']['nik'];
+                // Save NIK to preferences
+                prefs.setString('user_nik', _userNik!);
               });
+              print("NIK extracted: $_userNik");
             }
-          } catch (e) {
-            print('Error fetching user profile: $e');
+
+            // Check if data is nested under 'data' and then 'user'
+            final userData = responseData['data'] != null &&
+                    responseData['data']['user'] != null
+                ? responseData['data']['user']
+                : responseData;
+
+            setState(() {
+              _userName = userData['name'] ??
+                  userData['username'] ??
+                  currentUserName ??
+                  "Dosen";
+              _userEmail = userData['email'];
+              _userRole = userData['role'];
+
+              // Extract and save NIP
+              if (userData['nip'] != null) {
+                currentUserNip = userData['nip'];
+                prefs.setString('user_nip', currentUserNip!);
+              }
+
+              // Save to preferences for future use
+              prefs.setString('user_name', _userName);
+              if (_userEmail != null)
+                prefs.setString('user_email', _userEmail!);
+              if (_userRole != null) prefs.setString('user_role', _userRole!);
+              prefs.setString('user_data', json.encode(userData));
+            });
           }
+        } catch (e) {
+          print('Error fetching user profile: $e');
         }
       }
 
@@ -225,6 +248,13 @@ class _SidebarDosenState extends State<SidebarDosen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             SizedBox(height: 3),
+                            Text(
+                              _isLoading ? "Loading..." : _userNik ?? "NIK: -",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 12,
+                              ),
+                            ),
                             Text(
                               _userEmail ??
                                   (_userRole != null ? "Role: $_userRole" : ""),

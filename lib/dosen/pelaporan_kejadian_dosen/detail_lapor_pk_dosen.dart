@@ -617,9 +617,10 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
   }
 
   String _getImageUrl(String? imagePath, String? fotoKejadian) {
-    final String baseUrl = 'http://10.0.2.2:8000/storage/laporan/';
+    final String baseUrl =
+        'https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporan/';
 
-    // Choose available image
+    // Pilih gambar yang tersedia
     String? image = imagePath ?? fotoKejadian;
     if (image == null) return '';
 
@@ -629,12 +630,12 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
       image = image.split(',').first.trim();
     }
 
-    // If it's already a full URL
+    // Jika sudah URL lengkap
     if (image.startsWith('http')) {
       return image;
     }
 
-    // If it's a relative path
+    // Jika path relatif
     return baseUrl + image;
   }
 

@@ -447,9 +447,9 @@ class _DetailLaporanKekerasanDosenPageState
                   final int index = entry.key;
                   final String fileName = entry.value;
 
-                  // Construct full image URL - adjust base URL to match your API
+                  // Construct full image URL
                   final String baseUrl =
-                      'http://10.0.2.2:8000/storage/laporan_kekerasan/';
+                      'https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporankekerasan/';
                   final String imageUrl = '$baseUrl$fileName';
 
                   return Column(
@@ -466,147 +466,184 @@ class _DetailLaporanKekerasanDosenPageState
                         ),
                       ),
 
-                      // Image display with error handling
+                      // Image display with consistent size constraints
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
                           constraints: BoxConstraints(
-                            maxHeight: 300,
+                            maxHeight: 200,
+                            maxWidth: double.infinity,
                           ),
-                          width: double.infinity,
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: InkWell(
-                            onTap: () {
-                              // Show full-screen image view when tapped
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => Scaffold(
-                                    appBar: AppBar(
-                                      title:
-                                          Text('Gambar Lampiran ${index + 1}'),
-                                      backgroundColor: Color(0xFF00A2EA),
-                                    ),
-                                    body: Center(
-                                      child: InteractiveViewer(
-                                        minScale: 0.5,
-                                        maxScale: 4.0,
-                                        child: Image.network(
-                                          imageUrl,
-                                          fit: BoxFit.contain,
-                                          loadingBuilder:
-                                              (context, child, progress) {
-                                            if (progress == null) return child;
-                                            return Center(
-                                                child:
-                                                    CircularProgressIndicator());
-                                          },
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            print("Image error: $error");
-                                            return Center(
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(Icons.broken_image,
-                                                      size: 50,
-                                                      color: Colors.grey),
-                                                  SizedBox(height: 16),
-                                                  Text(
-                                                    'Tidak dapat memuat gambar',
-                                                    style: TextStyle(
-                                                        color:
-                                                            Colors.grey[700]),
+                          child: Stack(
+                            children: [
+                              // Image with fixed height preview
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => Scaffold(
+                                        appBar: AppBar(
+                                          title: Text(
+                                              'Gambar Lampiran ${index + 1}'),
+                                          backgroundColor: Color(0xFF00A2EA),
+                                        ),
+                                        body: Center(
+                                          child: InteractiveViewer(
+                                            minScale: 0.5,
+                                            maxScale: 4.0,
+                                            child: Image.network(
+                                              imageUrl,
+                                              fit: BoxFit.contain,
+                                              loadingBuilder:
+                                                  (context, child, progress) {
+                                                if (progress == null)
+                                                  return child;
+                                                return Center(
+                                                    child:
+                                                        CircularProgressIndicator());
+                                              },
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                print("Image error: $error");
+                                                return Center(
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Icon(Icons.broken_image,
+                                                          size: 50,
+                                                          color: Colors.grey),
+                                                      SizedBox(height: 16),
+                                                      Text(
+                                                        'Tidak dapat memuat gambar',
+                                                        style: TextStyle(
+                                                            color: Colors
+                                                                .grey[700]),
+                                                      ),
+                                                      SizedBox(height: 8),
+                                                      Text(
+                                                        fileName,
+                                                        style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.grey),
+                                                      ),
+                                                    ],
                                                   ),
-                                                  SizedBox(height: 8),
-                                                  Text(
-                                                    fileName,
-                                                    style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
+                                                );
+                                              },
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, progress) {
-                                    if (progress == null) return child;
-                                    return Container(
-                                      height: 200,
+                                  );
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: 150,
                                       width: double.infinity,
-                                      alignment: Alignment.center,
-                                      child: CircularProgressIndicator(
-                                        value: progress.expectedTotalBytes !=
-                                                null
-                                            ? progress.cumulativeBytesLoaded /
-                                                progress.expectedTotalBytes!
-                                            : null,
+                                      child: Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder:
+                                            (context, child, progress) {
+                                          if (progress == null) return child;
+                                          return Container(
+                                            alignment: Alignment.center,
+                                            child: CircularProgressIndicator(
+                                              value: progress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? progress
+                                                          .cumulativeBytesLoaded /
+                                                      progress
+                                                          .expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          print("Thumbnail error: $error");
+                                          return Container(
+                                            alignment: Alignment.center,
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.image_not_supported,
+                                                    size: 40,
+                                                    color: Colors.grey),
+                                                SizedBox(height: 8),
+                                                Text(
+                                                  'File: $fileName',
+                                                  style:
+                                                      TextStyle(fontSize: 12),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
                                       ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    print("Thumbnail error: $error");
-                                    return Container(
-                                      height: 100,
+                                    ),
+                                    Container(
+                                      padding: EdgeInsets.all(8),
                                       width: double.infinity,
-                                      alignment: Alignment.center,
-                                      child: Column(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                      ),
+                                      child: Row(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Icon(Icons.image_not_supported,
-                                              size: 40, color: Colors.grey),
-                                          SizedBox(height: 8),
+                                          Expanded(
+                                            child: Text(
+                                              fileName,
+                                              style: TextStyle(fontSize: 12),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
                                           Text(
-                                            'File: $fileName',
-                                            style: TextStyle(fontSize: 12),
+                                            'Klik untuk perbesar',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.blue,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ],
                                       ),
-                                    );
-                                  },
+                                    ),
+                                  ],
                                 ),
-                                Container(
-                                  padding: EdgeInsets.all(8),
-                                  width: double.infinity,
+                              ),
+
+                              // Overlay icon to indicate image can be enlarged
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[200],
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          fileName,
-                                          style: TextStyle(fontSize: 12),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Icon(Icons.touch_app,
-                                          size: 16, color: Colors.grey[700]),
-                                    ],
+                                  child: Icon(
+                                    Icons.zoom_in,
+                                    color: Colors.white,
+                                    size: 20,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
