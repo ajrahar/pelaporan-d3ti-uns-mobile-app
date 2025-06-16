@@ -791,7 +791,7 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/addlaporkejadianDosen');
+                  Navigator.pushNamed(context, '/addlaporpkdosen');
                 },
                 icon: Icon(Icons.add),
                 label: Text('Tambah Laporan'),

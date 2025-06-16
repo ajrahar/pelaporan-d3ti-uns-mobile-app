@@ -161,7 +161,7 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
 
       setState(() {
         _namaPelaporController.text = prefs.getString('user_name') ?? '';
-        _nipPelaporController.text = prefs.getString('user_nip') ?? '';
+        _nipPelaporController.text = prefs.getString('user_nik') ?? '';
         _nomorTeleponController.text = prefs.getString('user_no_telp') ?? '';
       });
     } catch (e) {

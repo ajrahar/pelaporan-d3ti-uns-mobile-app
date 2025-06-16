@@ -453,7 +453,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/addlaporkejadianmendesak');
+                  Navigator.pushNamed(context, '/addlaporpkmendesakdosen');
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -528,7 +528,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/addlaporks');
+                  Navigator.pushNamed(context, '/addlaporksdosen');
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),

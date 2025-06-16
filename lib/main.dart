@@ -5,7 +5,10 @@ import 'package:pelaporan_d3ti/auth_screen/login_dosen.dart';
 import 'package:pelaporan_d3ti/auth_screen/login_mhs.dart';
 import 'package:pelaporan_d3ti/auth_screen/register_mhs.dart';
 import 'package:pelaporan_d3ti/dosen/home/home_screen_dosen.dart';
+import 'package:pelaporan_d3ti/dosen/pelaporan_kejadian_dosen/add_lapor_pk_dosen.dart';
+import 'package:pelaporan_d3ti/dosen/pelaporan_kejadian_dosen/add_lapor_pk_mendesak_dosen.dart';
 import 'package:pelaporan_d3ti/dosen/pelaporan_kejadian_dosen/lapor_pk_dosen.dart';
+import 'package:pelaporan_d3ti/dosen/pelaporan_kekerasan_seksual_dosen/add_lapor_ks_dosen.dart';
 import 'package:pelaporan_d3ti/dosen/pelaporan_kekerasan_seksual_dosen/lapor_ks_dosen.dart';
 import 'package:pelaporan_d3ti/kekerasan_seksual/add_ks_public.dart';
 import 'package:pelaporan_d3ti/kekerasan_seksual/test_page.dart';
@@ -59,8 +62,18 @@ class MyApp extends StatelessWidget {
 
         '/homedosen': (context) => HomeScreenDosen(),
         '/laporpkdosen': (context) => LaporKejadianDosenPage(),
+
         '/laporksdosen': (context) =>
             LaporKekerasanDosenPage(), // Route for faculty violence reports
+
+        '/addlaporpkdosen': (context) =>
+            AddLaporPKDosenPage(), // Route for adding faculty incident reports
+
+        '/addlaporpkmendesakdosen': (context) =>
+            AddLaporPKMendesakDosen(), // Route for adding urgent faculty incident reports
+
+        '/addlaporksdosen': (context) =>
+            AddLaporKsDosenPage(), // Route for adding faculty violence reports
 
         '/addkspublic': (context) =>
             AddKSPublicPage(), // Route for adding public violence reports
