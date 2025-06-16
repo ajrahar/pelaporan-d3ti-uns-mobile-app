@@ -1,0 +1,45 @@
+flutter_native_splash:
+  # Background color for the splash screen
+  color: "#FFFFFF" # Using white background instead of blue
+
+  # The image parameter allows you to specify an image used in the splash screen
+  # This is your D3TI logo
+  image: assets/images/d3ti_logo.png
+
+  # Platform specific settings
+  android: true
+  ios: true
+  web: false
+
+  # Positioning settings
+  android_gravity: center
+  ios_content_mode: center
+
+  # Android 12+ specific settings - this is where we fix the circular shape issue
+  android_12:
+    # The image for Android 12+ splash
+    image: assets/images/d3ti_logo.png
+
+    # Background color (white)
+    color: "#FFFFFF"
+
+    # Critical setting: This controls the background color of the icon
+    # Setting it to match the main color avoids the circular shape appearance
+    icon_background_color: "#FFFFFF"
+
+    # Adding branding without the circular constraint
+    # Using the same image as a branding image helps avoid the circle crop
+    branding: assets/images/d3ti_logo.png
+
+    # Dark mode settings - needed even if you don't use dark mode
+    # These help ensure consistent appearance
+    image_dark: assets/images/d3ti_logo.png
+    color_dark: "#FFFFFF"
+    icon_background_color_dark: "#FFFFFF"
+
+  # Fullscreen option to avoid notification bar
+  # Uncomment if you want fullscreen splash
+  # fullscreen: true
+
+  # Screen orientation
+  android_screen_orientation: portrait

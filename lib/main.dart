@@ -1,5 +1,6 @@
 // File: lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:pelaporan_d3ti/auth_screen/login_dosen.dart';
 import 'package:pelaporan_d3ti/auth_screen/login_mhs.dart';
 import 'package:pelaporan_d3ti/auth_screen/register_mhs.dart';
@@ -16,18 +17,27 @@ import 'package:pelaporan_d3ti/mahasiswa/pelaporan/lapor_kejadian.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan/add_lapor_kejadian_mendesak.dart';
 import 'package:pelaporan_d3ti/services/notification_service.dart';
 import 'package:pelaporan_d3ti/settings/settings_screen.dart'; // You'll need to create this
-import 'splash_screen/splash_screen.dart';
+// Remove this import since we're replacing it with native splash
+// import 'splash_screen/splash_screen.dart';
 import 'package:timezone/data/latest.dart' as tz_init;
 
 void main() async {
-  // Ensure Flutter is initialized
-  WidgetsFlutterBinding.ensureInitialized();
+  // Ensure Flutter is initialized and preserve splash screen
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   // Initialize timezone data
   tz_init.initializeTimeZones();
 
   // Initialize notification service
   await NotificationService().initialize();
+
+  // Add any other initialization needed here
+
+  // Remove the splash screen when initialization is done
+  // You can add a small delay if you want the splash screen to show for a minimum amount of time
+  await Future.delayed(Duration(seconds: 3));
+  FlutterNativeSplash.remove();
 
   runApp(MyApp());
 }
@@ -37,9 +47,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // Hide debug banner
-      initialRoute: '/', // Initial route is splash screen
+      initialRoute:
+          '/login', // Changed initial route to login since splash is now native
       routes: {
-        '/': (context) => SplashScreen(), // Splash screen as initial page
+        // Removed the splash screen route since we're using native splash
+        // '/': (context) => SplashScreen(),
+
         '/login': (context) => LoginPage(), // Route for login page
         '/logindosen': (context) => LoginDosenPage(), // Route for faculty login
         '/home': (context) => HomeScreen(), // Route for main page

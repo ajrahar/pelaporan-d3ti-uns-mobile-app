@@ -243,6 +243,57 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
     }
   }
 
+  Future<void> finishReport() async {
+    if (laporan == null) return;
+
+    try {
+      // Show confirmation dialog
+      final bool? confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Tutup Kasus Laporan'),
+          content: Text(
+              'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('Ya, Selesaikan!'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+
+      setState(() {
+        isLoading = true;
+      });
+
+      // Get current date time using device's local time
+      final now = DateTime.now();
+
+      // Call the API to update status
+      await _apiService.updateLaporanStatus(widget.id, 'finished');
+
+      // Update local status
+      setState(() {
+        laporan = laporan!.copyWith(status: 'finished', updatedAt: now);
+        isLoading = false;
+      });
+
+      _showSuccessMessage('Laporan berhasil ditutup dan selesai');
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      _showErrorMessage('Gagal menyelesaikan laporan: $e');
+    }
+  }
+
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -379,86 +430,104 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
               : laporan == null
                   ? Center(child: Text('Data laporan tidak ditemukan'))
                   : _buildDetailContent(),
-      // Add floating action button for adding responses
       floatingActionButton: laporan != null && laporan!.status != 'finished'
-          ? FloatingActionButton(
-              onPressed: () {
-                setState(() {
-                  showTanggapanModal = true;
-                });
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Add response button
+                FloatingActionButton(
+                  onPressed: () {
+                    setState(() {
+                      showTanggapanModal = true;
+                    });
 
-                // Show bottom sheet for adding tanggapan
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).viewInsets.bottom,
-                        left: 16,
-                        right: 16,
-                        top: 16,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // Show bottom sheet for adding tanggapan
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (context) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).viewInsets.bottom,
+                            left: 16,
+                            right: 16,
+                            top: 16,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Tambah Tanggapan',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Tambah Tanggapan',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.close),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16),
+                              TextField(
+                                controller: tanggapanController,
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Masukkan tanggapan anda di sini...',
+                                  border: OutlineInputBorder(),
                                 ),
+                                maxLines: 5,
                               ),
-                              IconButton(
-                                icon: Icon(Icons.close),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
+                              SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text('Batal'),
+                                  ),
+                                  SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      saveTanggapan();
+                                    },
+                                    child: Text('Simpan Tanggapan'),
+                                  ),
+                                ],
                               ),
+                              SizedBox(height: 16),
                             ],
                           ),
-                          SizedBox(height: 16),
-                          TextField(
-                            controller: tanggapanController,
-                            decoration: InputDecoration(
-                              hintText: 'Masukkan tanggapan anda di sini...',
-                              border: OutlineInputBorder(),
-                            ),
-                            maxLines: 5,
-                          ),
-                          SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Text('Batal'),
-                              ),
-                              SizedBox(width: 8),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  saveTanggapan();
-                                },
-                                child: Text('Simpan Tanggapan'),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 16),
-                        ],
-                      ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-              tooltip: 'Tambah Tanggapan',
-              child: Icon(Icons.comment),
+                  tooltip: 'Tambah Tanggapan',
+                  heroTag: 'tanggapan',
+                  child: Icon(Icons.comment),
+                ),
+                SizedBox(height: 16),
+                // Add finish report button - only show for verified reports
+                if (laporan!.status == 'verified')
+                  FloatingActionButton(
+                    onPressed: finishReport,
+                    tooltip: 'Selesaikan Laporan',
+                    heroTag: 'selesai',
+                    backgroundColor: Colors.green,
+                    child: Icon(Icons.check_circle_outline),
+                  ),
+              ],
             )
           : null,
     );
@@ -773,6 +842,23 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
                 title: 'Tanggapan',
                 icon: Icons.comment_outlined,
                 child: _buildTanggapanContent(laporan!.tanggapan),
+              ),
+            ],
+
+            if (laporan!.status == 'verified') ...[
+              SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: Icon(Icons.check_circle_outline),
+                  label: Text('Tutup dan Selesaikan Laporan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: finishReport,
+                ),
               ),
             ],
 
