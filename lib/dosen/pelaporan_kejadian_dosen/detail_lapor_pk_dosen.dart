@@ -251,16 +251,36 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
       final bool? confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Tutup Kasus Laporan'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.green),
+              SizedBox(width: 10),
+              Text('Tutup Kasus Laporan'),
+            ],
+          ),
           content: Text(
-              'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?'),
+            'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
+            style: TextStyle(color: Colors.grey[700]),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: Text('Batal'),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
               child: Text('Ya, Selesaikan!'),
             ),
           ],
@@ -297,9 +317,18 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Colors.white),
+            SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
         backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.all(15),
+        duration: Duration(seconds: 3),
       ),
     );
   }
@@ -307,9 +336,18 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
+        content: Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.white),
+            SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red[700],
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.all(15),
+        duration: Duration(seconds: 3),
       ),
     );
   }
@@ -402,33 +440,43 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Detail Laporan Kejadian'),
+        title: Text(
+          'Detail Laporan Kejadian',
+          style: TextStyle(
+            color: Colors.grey[800],
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.grey[800]),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pushReplacementNamed(context, '/laporpkdosen');
           },
         ),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Colors.grey.shade200,
+          ),
+        ),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? _buildLoadingView()
           : error != null && laporan == null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(error!),
-                      SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadData,
-                        child: Text('Coba Lagi'),
-                      ),
-                    ],
-                  ),
-                )
+              ? _buildErrorView()
               : laporan == null
-                  ? Center(child: Text('Data laporan tidak ditemukan'))
+                  ? Center(
+                      child: Text(
+                        'Data laporan tidak ditemukan',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      ),
+                    )
                   : _buildDetailContent(),
       floatingActionButton: laporan != null && laporan!.status != 'finished'
           ? Column(
@@ -436,85 +484,11 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
               children: [
                 // Add response button
                 FloatingActionButton(
-                  onPressed: () {
-                    setState(() {
-                      showTanggapanModal = true;
-                    });
-
-                    // Show bottom sheet for adding tanggapan
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (context) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).viewInsets.bottom,
-                            left: 16,
-                            right: 16,
-                            top: 16,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Tambah Tanggapan',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.close),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 16),
-                              TextField(
-                                controller: tanggapanController,
-                                decoration: InputDecoration(
-                                  hintText:
-                                      'Masukkan tanggapan anda di sini...',
-                                  border: OutlineInputBorder(),
-                                ),
-                                maxLines: 5,
-                              ),
-                              SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: Text('Batal'),
-                                  ),
-                                  SizedBox(width: 8),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      saveTanggapan();
-                                    },
-                                    child: Text('Simpan Tanggapan'),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 16),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
+                  onPressed: () => _showTanggapanBottomSheet(),
                   tooltip: 'Tambah Tanggapan',
                   heroTag: 'tanggapan',
+                  backgroundColor: Colors.blue,
+                  elevation: 4,
                   child: Icon(Icons.comment),
                 ),
                 SizedBox(height: 16),
@@ -525,6 +499,7 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
                     tooltip: 'Selesaikan Laporan',
                     heroTag: 'selesai',
                     backgroundColor: Colors.green,
+                    elevation: 4,
                     child: Icon(Icons.check_circle_outline),
                   ),
               ],
@@ -533,76 +508,265 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
     );
   }
 
-  Widget _buildDetailContent() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+  Widget _buildLoadingView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            strokeWidth: 3,
+          ),
+          SizedBox(height: 20),
+          Text(
+            'Memuat data...',
+            style: TextStyle(color: Colors.grey[700], fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorView() {
+    return Center(
+      child: Container(
+        padding: EdgeInsets.all(24),
+        width: double.infinity,
+        margin: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 20,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Header section
-            Row(
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 40,
+                color: Colors.red[700],
+              ),
+            ),
+            SizedBox(height: 24),
+            Text(
+              'Terjadi Kesalahan',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 16,
+              ),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadData,
+              icon: Icon(Icons.refresh),
+              label: Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTanggapanBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, -5),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Detail Laporan Kejadian',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tambah Tanggapan',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        laporan!.nomorLaporan ?? 'No. Laporan tidak tersedia',
-                        style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      color: Colors.grey[700],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: getStatusColor(laporan!.status ?? 'unverified')
-                        .withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    formatStatus(laporan!.status ?? 'unverified'),
-                    style: TextStyle(
-                      color: getStatusColor(laporan!.status ?? 'unverified'),
-                      fontWeight: FontWeight.bold,
+                  child: TextField(
+                    controller: tanggapanController,
+                    decoration: InputDecoration(
+                      hintText: 'Masukkan tanggapan anda di sini...',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      contentPadding: EdgeInsets.all(16),
                     ),
+                    style: TextStyle(fontSize: 15, color: Colors.grey[800]),
+                    maxLines: 5,
                   ),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Batal'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey[700],
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        saveTanggapan();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text('Simpan Tanggapan'),
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
 
+  Widget _buildDetailContent() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header section with subtle shadow
+            _buildHeaderCard(),
             SizedBox(height: 24),
 
             // Card for Information
-            _buildCard(
+            _buildInfoCard(
               title: 'Informasi Kejadian',
+              icon: Icons.info_outline,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (laporan!.categoryId != null)
                     Container(
-                      margin: EdgeInsets.only(bottom: 16),
+                      margin: EdgeInsets.only(bottom: 20),
                       padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
+                        color: Colors.blue.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.label, size: 16, color: Colors.blue),
-                          SizedBox(width: 4),
+                          Icon(Icons.label_outline,
+                              size: 16, color: Colors.blue),
+                          SizedBox(width: 6),
                           Text(
                             getCategoryName(laporan!.categoryId),
-                            style: TextStyle(color: Colors.blue),
+                            style: TextStyle(
+                              color: Colors.blue[700],
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
@@ -611,200 +775,234 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
                     {
                       'label': 'Tanggal dan Waktu Kejadian',
                       'value': formatDateKejadian(laporan!.tanggalKejadian),
+                      'icon': Icons.event,
                     },
                     {
                       'label': 'Kategori Kejadian',
                       'value': getCategoryName(laporan!.categoryId) ??
                           laporan!.jenisKejadian ??
                           '-',
+                      'icon': Icons.category,
                     },
                   ]),
                 ],
               ),
             ),
 
-            SizedBox(height: 16),
+            SizedBox(height: 24),
 
-            // Card for Details
-            _buildCard(
+            // Card for Details with more elegant styling
+            _buildInfoCard(
               title: 'Detail Kejadian',
+              icon: Icons.description_outlined,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (laporan!.judul != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
+                    Container(
+                      margin: EdgeInsets.only(bottom: 16),
+                      padding: EdgeInsets.all(16),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Text(
                         laporan!.judul!,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
                         ),
                       ),
                     ),
-                  Text(
-                    laporan!.deskripsi ?? laporan!.deskripsiKejadian ?? '-',
-                    style: TextStyle(height: 1.5),
-                  ),
-                  if (laporan!.imagePath != null ||
-                      laporan!.fotoKejadian != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Foto Kejadian',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                showFullImage = true;
-                              });
-                              // Show dialog with full image
-                              showDialog(
-                                context: context,
-                                builder: (context) => Dialog(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Stack(
-                                        alignment: Alignment.topRight,
-                                        children: [
-                                          Image.network(
-                                            _getImageUrl(laporan!.imagePath,
-                                                laporan!.fotoKejadian),
-                                            fit: BoxFit.contain,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Center(
-                                                child: Text(
-                                                    'Gambar tidak dapat dimuat'),
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: Icon(Icons.close),
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Center(
-                              child: Container(
-                                constraints: BoxConstraints(
-                                  maxHeight: 200,
-                                ),
-                                child: Image.network(
-                                  _getImageUrl(laporan!.imagePath,
-                                      laporan!.fotoKejadian),
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Center(
-                                      child: Text('Gambar tidak dapat dimuat'),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          Center(
-                            child: Text(
-                              'Klik untuk memperbesar gambar',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ),
-                        ],
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      laporan!.deskripsi ?? laporan!.deskripsiKejadian ?? '-',
+                      style: TextStyle(
+                        color: Colors.grey[800],
+                        height: 1.6,
+                        fontSize: 15,
                       ),
                     ),
+                  ),
+                  if (laporan!.imagePath != null ||
+                      laporan!.fotoKejadian != null) ...[
+                    SizedBox(height: 20),
+                    Text(
+                      'Foto Kejadian',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () => _showFullImageDialog(),
+                      child: Hero(
+                        tag: 'report_image',
+                        child: Container(
+                          width: double.infinity,
+                          constraints: BoxConstraints(
+                            maxHeight: 220,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.network(
+                              _getImageUrl(
+                                  laporan!.imagePath, laporan!.fotoKejadian),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 200,
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.broken_image_outlined,
+                                      color: Colors.grey[400],
+                                      size: 40,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        'Klik untuk memperbesar gambar',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
 
-            SizedBox(height: 16),
+            SizedBox(height: 24),
 
-            // Card for Reporter
-            _buildCard(
+            // Card for Reporter with enhanced styling
+            _buildInfoCard(
               title: 'Informasi Pelapor',
+              icon: Icons.person_outline,
               child: _buildInfoGrid([
                 {
                   'label': 'Nama',
                   'value': laporan!.namaPelapor ?? '-',
+                  'icon': Icons.person,
                 },
                 {
                   'label': 'NI Pelapor',
                   'value': laporan!.niPelapor ?? '-',
+                  'icon': Icons.badge,
                 },
                 {
                   'label': 'Email',
                   'value': laporan!.email ?? laporan!.emailPelapor ?? '-',
+                  'icon': Icons.email,
                 },
                 {
                   'label': 'Telepon',
                   'value':
                       laporan!.nomorTelepon ?? laporan!.teleponPelapor ?? '-',
+                  'icon': Icons.phone,
                 },
                 {
                   'label': 'Profesi',
                   'value': laporan!.profesi ?? '-',
+                  'icon': Icons.work,
                 },
                 {
                   'label': 'Jenis Kelamin',
                   'value': laporan!.jenisKelamin ?? '-',
+                  'icon': Icons.person_outline,
                 },
                 {
                   'label': 'Kelompok Umur',
                   'value': laporan!.umurPelapor ?? '-',
+                  'icon': Icons.person_search,
                 },
               ]),
             ),
 
-            SizedBox(height: 16),
+            SizedBox(height: 24),
 
-            // Card for Status
-            _buildCard(
+            // Card for Status with visual enhancements
+            _buildInfoCard(
               title: 'Status Laporan',
+              icon: Icons.analytics_outlined,
               child: _buildInfoGrid([
                 {
                   'label': 'Status',
                   'value': formatStatus(laporan!.status ?? 'unverified'),
+                  'icon': _getStatusIcon(laporan!.status ?? 'unverified'),
                   'widget': Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: getStatusColor(laporan!.status ?? 'unverified')
-                          .withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      formatStatus(laporan!.status ?? 'unverified'),
-                      style: TextStyle(
-                        color: getStatusColor(laporan!.status ?? 'unverified'),
-                        fontWeight: FontWeight.bold,
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: getStatusColor(laporan!.status ?? 'unverified')
+                            .withOpacity(0.2),
                       ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _getStatusIcon(laporan!.status ?? 'unverified'),
+                          color:
+                              getStatusColor(laporan!.status ?? 'unverified'),
+                          size: 16,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          formatStatus(laporan!.status ?? 'unverified'),
+                          style: TextStyle(
+                            color:
+                                getStatusColor(laporan!.status ?? 'unverified'),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 },
                 {
                   'label': 'Tanggal Laporan',
                   'value': formatDate(laporan!.createdAt?.toIso8601String()),
+                  'icon': Icons.calendar_today,
                 },
                 {
                   'label': 'Terakhir Diperbarui',
                   'value': formatDate(laporan!.updatedAt?.toIso8601String()),
+                  'icon': Icons.update,
                 },
               ]),
             ),
@@ -812,21 +1010,48 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
             // Additional bukti pelanggaran section if available
             if (laporan!.buktiPelanggaran != null &&
                 laporan!.buktiPelanggaran!.isNotEmpty) ...[
-              SizedBox(height: 16),
-              _buildCard(
+              SizedBox(height: 24),
+              _buildInfoCard(
                 title: 'Bukti Pelanggaran',
                 icon: Icons.assignment_outlined,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: laporan!.buktiPelanggaran!.map((bukti) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.green.withOpacity(0.2),
+                        ),
+                      ),
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle_outline,
-                              color: Colors.green, size: 18),
-                          SizedBox(width: 8),
-                          Text(bukti),
+                          Container(
+                            padding: EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.check,
+                              color: Colors.green,
+                              size: 16,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              bukti,
+                              style: TextStyle(
+                                color: Colors.grey[800],
+                                fontSize: 14,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -835,10 +1060,10 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
               ),
             ],
 
-            // Tanggapan section
+            // Tanggapan section with elegant styling
             if (hasTanggapan) ...[
-              SizedBox(height: 16),
-              _buildCard(
+              SizedBox(height: 24),
+              _buildInfoCard(
                 title: 'Tanggapan',
                 icon: Icons.comment_outlined,
                 child: _buildTanggapanContent(laporan!.tanggapan),
@@ -846,27 +1071,113 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
             ],
 
             if (laporan!.status == 'verified') ...[
-              SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: Icon(Icons.check_circle_outline),
-                  label: Text('Tutup dan Selesaikan Laporan'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  onPressed: finishReport,
-                ),
-              ),
+              SizedBox(height: 32),
+              _buildFinishReportButton(),
             ],
 
-            SizedBox(height: 24),
+            SizedBox(height: 40),
           ],
         ),
       ),
     );
+  }
+
+  void _showFullImageDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.all(20),
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: [
+              Hero(
+                tag: 'report_image',
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 4.0,
+                      child: Image.network(
+                        _getImageUrl(laporan!.imagePath, laporan!.fotoKejadian),
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.broken_image_outlined,
+                                  color: Colors.grey[400],
+                                  size: 60,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Gambar tidak dapat dimuat',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: IconButton(
+                  icon: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'unverified':
+        return Icons.hourglass_empty_outlined;
+      case 'verified':
+        return Icons.pending_actions_outlined;
+      case 'rejected':
+        return Icons.cancel_outlined;
+      case 'finished':
+        return Icons.check_circle_outline;
+      default:
+        return Icons.help_outline;
+    }
   }
 
   String _getImageUrl(String? imagePath, String? fotoKejadian) {
@@ -892,42 +1203,172 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
     return baseUrl + image;
   }
 
-  Widget _buildCard(
-      {required String title, required Widget child, IconData? icon}) {
+  Widget _buildHeaderCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 12,
+            spreadRadius: 0,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left section with report number and icon
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.article_outlined,
+              color: Colors.blue[700],
+              size: 24,
+            ),
+          ),
+          SizedBox(width: 16),
+
+          // Right section with title, number and status
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Detail Laporan Kejadian',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.confirmation_number_outlined,
+                      color: Colors.grey[600],
+                      size: 14,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      laporan!.nomorLaporan ?? 'No. Laporan tidak tersedia',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                // Status badge moved below the report number
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: getStatusColor(laporan!.status ?? 'unverified')
+                        .withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: getStatusColor(laporan!.status ?? 'unverified')
+                          .withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _getStatusIcon(laporan!.status ?? 'unverified'),
+                        color: getStatusColor(laporan!.status ?? 'unverified'),
+                        size: 14,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        formatStatus(laporan!.status ?? 'unverified'),
+                        style: TextStyle(
+                          color:
+                              getStatusColor(laporan!.status ?? 'unverified'),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required String title,
+    required Widget child,
+    IconData? icon,
+  }) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 12,
+            spreadRadius: 0,
+            offset: Offset(0, 3),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 20),
-                  SizedBox(width: 8),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 18,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                  SizedBox(width: 12),
                 ],
                 Text(
                   title,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
                   ),
                 ),
               ],
             ),
-            Divider(height: 24),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Divider(
+                color: Colors.grey.shade200,
+                height: 1,
+              ),
+            ),
             child,
           ],
         ),
@@ -936,35 +1377,62 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
   }
 
   Widget _buildInfoGrid(List<Map<String, dynamic>> items) {
+    bool isWideScreen = MediaQuery.of(context).size.width > 600;
+
     return Wrap(
-      spacing: 24,
-      runSpacing: 16,
+      spacing: 24, // horizontal space between items
+      runSpacing: 20, // vertical space between lines
       children: items.map((item) {
         return SizedBox(
-          width: MediaQuery.of(context).size.width > 600
-              ? (MediaQuery.of(context).size.width - 80) /
+          width: isWideScreen
+              ? (MediaQuery.of(context).size.width - 130) /
                   2 // 2 columns for larger screens
               : double.infinity, // Full width for smaller screens
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                item['label'],
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-              SizedBox(height: 4),
-              if (item['widget'] != null)
-                item['widget']
-              else
-                Text(
-                  item['value'] ?? '-',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
+              // Add icon if provided
+              if (item['icon'] != null) ...[
+                Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    item['icon'] as IconData,
+                    color: Colors.grey[600],
+                    size: 16,
                   ),
                 ),
+                SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['label'],
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 13,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    if (item['widget'] != null)
+                      item['widget']
+                    else
+                      Text(
+                        item['value'] ?? '-',
+                        style: TextStyle(
+                          color: Colors.grey[800],
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -975,7 +1443,19 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
   Widget _buildTanggapanContent(dynamic tanggapan) {
     if (tanggapan is String) {
       // Old format: string
-      return Text(tanggapan);
+      return Container(
+        padding: EdgeInsets.all(16),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Text(
+          tanggapan,
+          style: TextStyle(color: Colors.grey[800], height: 1.5),
+        ),
+      );
     } else if (tanggapan is List) {
       // New format: array of objects
       return Column(
@@ -987,41 +1467,84 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
             return Container(
               margin: EdgeInsets.only(
                   bottom: index < tanggapan.length - 1 ? 16 : 0),
-              padding: EdgeInsets.all(12),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: Colors.blue,
-                    width: 3,
-                  ),
+                color: Colors.blue.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.blue.withOpacity(0.08),
                 ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.person_outline,
+                          size: 16,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                      SizedBox(width: 10),
                       Text(
                         item['user'] ?? 'Admin',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                          fontSize: 14,
                         ),
                       ),
-                      Text(
-                        formatDate(item['timestamp']),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                      Spacer(),
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 12,
+                              color: Colors.grey[600],
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              formatDate(item['timestamp']),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    item['text'] ?? '',
-                    style: TextStyle(height: 1.5),
+                  SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      item['text'] ?? '',
+                      style: TextStyle(
+                        color: Colors.grey[800],
+                        height: 1.5,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1031,6 +1554,62 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
       );
     }
 
-    return Text('Tidak ada tanggapan');
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Text(
+          'Tidak ada tanggapan',
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFinishReportButton() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.2),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        icon: Icon(Icons.check_circle_outline, size: 20),
+        label: Text(
+          'Tutup dan Selesaikan Laporan',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: finishReport,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    tanggapanController.dispose();
+    super.dispose();
   }
 }

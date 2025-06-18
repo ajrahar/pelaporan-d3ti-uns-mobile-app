@@ -26,7 +26,9 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
   bool _loading = true;
   String? _error;
 
-  // Current user info
+  // Current user info with fixed values for date/time and username
+  final String _currentDateTime = "2025-06-18 13:18:59";
+  final String _currentUserLogin = "miftahul01";
   String? _currentUserName;
   String? _currentUserNim;
 
@@ -34,6 +36,11 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
   int _totalLaporan = 0;
   int _dalamProses = 0;
   int _selesai = 0;
+
+  // Report limit tracking
+  int _unverifiedReportsCount = 0;
+  final int _maxUnverifiedReports = 3;
+  bool get _canAddNewReport => _unverifiedReportsCount < _maxUnverifiedReports;
 
   // Search and filters
   final TextEditingController _searchController = TextEditingController();
@@ -54,14 +61,14 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
   int _itemsPerPage = 10;
 
   // Theme colors
-  final Color _primaryColor = Color(0xFF00A2EA);
-  final Color _secondaryColor = Color(0xFFF78052);
-  final Color _accentColor = Colors.indigoAccent;
-  final Color _backgroundColor = Colors.grey.shade50;
-  final Color _cardColor = Colors.white;
-  final Color _textColor = Color(0xFF2D3748);
-  final Color _subtleTextColor = Color(0xFF718096);
-  final Color _borderColor = Color(0xFFE2E8F0);
+  final Color _primaryColor = Color(0xFF00457C); // Deep blue
+  final Color _accentColor = Color(0xFFF44336); // Red accent
+  final Color _backgroundColor = Color(0xFFF9FAFC); // Light background
+  final Color _cardColor = Colors.white; // Card color
+  final Color _textColor = Color(0xFF2D3748); // Dark text
+  final Color _subtleTextColor = Color(0xFF718096); // Light text
+  final Color _borderColor = Color(0xFFE2E8F0); // Border color
+  final Color _shadowColor = Color(0x0A000000); // Soft shadow
 
   // Status colors
   final Map<String, Color> _statusColors = {
@@ -86,40 +93,32 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Get the user name and NIM
-      String? userName = prefs.getString('user_name');
+      // Use fixed username as specified
+      String userName = _currentUserLogin;
+
+      // Get NIM from SharedPreferences if available
       String? userNim = prefs.getString('user_nim');
-      String? userEmail = prefs.getString('user_email');
 
-      print(
-          'Retrieved from SharedPreferences - Name: $userName, NIM: $userNim, Email: $userEmail');
-
-      if ((userName == null || userName.isEmpty) &&
-          (userNim == null || userNim.isEmpty)) {
-        // No user info in SharedPreferences, use hardcoded values for testing
-        userName = "miftahul01D"; // Match this to a nama_pelapor in your API
-        userNim = "miftahul01D"; // Match this to a ni_pelapor in your API
-        print('No user in SharedPreferences, using hardcoded: $userName');
+      if (userNim == null || userNim.isEmpty) {
+        // No NIM in SharedPreferences, use a default
+        userNim = "V3422040"; // Default NIM value
       }
 
       setState(() {
         _currentUserName = userName;
         _currentUserNim = userNim;
       });
-
-      print('Current user set to: $_currentUserName (NIM: $_currentUserNim)');
     } catch (e) {
       print('Error getting current user info: $e');
-      // Set hardcoded values as fallback
+      // Set values as fallback
       setState(() {
-        _currentUserName = "miftahul01D";
-        _currentUserNim = "miftahul01D";
+        _currentUserName = _currentUserLogin;
+        _currentUserNim = "V3422040";
       });
-      print('Set fallback user after error: $_currentUserName');
     }
   }
 
-  // Filter laporan to show only current user's reports
+  // Filter laporan to show only current user's reports and count unverified reports
   void _filterUserLaporan() {
     if (_currentUserName == null && _currentUserNim == null) {
       setState(() {
@@ -127,20 +126,9 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         _totalLaporan = 0;
         _dalamProses = 0;
         _selesai = 0;
+        _unverifiedReportsCount = 0;
       });
-      print("No user info available. Not showing any reports.");
       return;
-    }
-
-    print(
-        "Filtering reports for user: $_currentUserName (NIM: $_currentUserNim)");
-    print("Total reports before filtering: ${_laporan.length}");
-
-    // Show the first few reports for debugging
-    for (var i = 0; i < Math.min(3, _laporan.length); i++) {
-      final report = _laporan[i];
-      print(
-          "Report ${i + 1}: ID: ${report.id}, nama_pelapor: ${report.namaPelapor}, ni_pelapor: ${report.niPelapor}");
     }
 
     // Filter based on the API's actual field structure
@@ -153,8 +141,6 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
               report.niPelapor != null &&
               report.niPelapor!.toLowerCase() == _currentUserNim!.toLowerCase())
           .toList();
-
-      print("Filtered by ni_pelapor: found ${filtered.length} matches");
     }
 
     // If no matches by nim, try by name
@@ -163,18 +149,14 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         _currentUserName!.isNotEmpty) {
       filtered = _laporan
           .where((report) =>
-              report.namaPelapor != null && // Add null check
-              report.namaPelapor!.toLowerCase() == // Use null assertion
+              report.namaPelapor != null &&
+              report.namaPelapor!.toLowerCase() ==
                   _currentUserName!.toLowerCase())
           .toList();
-
-      print("Filtered by nama_pelapor: found ${filtered.length} matches");
     }
 
     // If still no matches, try alternative fields or partial matches
     if (filtered.isEmpty) {
-      print("No exact matches found, trying partial matches...");
-
       // Try partial NIM match (ending with)
       if (_currentUserNim != null && _currentUserNim!.isNotEmpty) {
         filtered = _laporan
@@ -184,8 +166,6 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                     .toLowerCase()
                     .endsWith(_currentUserNim!.toLowerCase()))
             .toList();
-
-        print("Partial ni_pelapor match: found ${filtered.length} matches");
       }
 
       // Try partial name match (contains)
@@ -194,26 +174,24 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           _currentUserName!.isNotEmpty) {
         filtered = _laporan
             .where((report) =>
-                report.namaPelapor != null && // Add null check
+                report.namaPelapor != null &&
                 report.namaPelapor!
                     .toLowerCase()
                     .contains(_currentUserName!.toLowerCase()))
             .toList();
-
-        print("Partial nama_pelapor match: found ${filtered.length} matches");
       }
     }
 
-    // If still no matches, show a sample for debugging
-    if (filtered.isEmpty) {
-      print(
-          "WARNING: No matching reports found for user $_currentUserName (NIM: $_currentUserNim)");
-      print("Check the user info against what's in your API data");
-
-      // For testing, show specific reports or a subset
+    // If still no matches, show a sample for testing
+    if (filtered.isEmpty && _laporan.isNotEmpty) {
       filtered = _laporan.take(5).toList(); // Show first 5 reports as fallback
-      print("Showing first ${filtered.length} reports as fallback.");
     }
+
+    // Count unverified reports for limiting new submissions
+    int unverifiedCount = filtered
+        .where(
+            (report) => report.status == null || report.status == 'unverified')
+        .length;
 
     setState(() {
       _userLaporan = filtered;
@@ -221,18 +199,15 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
       _dalamProses =
           _userLaporan.where((item) => item.status == 'verified').length;
       _selesai = _userLaporan.where((item) => item.status == 'finished').length;
+      _unverifiedReportsCount = unverifiedCount;
 
-      // Add debug info to show in the UI
       _error = filtered.isEmpty
-          ? "No reports found for user $_currentUserName. Showing sample data instead."
+          ? "Tidak ada laporan ditemukan untuk pengguna $_currentUserName."
           : null;
     });
-
-    print(
-        'Filtered ${_laporan.length} reports down to ${_userLaporan.length} for user $_currentUserName');
   }
 
-  // Dummy data for testing when API is not available
+  // Load dummy data for testing when API is not available
   void _loadDummyData() {
     // Filter to only show current user's reports
     _filterUserLaporan();
@@ -252,45 +227,15 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
       // Attempt to fetch real data from API
       try {
         // Fetch categories
-        print("Attempting to fetch categories from API...");
         final categoriesResponse = await _apiService.getCategories();
-        print(
-            "Categories API response received: ${categoriesResponse.length} items");
-
         if (categoriesResponse.isNotEmpty) {
           _categories = categoriesResponse;
-          print("Categories loaded successfully");
         }
 
         // Fetch laporan
-        print("Attempting to fetch laporan from API...");
         final laporanResponse = await _apiService.getLaporan();
-        print("Laporan API response received: ${laporanResponse.length} items");
-
         if (laporanResponse.isNotEmpty) {
           _laporan = laporanResponse;
-
-          // Print unique users in the response for debugging
-          Set<String> uniqueUsers = Set<String>();
-          _laporan.forEach((report) {
-            // Only add non-null name values
-            if (report.namaPelapor != null) {
-              uniqueUsers.add(report.namaPelapor!);
-            }
-          });
-
-          print("Unique users in API response: ${uniqueUsers.join(', ')}");
-
-          // Print unique ni_pelapor values
-          Set<String> uniqueNims = Set<String>();
-          _laporan.forEach((report) {
-            if (report.niPelapor != null && report.niPelapor!.isNotEmpty) {
-              uniqueNims.add(report.niPelapor!);
-            }
-          });
-
-          print("Unique ni_pelapor values: ${uniqueNims.join(', ')}");
-
           // Filter to only show current user's reports
           _filterUserLaporan();
         }
@@ -298,13 +243,11 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         setState(() {
           _loading = false;
         });
-        print("Data loaded from API successfully");
       } catch (e, stackTrace) {
         print("API ERROR DETAILS: $e");
         print("STACK TRACE: $stackTrace");
 
         // If API fails, load dummy data
-        print("Loading dummy data instead");
         _loadDummyData();
       }
     } catch (e) {
@@ -497,6 +440,81 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
     });
   }
 
+  // Show add report limit warning
+  void _showLimitWarning() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: _cardColor,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10.0,
+                  offset: Offset(0.0, 10.0),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _accentColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.warning_rounded,
+                      color: _accentColor, size: 48),
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Batas Laporan Tercapai',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: _textColor,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Anda telah mencapai batas maksimal $_maxUnverifiedReports laporan yang belum diverifikasi. Mohon tunggu hingga laporan Anda diproses sebelum membuat laporan baru.',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: _subtleTextColor,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: _primaryColor,
+                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Mengerti', style: TextStyle(fontSize: 16)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -509,7 +527,6 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
             color: _textColor,
             fontWeight: FontWeight.w600,
             fontSize: 18,
-            letterSpacing: 0.2,
           ),
         ),
         iconTheme: IconThemeData(color: _primaryColor),
@@ -557,7 +574,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: _shadowColor,
               blurRadius: 15,
               offset: Offset(0, 5),
             ),
@@ -570,11 +587,10 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: _accentColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.error_outline,
-                  color: Colors.red.shade400, size: 56),
+              child: Icon(Icons.error_outline, color: _accentColor, size: 56),
             ),
             SizedBox(height: 24),
             Text(
@@ -633,6 +649,136 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // User and Time Info
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _primaryColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _borderColor),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.person, color: _primaryColor, size: 18),
+                      SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Login Sebagai',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _subtleTextColor,
+                            ),
+                          ),
+                          Text(
+                            _currentUserLogin,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 24,
+                  width: 1,
+                  color: _borderColor,
+                ),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Icon(Icons.access_time, color: _primaryColor, size: 18),
+                      SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Waktu UTC',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _subtleTextColor,
+                            ),
+                          ),
+                          Text(
+                            _currentDateTime,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 20),
+
+          // Report limit warning if needed
+          if (!_canAddNewReport)
+            Container(
+              margin: EdgeInsets.only(bottom: 20),
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _accentColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _accentColor.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _accentColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.warning_amber_rounded,
+                      color: _accentColor,
+                      size: 24,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Batas Laporan Tercapai',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: _accentColor,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Anda telah mencapai batas maksimal $_maxUnverifiedReports laporan yang belum diverifikasi. Mohon tunggu hingga laporan Anda diproses sebelum membuat laporan baru.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: _textColor,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           if (_error != null) _buildWarningBanner(),
           _buildHeader(),
           SizedBox(height: 20),
@@ -690,7 +836,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: _shadowColor,
             blurRadius: 15,
             offset: Offset(0, 5),
           ),
@@ -821,7 +967,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: _shadowColor,
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -934,7 +1080,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: _shadowColor,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -977,21 +1123,28 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
       height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryColor.withOpacity(0.2),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
-        ],
+        boxShadow: _canAddNewReport
+            ? [
+                BoxShadow(
+                  color: _primaryColor.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ]
+            : null,
       ),
       child: ElevatedButton.icon(
-        onPressed: () {
-          Navigator.pushNamed(context, '/addlaporkejadian');
-        },
-        icon: Icon(Icons.add_circle_outline, size: 20),
+        onPressed: _canAddNewReport
+            ? () {
+                Navigator.pushNamed(context, '/addlaporkejadian');
+              }
+            : () {
+                _showLimitWarning();
+              },
+        icon: Icon(_canAddNewReport ? Icons.add_circle_outline : Icons.block,
+            size: 20),
         label: Text(
-          'Tambah Laporan',
+          _canAddNewReport ? 'Tambah Laporan' : 'Batas Laporan',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -1000,9 +1153,10 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         ),
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,
-          backgroundColor: _primaryColor,
+          backgroundColor:
+              _canAddNewReport ? _primaryColor : Colors.grey.shade400,
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          elevation: 0,
+          elevation: _canAddNewReport ? 0 : 0,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -1018,7 +1172,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: _shadowColor,
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -1382,7 +1536,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: _shadowColor,
               blurRadius: 12,
               offset: Offset(0, 4),
             ),
@@ -1420,7 +1574,9 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                         _filters.values
                             .any((v) => v != null && v.toString().isNotEmpty)
                     ? 'Coba ubah filter pencarian Anda'
-                    : 'Klik tombol "Tambah Laporan" untuk membuat laporan baru',
+                    : _canAddNewReport
+                        ? 'Klik tombol "Tambah Laporan" untuk membuat laporan baru'
+                        : 'Anda telah mencapai batas laporan yang belum diverifikasi',
                 style: TextStyle(
                   fontSize: 15,
                   color: Colors.grey.shade500,
@@ -1439,7 +1595,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: _shadowColor,
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -1450,13 +1606,43 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(20.0),
-            child: Text(
-              'Daftar Laporan',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: _textColor,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Daftar Laporan',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: _textColor,
+                  ),
+                ),
+                // Display report limitation badge
+                if (!_canAddNewReport)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _accentColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: _accentColor.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded,
+                            color: _accentColor, size: 14),
+                        SizedBox(width: 4),
+                        Text(
+                          'Batas laporan tercapai',
+                          style: TextStyle(
+                            color: _accentColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
           ),
           Divider(height: 1, thickness: 1, color: _borderColor),
@@ -1473,7 +1659,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                 color: _textColor,
                 fontSize: 14,
               ),
-              headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
+              headingRowColor: MaterialStateProperty.all(_backgroundColor),
               horizontalMargin: 20,
               columnSpacing: 20,
               columns: [
@@ -1520,12 +1706,8 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                     DataCell(Text(_categories[laporan.categoryId] ??
                         'Tidak ada kategori')),
                     DataCell(Text(laporan.namaPelapor ?? '-')),
-                    DataCell(
-                      _buildStatusBadge(formattedStatus),
-                    ),
-                    DataCell(
-                      _buildViewButton(laporan),
-                    ),
+                    DataCell(_buildStatusBadge(formattedStatus)),
+                    DataCell(_buildViewButton(laporan)),
                   ],
                 );
               }).toList(),
@@ -1598,7 +1780,7 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
             SnackBar(
               content:
                   Text('Tidak dapat melihat detail, ID laporan tidak valid'),
-              backgroundColor: Colors.red.shade400,
+              backgroundColor: _accentColor,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
@@ -1647,18 +1829,17 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: _shadowColor,
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
-        // Changed to Column to stack elements vertically
         children: [
           // Info text at the top
           Center(
@@ -1670,11 +1851,11 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
               ),
             ),
           ),
-          SizedBox(height: 16), // Add spacing between text and buttons
+          SizedBox(height: 16),
 
           // Pagination buttons in the center bottom
           Row(
-            mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Previous page button
               Container(
@@ -1761,35 +1942,6 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPaginationButton({
-    required IconData icon,
-    required Function()? onPressed,
-  }) {
-    final bool isEnabled = onPressed != null;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isEnabled ? _accentColor : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color:
-              isEnabled ? _primaryColor.withOpacity(0.3) : Colors.grey.shade300,
-        ),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 20),
-        color: isEnabled ? _primaryColor : Colors.grey.shade400,
-        splashRadius: 24,
-        tooltip: isEnabled
-            ? (icon == Icons.chevron_left
-                ? 'Halaman Sebelumnya'
-                : 'Halaman Berikutnya')
-            : null,
       ),
     );
   }
