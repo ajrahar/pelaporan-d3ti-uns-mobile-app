@@ -154,255 +154,304 @@ class _SidebarDosenState extends State<SidebarDosen> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.indigo[800]!,
-              Colors.indigo[700]!,
-              Colors.indigo[600]!,
-            ],
-          ),
-        ),
-        child: Column(
-          children: [
-            // App Title Section
-            Container(
-              padding: EdgeInsets.only(top: 50, bottom: 20),
-              width: double.infinity,
-              color: Colors.indigo[900],
-              child: Column(
-                children: [
-                  // App logo or icon
-                  Container(
-                    height: 70,
-                    width: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/images/d3ti_logo.png',
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  // App title text
-                  Text(
-                    "Pelaporan D3TI UNS",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
+      backgroundColor: Colors.white,
+      elevation: 2,
+      child: Column(
+        children: [
+          // App Title Section with logo
+          Container(
+            padding: const EdgeInsets.only(top: 50, bottom: 20),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-
-            // User info section
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-              width: double.infinity,
-              color: Colors.indigo.withOpacity(0.8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 25,
-                        child: Icon(
-                          Icons.person,
-                          size: 30,
-                          color: Colors.indigo[800],
-                        ),
-                      ),
-                      SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _isLoading ? "Loading..." : _userName,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 3),
-                            Text(
-                              _isLoading ? "Loading..." : _userNik ?? "NIK: -",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
-                              _userEmail ??
-                                  (_userRole != null ? "Role: $_userRole" : ""),
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 12,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
+            child: Column(
+              children: [
+                // App logo
+                Container(
+                  height: 80,
+                  width: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
+                    border: Border.all(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 2,
+                    ),
                   ),
-                ],
-              ),
-            ),
-
-            // Menu items
-            Expanded(
-              child: Container(
-                color: Colors.white,
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    _buildMenuItem(
-                      icon: Icons.dashboard,
-                      title: 'Dashboard',
-                      onTap: () {
-                        Navigator.pushReplacementNamed(context, '/homedosen');
-                      },
-                      gradientColors: [
-                        Colors.indigo[400]!,
-                        Colors.indigo[600]!
-                      ],
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/d3ti_logo.png',
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.contain,
                     ),
-                    _buildMenuItem(
-                      icon: Icons.assignment,
-                      title: 'Laporan Kejadian',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/laporpkdosen');
-                      },
-                      gradientColors: [Colors.amber[600]!, Colors.amber[800]!],
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.people,
-                      title: 'Laporan Kekerasan Seksual',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/laporksdosen');
-                      },
-                      gradientColors: [Colors.red[400]!, Colors.red[600]!],
-                    ),
-                    Divider(thickness: 1),
-                    _buildMenuItem(
-                      icon: Icons.logout,
-                      title: 'Logout',
-                      onTap: () async {
-                        try {
-                          await TokenManager.clearToken();
-                          Navigator.pushReplacementNamed(
-                              context, '/logindosen');
-                        } catch (e) {
-                          print('Error during logout: $e');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error during logout: $e')),
-                          );
-                        }
-                      },
-                      gradientColors: [Colors.grey[400]!, Colors.grey[700]!],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 15),
+                // App title text
+                Text(
+                  "Pelaporan D3TI",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue[800],
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  "Sekolah Vokasi",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  "Universitas Sebelas Maret",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
-
-            // Footer with version info
-            Container(
-              width: double.infinity,
-              color: Colors.indigo[900],
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                'v1.0.0',
-                style: TextStyle(color: Colors.white.withOpacity(0.6)),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Custom menu item widget with gradient background
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required Function() onTap,
-    required List<Color> gradientColors,
-  }) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: Offset(0, 2),
           ),
-        ],
-      ),
-      child: Material(
-        borderRadius: BorderRadius.circular(10),
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+
+          // User info section with elegant design
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+            width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: gradientColors,
+              color: Colors.grey[50],
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey.withOpacity(0.2),
+                  width: 1,
+                ),
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 25,
+                    child: Icon(
+                      Icons.person,
+                      size: 30,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _isLoading ? "Loading..." : _userName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        _isLoading ? "Loading..." : _userNik ?? "NIK: -",
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        _userEmail ??
+                            (_userRole != null ? "Role: $_userRole" : ""),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Menu items - Vertical layout
+          Expanded(
+            child: Container(
+              color: Colors.white,
+              child: ListView(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                children: [
+                  _buildMenuItem(
+                    icon: Icons.dashboard_outlined,
+                    title: 'Dashboard',
+                    onTap: () {
+                      Navigator.pushReplacementNamed(context, '/homedosen');
+                    },
+                    iconColor: Colors.blue[700]!,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildMenuItem(
+                    icon: Icons.assignment_outlined,
+                    title: 'Laporan Kejadian',
+                    onTap: () {
+                      Navigator.pushNamed(context, '/laporpkdosen');
+                    },
+                    iconColor: Colors.amber[700]!,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildMenuItem(
+                    icon: Icons.people_outlined,
+                    title: 'Laporan\nKekerasan Seksual', // Split into two lines
+                    onTap: () {
+                      Navigator.pushNamed(context, '/laporksdosen');
+                    },
+                    iconColor: Colors.red[700]!,
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(
+                    thickness: 1,
+                    color: Color(0xFFEEEEEE),
+                    height: 24,
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.logout,
+                    title: 'Logout',
+                    onTap: () async {
+                      try {
+                        await TokenManager.clearToken();
+                        Navigator.pushReplacementNamed(context, '/logindosen');
+                      } catch (e) {
+                        print('Error during logout: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error during logout: $e')),
+                        );
+                      }
+                    },
+                    iconColor: Colors.grey[700]!,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Footer with version info
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 0,
+                  blurRadius: 5,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+            ),
+            child: Text(
+              'v1.0.0',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Vertical menu item with elegant design
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required Function() onTap,
+    required Color iconColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     icon,
-                    color: Colors.white,
+                    color: iconColor,
                     size: 22,
                   ),
                 ),
-                SizedBox(width: 15),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                    maxLines: 2, // Allow up to 2 lines of text
                   ),
                 ),
               ],

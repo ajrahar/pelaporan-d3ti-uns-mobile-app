@@ -336,7 +336,7 @@ class _SidebarState extends State<Sidebar> {
           title: 'Laporan Kejadian',
           onTap: () => _navigateTo(context, '/reports'),
           isActive: _isActivePage('/reports'),
-          iconColor: Colors.green.shade600,
+          iconColor: Colors.blue.shade600,
           isCompact: isCompact,
         ),
         _buildMenuItem(

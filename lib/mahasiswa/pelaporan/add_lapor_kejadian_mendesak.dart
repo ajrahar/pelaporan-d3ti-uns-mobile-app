@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -21,9 +22,16 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
   // Form key for validation
   final _formKey = GlobalKey<FormState>();
 
+  // Timer for updating current time
+  Timer? _timer;
+
   // Notifications
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  // User information
+  String _currentUserName = '';
+  String _currentUserNIM = '';
 
   // Form data
   final TextEditingController _judulController = TextEditingController();
@@ -67,6 +75,42 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
     _fetchCategories();
     _loadUserData();
     _initializeNotifications();
+
+    // Initialize with current Indonesia time
+    _updateIndonesiaTime();
+
+    // Set a timer to update the time every second
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _updateIndonesiaTime();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _judulController.dispose();
+    _tanggalKejadianController.dispose();
+    _lampiranLinkController.dispose();
+    super.dispose();
+  }
+
+  // Update the current time in Indonesia timezone (UTC+7)
+  void _updateIndonesiaTime() {
+    // Get current time in UTC
+    final now = DateTime.now().toUtc();
+
+    // Convert to Indonesia timezone (UTC+7)
+    final jakartaTime = now.add(Duration(hours: 7));
+
+    // Format time for display and API (YYYY-MM-DD HH:MM:SS)
+    final formattedTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(jakartaTime);
+
+    // Update controller if it's different from the current value
+    if (_tanggalKejadianController.text != formattedTime) {
+      setState(() {
+        _tanggalKejadianController.text = formattedTime;
+      });
+    }
   }
 
   Future<void> _initializeNotifications() async {
@@ -152,8 +196,26 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
   }
 
   Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    // You would implement your own decryption mechanism here
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Get username from shared preferences
+      final username = prefs.getString('user_name');
+      final nim = prefs.getString('user_nim');
+
+      setState(() {
+        _currentUserName = username ?? 'Unknown User';
+        _currentUserNIM = nim ?? '';
+      });
+
+      print('Loaded user data: $_currentUserName, NIM: $_currentUserNIM');
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        _currentUserName = 'Unknown User';
+        _currentUserNIM = '';
+      });
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -213,65 +275,6 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
     setState(() {
       _selectedImages.removeAt(index);
     });
-  }
-
-  Future<void> _selectDateTime() async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _primaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: _textColor,
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-        builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: _primaryColor,
-                onPrimary: Colors.white,
-                surface: Colors.white,
-                onSurface: _textColor,
-              ),
-              dialogBackgroundColor: Colors.white,
-            ),
-            child: child!,
-          );
-        },
-      );
-
-      if (pickedTime != null) {
-        final DateTime combinedDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-
-        setState(() {
-          _tanggalKejadianController.text =
-              DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
-        });
-      }
-    }
   }
 
   bool _validateForm() {
@@ -336,6 +339,10 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
       request.fields['category_id'] = _selectedCategoryId.toString();
       request.fields['deskripsi'] = '-';
       request.fields['tanggal_kejadian'] = _tanggalKejadianController.text;
+
+      // User data
+      request.fields['nama_pelapor'] = _currentUserName;
+      request.fields['ni_pelapor'] = _currentUserNIM;
       request.fields['profesi'] = 'Mahasiswa';
       request.fields['jenis_kelamin'] = 'laki-laki';
       request.fields['umur_pelapor'] = '20-40';
@@ -662,6 +669,12 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                       ),
                     ),
 
+                    // User Information Field
+                    _buildUserInfoField(),
+
+                    // Real-time Indonesia Time
+                    _buildCurrentTimeField(),
+
                     // Lampiran Foto
                     _buildFormField(
                       label: 'Lampiran Foto',
@@ -743,27 +756,6 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-
-                    // Tanggal & Waktu Kejadian
-                    _buildFormField(
-                      label: 'Tanggal & Waktu Kejadian',
-                      isRequired: true,
-                      child: GestureDetector(
-                        onTap: _selectDateTime,
-                        child: AbsorbPointer(
-                          child: TextFormField(
-                            controller: _tanggalKejadianController,
-                            decoration: _inputDecoration(
-                              hintText: 'Pilih tanggal dan waktu',
-                              errorText: _errors['tanggal_kejadian']?.first,
-                              prefixIcon: Icons.calendar_month_outlined,
-                              suffixIcon: Icons.arrow_drop_down,
-                            ),
-                            style: TextStyle(fontSize: 15, color: _textColor),
-                          ),
                         ),
                       ),
                     ),
@@ -980,6 +972,106 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                 ),
               ),
             ),
+    );
+  }
+
+  // Widget for displaying the Indonesia time (constantly updating)
+  Widget _buildCurrentTimeField() {
+    return _buildFormField(
+      label: 'Waktu Kejadian (WIB)',
+      isRequired: true,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: _primaryColor.withOpacity(0.5)),
+          color: _primaryColor.withOpacity(0.05),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Icon(Icons.access_time, color: _primaryColor, size: 20),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _tanggalKejadianController.text,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: _textColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.sync, color: _primaryColor, size: 14),
+                  SizedBox(width: 4),
+                  Text(
+                    'Real-time',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget for displaying the current user
+  Widget _buildUserInfoField() {
+    return _buildFormField(
+      label: 'Pelapor',
+      isRequired: true,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: _borderColor),
+          color: _disabledColor,
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Icon(Icons.person, color: _primaryColor, size: 20),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _currentUserName,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: _textColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (_currentUserNIM.isNotEmpty)
+                    Text(
+                      _currentUserNIM,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _subTextColor,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Icon(Icons.verified_user,
+                color: _primaryColor.withOpacity(0.7), size: 16),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1237,13 +1329,5 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
       ),
       filled: false,
     );
-  }
-
-  @override
-  void dispose() {
-    _judulController.dispose();
-    _tanggalKejadianController.dispose();
-    _lampiranLinkController.dispose();
-    super.dispose();
   }
 }

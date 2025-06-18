@@ -48,6 +48,12 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
   int _totalLaporanKekerasan = 0;
   bool _isLoadingKekerasanReports = true;
 
+  // Limitation tracking
+  int _userPendingReportsCount = 0;
+  int _kekerasanReportsTodayCount = 0;
+  bool _canSubmitRegularReport = true;
+  bool _canSubmitKekerasanReport = true;
+
   @override
   void initState() {
     super.initState();
@@ -187,9 +193,24 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
         print(
             'After sorting kekerasan - first item date: ${laporanResponse.first.createdAt}');
 
+        // Count how many kekerasan reports were made today
+        final today = DateTime.now();
+        final startOfDay = DateTime(today.year, today.month, today.day);
+
+        int kekerasanReportsToday = 0;
+        for (var report in laporanResponse) {
+          if (report.createdAt != null &&
+              report.createdAt!.isAfter(startOfDay) &&
+              report.namaPelapor == _currentUserName) {
+            kekerasanReportsToday++;
+          }
+        }
+
         setState(() {
           _laporanKekerasan = laporanResponse;
           _totalLaporanKekerasan = laporanResponse.length;
+          _kekerasanReportsTodayCount = kekerasanReportsToday;
+          _canSubmitKekerasanReport = kekerasanReportsToday < 5;
         });
       }
 
@@ -232,8 +253,6 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
     });
   }
 
-  // In _HomeScreenDosenState class, update or add this method:
-
   void _filterUserReports() {
     if (_currentUserName == null && _currentUserNip == null) {
       setState(() {
@@ -269,9 +288,21 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
       return matchesByNip || matchesByName;
     }).toList();
 
+    // Count unverified reports by this user
+    int pendingReportsCount = 0;
+    for (var report in filteredReports) {
+      if (report.status == 'unverified') {
+        pendingReportsCount++;
+      }
+    }
+
     setState(() {
       _userMatchingReports = filteredReports;
       _countMatchingReports = filteredReports.length;
+      _userPendingReportsCount = pendingReportsCount;
+
+      // Check if the user can submit new reports (limit to 3 pending reports)
+      _canSubmitRegularReport = pendingReportsCount < 3;
 
       // Update the statistics based on the filtered reports for the current user
       _calculateStats(_userMatchingReports);
@@ -279,23 +310,34 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
 
     print(
         'Filtered ${_laporan.length} reports down to ${_userMatchingReports.length} for user $_currentUserName');
+    print(
+        'User has $_userPendingReportsCount pending reports - can submit new report: $_canSubmitRegularReport');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Dashboard Dosen'),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        title: Text(
+          'Dashboard Dosen',
+          style: TextStyle(
+            color: Colors.grey[800],
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.menu),
+          icon: Icon(Icons.menu, color: Colors.grey[800]),
           onPressed: () {
             _scaffoldKey.currentState?.openDrawer();
           },
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, color: Colors.grey[800]),
             onPressed: () {
               _fetchReports();
               _loadUserData();
@@ -327,9 +369,19 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               const SizedBox(height: 24),
 
               _buildUrgentReportButton(),
+              const SizedBox(height: 16),
+              _canSubmitRegularReport
+                  ? Container()
+                  : _buildLimitWarning(
+                      "Anda telah memiliki 3 laporan yang belum diverifikasi"),
               const SizedBox(height: 24),
 
               _buildSexualHarassmentReportButton(),
+              const SizedBox(height: 16),
+              _canSubmitKekerasanReport
+                  ? Container()
+                  : _buildLimitWarning(
+                      "Anda telah mencapai batas 5 laporan kekerasan seksual hari ini"),
               const SizedBox(height: 24),
 
               // Statistics section
@@ -340,7 +392,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               _buildPendingVerificationSection(),
               const SizedBox(height: 24),
 
-              // Kekerasan sexual reports section (if professor has access)
+              // Kekerasan sexual reports section
               _buildKekerasanReportsSection(),
             ],
           ),
@@ -349,23 +401,60 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
     );
   }
 
+  Widget _buildLimitWarning(String message) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.red[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red[200]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: Colors.red[400], size: 18),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Colors.red[700],
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWelcomeCard() {
     return Card(
-      elevation: 4,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.indigo,
-                  child: Icon(Icons.school, color: Colors.white, size: 30),
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.blue[50],
+                    border: Border.all(color: Colors.blue.shade100, width: 2),
+                  ),
+                  child: Icon(
+                    Icons.school_rounded,
+                    color: Colors.blue[700],
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -376,27 +465,50 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                         _isLoadingUser
                             ? "Loading..."
                             : "Selamat datang, $_userName",
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
                         _userRole != null
                             ? "Role: $_userRole"
                             : "Dashboard Pelaporan D3TI UNS",
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey[600],
-                            ),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Hari ini: ${DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.now())}',
-              style: TextStyle(color: Colors.grey[700]),
+            const SizedBox(height: 20),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today_rounded,
+                      size: 18, color: Colors.grey[700]),
+                  const SizedBox(width: 8),
+                  Text(
+                    DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
+                        .format(DateTime.now()),
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -406,24 +518,38 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
 
   Widget _buildUrgentReportButton() {
     return Card(
-      elevation: 4,
-      color: Colors.purple.shade50,
+      elevation: 0,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.purple.shade200, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+            color: _canSubmitRegularReport
+                ? Colors.purple.shade200
+                : Colors.grey.shade300,
+            width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.warning_rounded,
-                  color: Colors.purple,
-                  size: 30,
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _canSubmitRegularReport
+                        ? Colors.purple.shade50
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.warning_rounded,
+                    color:
+                        _canSubmitRegularReport ? Colors.purple : Colors.grey,
+                    size: 24,
+                  ),
                 ),
-                SizedBox(width: 12),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,14 +559,19 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: _canSubmitRegularReport
+                              ? Colors.grey[800]
+                              : Colors.grey,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 6),
                       Text(
                         'Segera laporkan kejadian darurat dan mendesak yang membutuhkan penanganan cepat',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[700],
+                          color: _canSubmitRegularReport
+                              ? Colors.grey[700]
+                              : Colors.grey,
                         ),
                       ),
                     ],
@@ -448,27 +579,34 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/addlaporpkmendesakdosen');
-                },
+                onPressed: _canSubmitRegularReport
+                    ? () {
+                        Navigator.pushNamed(
+                            context, '/addlaporpkmendesakdosen');
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: Colors.purple,
                   foregroundColor: Colors.white,
-                  elevation: 3,
+                  elevation: _canSubmitRegularReport ? 0 : 0,
+                  disabledBackgroundColor: Colors.grey[300],
+                  disabledForegroundColor: Colors.grey[500],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                child: const Text(
+                child: Text(
                   'Tambah Laporan Mendesak',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
             ),
@@ -481,24 +619,37 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
   // Create a method for the sexual harassment report button
   Widget _buildSexualHarassmentReportButton() {
     return Card(
-      elevation: 4,
-      color: Colors.red.shade50,
+      elevation: 0,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.red.shade200, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+            color: _canSubmitKekerasanReport
+                ? Colors.red.shade200
+                : Colors.grey.shade300,
+            width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.privacy_tip_rounded,
-                  color: Colors.red,
-                  size: 30,
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _canSubmitKekerasanReport
+                        ? Colors.red.shade50
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.privacy_tip_rounded,
+                    color: _canSubmitKekerasanReport ? Colors.red : Colors.grey,
+                    size: 24,
+                  ),
                 ),
-                SizedBox(width: 12),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -508,14 +659,19 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: _canSubmitKekerasanReport
+                              ? Colors.grey[800]
+                              : Colors.grey,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 6),
                       Text(
                         'Laporkan dengan aman dan privasi terjaga. Semua laporan ditangani dengan kerahasiaan penuh',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[700],
+                          color: _canSubmitKekerasanReport
+                              ? Colors.grey[700]
+                              : Colors.grey,
                         ),
                       ),
                     ],
@@ -523,27 +679,33 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/addlaporksdosen');
-                },
+                onPressed: _canSubmitKekerasanReport
+                    ? () {
+                        Navigator.pushNamed(context, '/addlaporksdosen');
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
-                  elevation: 3,
+                  elevation: _canSubmitKekerasanReport ? 0 : 0,
+                  disabledBackgroundColor: Colors.grey[300],
+                  disabledForegroundColor: Colors.grey[500],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                child: const Text(
+                child: Text(
                   'Laporkan Kekerasan Seksual',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
             ),
@@ -556,23 +718,38 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
   Widget _buildDashboardStats() {
     if (_isLoadingReports) {
       return Center(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+          strokeWidth: 3,
+        ),
       );
     }
 
     if (_error != null) {
       return Card(
-        elevation: 2,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.red.shade200),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
               Icon(Icons.error_outline, color: Colors.red, size: 48),
               SizedBox(height: 16),
               Text(_error!, textAlign: TextAlign.center),
-              SizedBox(height: 16),
+              SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _fetchReports,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
                 child: Text('Coba Lagi'),
               ),
             ],
@@ -591,17 +768,19 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
             ),
           ),
         ),
         // Overview card
         Card(
-          elevation: 3,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.grey.shade200),
           ),
           child: Container(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(20.0),
             width: double.infinity,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,12 +790,12 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                     Container(
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.indigo.withOpacity(0.1),
+                        color: Colors.blue.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        Icons.assignment,
-                        color: Colors.indigo,
+                        Icons.assessment_rounded,
+                        color: Colors.blue[700],
                         size: 28,
                       ),
                     ),
@@ -629,16 +808,17 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                             'Total Semua Laporan',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
                             ),
                           ),
                           SizedBox(height: 8),
                           Text(
                             '$_totalLaporan Laporan',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: Colors.indigo,
+                              color: Colors.blue[700],
                             ),
                           ),
                         ],
@@ -660,26 +840,26 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
           physics: NeverScrollableScrollPhysics(),
           children: [
             _buildStatCard(
-              icon: Icons.hourglass_empty,
-              iconColor: Colors.amber,
+              icon: Icons.hourglass_empty_rounded,
+              iconColor: Colors.amber[700]!,
               title: 'Perlu Verifikasi',
               count: _belumDiverifikasi,
             ),
             _buildStatCard(
-              icon: Icons.pending_actions,
-              iconColor: Colors.orange,
+              icon: Icons.pending_actions_rounded,
+              iconColor: Colors.orange[700]!,
               title: 'Dalam Proses',
               count: _dalamProses,
             ),
             _buildStatCard(
-              icon: Icons.check_circle,
-              iconColor: Colors.green,
+              icon: Icons.check_circle_outline_rounded,
+              iconColor: Colors.green[700]!,
               title: 'Selesai',
               count: _selesai,
             ),
             _buildStatCard(
-              icon: Icons.cancel,
-              iconColor: Colors.red,
+              icon: Icons.cancel_outlined,
+              iconColor: Colors.red[700]!,
               title: 'Ditolak',
               count: _ditolak,
             ),
@@ -688,12 +868,14 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
         SizedBox(height: 16),
         // Kekerasan sexual reports stat card
         Card(
-          elevation: 3,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.red.shade200),
           ),
+          color: Colors.red[50],
           child: Container(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(20.0),
             width: double.infinity,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -703,12 +885,20 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                     Container(
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.2),
+                            blurRadius: 4,
+                            spreadRadius: 0,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Icon(
                         Icons.privacy_tip_rounded,
-                        color: Colors.red,
+                        color: Colors.red[700],
                         size: 28,
                       ),
                     ),
@@ -721,17 +911,40 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                             'Laporan Kekerasan Seksual',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red[900],
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            'Total: $_totalLaporanKekerasan',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                'Total: $_totalLaporanKekerasan',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red[700],
+                                ),
+                              ),
+                              SizedBox(width: 16),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.red[200]!),
+                                ),
+                                child: Text(
+                                  'Hari ini: $_kekerasanReportsTodayCount/5',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.red[700],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -753,9 +966,10 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
     required int count,
   }) {
     return Card(
-      elevation: 3,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
       ),
       child: Container(
         padding: EdgeInsets.all(16.0),
@@ -779,8 +993,9 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
             Text(
               count.toString(),
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 32,
                 fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
               ),
             ),
             SizedBox(height: 8),
@@ -788,7 +1003,8 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               title,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[600],
               ),
               textAlign: TextAlign.center,
             ),
@@ -803,20 +1019,40 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
     final userReports = _userMatchingReports.take(3).toList();
 
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Laporan Kejadian',
-              style: Theme.of(context).textTheme.titleLarge,
+            Row(
+              children: [
+                Icon(
+                  Icons.assignment_rounded,
+                  color: Colors.blue[700],
+                  size: 24,
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Laporan Kejadian',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             _isLoadingReports
-                ? Center(child: CircularProgressIndicator())
+                ? Center(
+                    child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                  ))
                 : userReports.isNotEmpty
                     ? Column(
                         children: userReports
@@ -825,44 +1061,49 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                       )
                     : Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24.0),
+                          padding: const EdgeInsets.symmetric(vertical: 30.0),
                           child: Column(
                             children: [
                               Icon(
-                                Icons.info_outline,
+                                Icons.folder_open_rounded,
                                 size: 48,
-                                color: Colors.blue,
+                                color: Colors.grey[400],
                               ),
-                              SizedBox(height: 12),
+                              SizedBox(height: 16),
                               Text(
                                 'Belum ada laporan yang Anda buat',
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pushNamed(context, '/my-reports');
                 },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  elevation: 2,
-                ),
-                child: const Text(
+                icon: Icon(Icons.visibility_rounded, size: 18),
+                label: Text(
                   'Lihat Semua Laporan Anda',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.3,
+                    fontWeight: FontWeight.w600,
                   ),
-                  textAlign: TextAlign.center,
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: Colors.blue[700],
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
@@ -892,8 +1133,40 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
       }
     }
 
+    // Determine status color and text
+    Color statusColor;
+    String statusText;
+    IconData statusIcon;
+
+    switch (report.status) {
+      case 'unverified':
+        statusColor = Colors.amber[700]!;
+        statusText = 'Perlu Verifikasi';
+        statusIcon = Icons.hourglass_empty_rounded;
+        break;
+      case 'verified':
+        statusColor = Colors.orange[700]!;
+        statusText = 'Dalam Proses';
+        statusIcon = Icons.pending_actions_rounded;
+        break;
+      case 'finished':
+        statusColor = Colors.green[700]!;
+        statusText = 'Selesai';
+        statusIcon = Icons.check_circle_outline_rounded;
+        break;
+      case 'rejected':
+        statusColor = Colors.red[700]!;
+        statusText = 'Ditolak';
+        statusIcon = Icons.cancel_outlined;
+        break;
+      default:
+        statusColor = Colors.grey[700]!;
+        statusText = 'Status Tidak Diketahui';
+        statusIcon = Icons.help_outline_rounded;
+    }
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
         onTap: () {
           if (report.id != null) {
@@ -905,30 +1178,31 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
             );
           }
         },
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: EdgeInsets.all(12),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade200),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  Icons.hourglass_empty,
-                  color: Colors.amber,
+                  statusIcon,
+                  color: statusColor,
                   size: 24,
                 ),
               ),
-              SizedBox(width: 12),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -938,48 +1212,41 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
+                        color: Colors.grey[800],
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 4),
+                    SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.access_time,
-                            size: 12, color: Colors.grey[600]),
+                        Icon(Icons.access_time_rounded,
+                            size: 14, color: Colors.grey[600]),
                         SizedBox(width: 4),
                         Text(
                           formattedDate,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             color: Colors.grey[600],
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Pelapor: ${report.namaPelapor ?? 'Unknown'}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[700],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                     SizedBox(height: 8),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.1),
+                        color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: statusColor.withOpacity(0.3)),
                       ),
                       child: Text(
-                        'Perlu Verifikasi',
+                        statusText,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.amber[800],
-                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -987,9 +1254,9 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                 ),
               ),
               Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: Colors.grey,
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: Colors.grey[400],
               ),
             ],
           ),
@@ -1000,36 +1267,42 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
 
   Widget _buildKekerasanReportsSection() {
     return Card(
-      elevation: 4,
-      color: Colors.red[50],
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.red.shade200),
+      ),
+      color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Icon(Icons.privacy_tip_outlined,
-                      color: Colors.red, size: 24),
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.privacy_tip_rounded,
+                      color: Colors.red[700], size: 22),
                 ),
-                SizedBox(width: 8),
+                SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Laporan Kekerasan Seksual',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red[800],
+                      color: Colors.red[900],
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             _isLoadingKekerasanReports
                 ? Center(child: CircularProgressIndicator(color: Colors.red))
                 : _laporanKekerasan.isNotEmpty
@@ -1041,47 +1314,49 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                       )
                     : Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24.0),
+                          padding: const EdgeInsets.symmetric(vertical: 30.0),
                           child: Column(
                             children: [
                               Icon(
-                                Icons.folder_open,
+                                Icons.folder_open_rounded,
                                 size: 48,
-                                color: Colors.red[300],
+                                color: Colors.red[200],
                               ),
-                              SizedBox(height: 12),
+                              SizedBox(height: 16),
                               Text(
                                 'Tidak ada laporan kekerasan seksual',
                                 style: TextStyle(
                                   color: Colors.red[400],
-                                  fontStyle: FontStyle.italic,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pushNamed(context, '/violence-reports');
                 },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  elevation: 2,
-                ),
-                child: const Text(
+                icon: Icon(Icons.visibility_rounded, size: 18),
+                label: Text(
                   'Lihat Semua Laporan Kekerasan Seksual',
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.3,
+                    fontWeight: FontWeight.w600,
                   ),
-                  textAlign: TextAlign.center,
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: Colors.red[700],
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
@@ -1112,7 +1387,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
         onTap: () {
           if (report.id != null) {
@@ -1124,31 +1399,31 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
             );
           }
         },
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: EdgeInsets.all(12),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
+            border: Border.all(color: Colors.red.shade100),
+            borderRadius: BorderRadius.circular(12),
             color: Colors.white,
-            border: Border.all(color: Colors.red.shade200),
-            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  Icons.privacy_tip,
-                  color: Colors.red,
+                  Icons.privacy_tip_rounded,
+                  color: Colors.red[700],
                   size: 24,
                 ),
               ),
-              SizedBox(width: 12),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1158,20 +1433,21 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
+                        color: Colors.grey[800],
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 4),
+                    SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.access_time,
-                            size: 12, color: Colors.grey[600]),
+                        Icon(Icons.access_time_rounded,
+                            size: 14, color: Colors.grey[600]),
                         SizedBox(width: 4),
                         Text(
                           formattedDate,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             color: Colors.grey[600],
                           ),
                         ),
@@ -1179,17 +1455,19 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                     ),
                     SizedBox(height: 8),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.red.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.withOpacity(0.3)),
                       ),
                       child: Text(
                         "Perlu Penanganan",
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
+                          color: Colors.red[700],
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -1197,9 +1475,9 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                 ),
               ),
               Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: Colors.grey,
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: Colors.grey[400],
               ),
             ],
           ),
