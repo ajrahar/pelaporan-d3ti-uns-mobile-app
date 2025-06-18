@@ -176,6 +176,20 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
       initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -192,6 +206,20 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -364,7 +392,11 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Formulir berisi kesalahan. Silakan periksa kembali.'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(20),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
       return;
@@ -517,8 +549,31 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text('Berhasil!'),
-              content: Text('Laporan berhasil disimpan dan akan diproses.'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.green,
+                      size: 24,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Text('Berhasil!'),
+                ],
+              ),
+              content: Text(
+                'Laporan berhasil disimpan dan akan diproses.',
+                style: TextStyle(fontSize: 16),
+              ),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -526,6 +581,10 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
                     Navigator.pop(context); // Kembali ke halaman sebelumnya
                   },
                   child: Text('OK'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.blue,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  ),
                 ),
               ],
             ),
@@ -536,7 +595,11 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
             SnackBar(
               content:
                   Text(jsonResponse['message'] ?? 'Gagal menyimpan laporan'),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.red.shade700,
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.all(20),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
           );
         }
@@ -545,7 +608,11 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal menyimpan laporan: ${response.statusCode}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(20),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
@@ -558,7 +625,11 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(20),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -567,610 +638,723 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Tambah Laporan Kejadian'),
+        title: Text(
+          'Tambah Laporan Kejadian',
+          style: TextStyle(
+            color: Colors.grey[800],
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: IconThemeData(
+          color: Colors.grey[800],
+        ),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1.0),
+          child: Container(
+            height: 1.0,
+            color: Colors.grey.shade200,
+          ),
+        ),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    strokeWidth: 3,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'Memproses...',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : Form(
               key: _formKey,
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // SECTION 1: DETAIL LAPORAN
                     _buildSectionHeader('Detail Laporan'),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
-                    _buildLabel('Judul Laporan', isRequired: true),
-                    TextFormField(
-                      controller: _judulController,
-                      decoration: InputDecoration(
-                        hintText: 'Masukkan judul laporan',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        errorText: _errors['judul'],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('Kategori', isRequired: true),
-                    _isLoadingCategories
-                        ? Center(
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : _categoryError != null
-                            ? Text(_categoryError!,
-                                style: TextStyle(color: Colors.red))
-                            : DropdownButtonFormField<int>(
-                                value: _selectedKategori,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  errorText: _errors['category_id'],
-                                ),
-                                items: filteredKategori.map((kategori) {
-                                  return DropdownMenuItem<int>(
-                                    value: kategori['id'],
-                                    child: Text(kategori['nama']),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedKategori = value;
-                                  });
-                                },
-                                hint: Text('Pilih kategori'),
-                              ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('Lampiran Link', isRequired: false),
-                    TextFormField(
-                      controller: _lampiranLinkController,
-                      decoration: InputDecoration(
-                        hintText: 'https://example.com',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        errorText: _errors['lampiran_link'],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('Deskripsi', isRequired: true),
-                    TextFormField(
-                      controller: _deskripsiController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Berikan deskripsi atau kronologi kejadian',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        errorText: _errors['deskripsi'],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('Tanggal & Waktu Kejadian', isRequired: true),
-                    InkWell(
-                      onTap: () => _selectDate(context),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                    _buildFormCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabel('Judul Laporan', isRequired: true),
+                          SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _judulController,
+                            hint: 'Masukkan judul laporan',
+                            errorText: _errors['judul'],
                           ),
-                          errorText: _errors['tanggal_kejadian'],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _selectedDate == null
-                                  ? 'Pilih Tanggal & Waktu'
-                                  : (_selectedTime == null
-                                      ? DateFormat('dd MMM yyyy')
-                                          .format(_selectedDate!)
-                                      : '${DateFormat('dd MMM yyyy').format(_selectedDate!)} ${_selectedTime!.format(context)}'),
-                              style: TextStyle(
-                                color: _selectedDate == null
-                                    ? Colors.grey
-                                    : Colors.black,
-                              ),
-                            ),
-                            Icon(Icons.calendar_today, color: Colors.grey),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('Lampiran Foto', isRequired: true),
-
-                    // Upload buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _pickImage(ImageSource.camera),
-                            icon: Icon(Icons.camera_alt),
-                            label: Text('Kamera'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _pickImage(ImageSource.gallery),
-                            icon: Icon(Icons.photo_library),
-                            label: Text('Galeri'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.teal,
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    if (_errors['image_path'] != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          _errors['image_path'],
-                          style: TextStyle(color: Colors.red, fontSize: 12),
-                        ),
-                      ),
-
-                    // Image previews
-                    if (_imageFiles.isNotEmpty)
-                      Container(
-                        margin: EdgeInsets.only(top: 16),
-                        height: 120,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _imageFiles.length,
-                          itemBuilder: (context, index) {
-                            return Stack(
-                              children: [
-                                Container(
-                                  margin: EdgeInsets.only(right: 8),
-                                  width: 120,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(7),
-                                    child: Image.file(
-                                      _imageFiles[index],
-                                      fit: BoxFit.cover,
+                          SizedBox(height: 20),
+                          _buildLabel('Kategori', isRequired: true),
+                          SizedBox(height: 8),
+                          _isLoadingCategories
+                              ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.blue),
                                     ),
                                   ),
-                                ),
-                                Positioned(
-                                  right: 10,
-                                  top: 2,
-                                  child: InkWell(
-                                    onTap: () => _removeImage(index),
-                                    child: Container(
-                                      padding: EdgeInsets.all(2),
+                                )
+                              : _categoryError != null
+                                  ? Container(
+                                      padding: EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black26,
-                                            blurRadius: 2,
+                                        color: Colors.red.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.error_outline,
+                                            color: Colors.red,
+                                            size: 18,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              _categoryError!,
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 14,
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),
-                                      child: Icon(
-                                        Icons.close,
-                                        size: 18,
-                                        color: Colors.red,
-                                      ),
+                                    )
+                                  : _buildDropdown(
+                                      value: _selectedKategori,
+                                      items: filteredKategori
+                                          .map((kategori) =>
+                                              DropdownMenuItem<int>(
+                                                value: kategori['id'],
+                                                child: Text(kategori['nama']),
+                                              ))
+                                          .toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _selectedKategori = value as int?;
+                                        });
+                                      },
+                                      hint: 'Pilih kategori',
+                                      errorText: _errors['category_id'],
+                                    ),
+                          SizedBox(height: 20),
+                          _buildLabel('Lampiran Link', isRequired: false),
+                          SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _lampiranLinkController,
+                            hint: 'https://example.com',
+                            errorText: _errors['lampiran_link'],
+                          ),
+                          SizedBox(height: 20),
+                          _buildLabel('Deskripsi', isRequired: true),
+                          SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _deskripsiController,
+                            hint: 'Berikan deskripsi atau kronologi kejadian',
+                            errorText: _errors['deskripsi'],
+                            maxLines: 4,
+                          ),
+                          SizedBox(height: 20),
+                          _buildLabel('Tanggal & Waktu Kejadian',
+                              isRequired: true),
+                          SizedBox(height: 8),
+                          InkWell(
+                            onTap: () => _selectDate(context),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _errors['tanggal_kejadian'] != null
+                                      ? Colors.red
+                                      : Colors.grey.shade300,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _selectedDate == null
+                                        ? 'Pilih Tanggal & Waktu'
+                                        : (_selectedTime == null
+                                            ? DateFormat('dd MMM yyyy')
+                                                .format(_selectedDate!)
+                                            : '${DateFormat('dd MMM yyyy').format(_selectedDate!)} ${_selectedTime!.format(context)}'),
+                                    style: TextStyle(
+                                      color: _selectedDate == null
+                                          ? Colors.grey.shade500
+                                          : Colors.grey.shade800,
+                                      fontSize: 15,
                                     ),
                                   ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    const SizedBox(height: 24),
-
-                    // Bukti Pelanggaran section
-                    _buildLabel('Bukti Pelanggaran', isRequired: true),
-                    Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: _errors['bukti_pelanggaran'] != null
-                                ? Colors.red
-                                : Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey.shade50,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _buktiOptions.map((option) {
-                          return CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              option['label'],
-                              style: TextStyle(fontSize: 14),
+                                  Icon(
+                                    Icons.calendar_today,
+                                    color: Colors.grey.shade500,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
                             ),
-                            value: _selectedBuktiPelanggaran
-                                .contains(option['value']),
-                            onChanged: (bool? value) {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedBuktiPelanggaran
-                                      .add(option['value']);
-                                } else {
-                                  _selectedBuktiPelanggaran
-                                      .remove(option['value']);
-                                }
-                              });
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                            dense: true,
-                          );
-                        }).toList(),
+                          ),
+                          if (_errors['tanggal_kejadian'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8, left: 12),
+                              child: Text(
+                                _errors['tanggal_kejadian']!,
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    if (_errors['bukti_pelanggaran'] != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 8),
-                        child: Text(
-                          _errors['bukti_pelanggaran'],
-                          style: TextStyle(color: Colors.red, fontSize: 12),
-                        ),
+                    SizedBox(height: 24),
+
+                    _buildFormCard(
+                      title: 'Lampiran Foto',
+                      required: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Upload buttons
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildElevatedButton(
+                                  onPressed: () =>
+                                      _pickImage(ImageSource.camera),
+                                  icon: Icons.camera_alt_outlined,
+                                  label: 'Kamera',
+                                  color: Colors.blue.shade600,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildElevatedButton(
+                                  onPressed: () =>
+                                      _pickImage(ImageSource.gallery),
+                                  icon: Icons.photo_library_outlined,
+                                  label: 'Galeri',
+                                  color: Colors.teal.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          if (_errors['image_path'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 8, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border:
+                                      Border.all(color: Colors.red.shade200),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      color: Colors.red,
+                                      size: 18,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        _errors['image_path']!,
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                          // Image previews
+                          if (_imageFiles.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Preview:',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Container(
+                                    height: 120,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: _imageFiles.length,
+                                      itemBuilder: (context, index) {
+                                        return Container(
+                                          margin: EdgeInsets.only(right: 12),
+                                          child: Stack(
+                                            children: [
+                                              Container(
+                                                width: 120,
+                                                height: 120,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.1),
+                                                      blurRadius: 4,
+                                                      offset: Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  child: Image.file(
+                                                    _imageFiles[index],
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              ),
+                                              Positioned(
+                                                right: 4,
+                                                top: 4,
+                                                child: InkWell(
+                                                  onTap: () =>
+                                                      _removeImage(index),
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(4),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white
+                                                          .withOpacity(0.8),
+                                                      shape: BoxShape.circle,
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black26,
+                                                          blurRadius: 2,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.close,
+                                                      size: 16,
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
-                    const SizedBox(height: 24),
+                    ),
+                    SizedBox(height: 24),
+
+                    // Bukti Pelanggaran section
+                    _buildFormCard(
+                      title: 'Bukti Pelanggaran',
+                      required: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _errors['bukti_pelanggaran'] != null
+                                    ? Colors.red
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: _buktiOptions.map((option) {
+                                bool isSelected = _selectedBuktiPelanggaran
+                                    .contains(option['value']);
+                                return Container(
+                                  margin: EdgeInsets.only(bottom: 4),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: isSelected
+                                        ? Colors.blue.shade50
+                                        : Colors.transparent,
+                                  ),
+                                  child: CheckboxListTile(
+                                    contentPadding:
+                                        EdgeInsets.symmetric(horizontal: 8),
+                                    title: Text(
+                                      option['label'],
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[800],
+                                        fontWeight: isSelected
+                                            ? FontWeight.w500
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                    value: isSelected,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          _selectedBuktiPelanggaran
+                                              .add(option['value']);
+                                        } else {
+                                          _selectedBuktiPelanggaran
+                                              .remove(option['value']);
+                                        }
+                                      });
+                                    },
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                    activeColor: Colors.blue,
+                                    checkColor: Colors.white,
+                                    dense: true,
+                                    visualDensity: VisualDensity.compact,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          if (_errors['bukti_pelanggaran'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8, left: 12),
+                              child: Text(
+                                _errors['bukti_pelanggaran']!,
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 32),
 
                     // SECTION 2: INFORMASI PELAPOR
                     _buildSectionHeader('Informasi Pelapor'),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
-                    _buildLabel('Nama Pelapor'),
-                    TextFormField(
-                      controller: _namaPelaporController,
-                      readOnly:
-                          true, // Data dari user session, tidak bisa diedit
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        filled: true,
-                        fillColor: Colors.grey.shade200,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('NIP Pelapor'),
-                    TextFormField(
-                      controller: _nipPelaporController,
-                      readOnly:
-                          true, // Data dari user session, tidak bisa diedit
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        filled: true,
-                        fillColor: Colors.grey.shade200,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('Nomor Telepon'),
-                    TextFormField(
-                      controller: _nomorTeleponController,
-                      readOnly:
-                          true, // Data dari user session, tidak bisa diedit
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        filled: true,
-                        fillColor: Colors.grey.shade200,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    _buildLabel('Jabatan', isRequired: true),
-                    DropdownButtonFormField<String>(
-                      value: _jabatan,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        errorText: _errors['jabatan'],
-                      ),
-                      items: [
-                        DropdownMenuItem(value: 'Dosen', child: Text('Dosen')),
-                        DropdownMenuItem(
-                            value: 'Kaprodi', child: Text('Kaprodi')),
-                        DropdownMenuItem(
-                            value: 'Koordinator Mata Kuliah',
-                            child: Text('Koordinator Mata Kuliah')),
-                        DropdownMenuItem(
-                            value: 'Lainnya', child: Text('Lainnya')),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _jabatan = value;
-                        });
-                      },
-                      hint: Text('Pilih Jabatan'),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Jenis Kelamin Radio
-                    _buildLabel('Jenis Kelamin', isRequired: true),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: _errors['jenis_kelamin'] != null
-                                ? Colors.red
-                                : Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    _buildFormCard(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          RadioListTile<String>(
-                            title: Text('Laki-laki'),
-                            value: 'laki-laki',
-                            groupValue: _jenisKelamin,
-                            onChanged: (value) {
-                              setState(() {
-                                _jenisKelamin = value;
-                              });
-                            },
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
+                          _buildLabel('Nama Pelapor'),
+                          SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _namaPelaporController,
+                            hint: 'Nama pelapor',
+                            readOnly: true,
+                            backgroundColor: Colors.grey.shade50,
                           ),
-                          RadioListTile<String>(
-                            title: Text('Perempuan'),
-                            value: 'perempuan',
-                            groupValue: _jenisKelamin,
+                          SizedBox(height: 20),
+                          _buildLabel('NIP Pelapor'),
+                          SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _nipPelaporController,
+                            hint: 'NIP pelapor',
+                            readOnly: true,
+                            backgroundColor: Colors.grey.shade50,
+                          ),
+                          SizedBox(height: 20),
+                          _buildLabel('Nomor Telepon'),
+                          SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _nomorTeleponController,
+                            hint: 'Nomor telepon',
+                            readOnly: true,
+                            backgroundColor: Colors.grey.shade50,
+                          ),
+                          SizedBox(height: 20),
+                          _buildLabel('Jabatan', isRequired: true),
+                          SizedBox(height: 8),
+                          _buildDropdown(
+                            value: _jabatan,
+                            items: [
+                              DropdownMenuItem(
+                                  value: 'Dosen', child: Text('Dosen')),
+                              DropdownMenuItem(
+                                  value: 'Kaprodi', child: Text('Kaprodi')),
+                              DropdownMenuItem(
+                                  value: 'Koordinator Mata Kuliah',
+                                  child: Text('Koordinator Mata Kuliah')),
+                              DropdownMenuItem(
+                                  value: 'Lainnya', child: Text('Lainnya')),
+                            ],
                             onChanged: (value) {
                               setState(() {
-                                _jenisKelamin = value;
+                                _jabatan = value as String?;
                               });
                             },
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
+                            hint: 'Pilih Jabatan',
+                            errorText: _errors['jabatan'],
                           ),
                         ],
                       ),
                     ),
-                    if (_errors['jenis_kelamin'] != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 8),
-                        child: Text(
-                          _errors['jenis_kelamin'],
-                          style: TextStyle(color: Colors.red, fontSize: 12),
-                        ),
-                      ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 24),
 
-                    // Rentang Umur Radio
-                    _buildLabel('Rentang Umur', isRequired: true),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: _errors['umur_pelapor'] != null
-                                ? Colors.red
-                                : Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    // Gender & Age Card
+                    _buildFormCard(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          RadioListTile<String>(
-                            title: Text('20 - 40 tahun'),
-                            value: '20-40',
-                            groupValue: _umurPelapor,
-                            onChanged: (value) {
+                          // Jenis Kelamin Radio
+                          _buildLabel('Jenis Kelamin', isRequired: true),
+                          SizedBox(height: 8),
+                          _buildRadioGroup(
+                            groupValue: _jenisKelamin,
+                            onChange: (value) {
                               setState(() {
-                                _umurPelapor = value;
+                                _jenisKelamin = value;
                               });
                             },
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
+                            options: [
+                              {'value': 'laki-laki', 'label': 'Laki-laki'},
+                              {'value': 'perempuan', 'label': 'Perempuan'},
+                            ],
+                            errorText: _errors['jenis_kelamin'],
                           ),
-                          RadioListTile<String>(
-                            title: Text('41 - 60 tahun'),
-                            value: '41-60',
+                          SizedBox(height: 20),
+
+                          // Rentang Umur Radio
+                          _buildLabel('Rentang Umur', isRequired: true),
+                          SizedBox(height: 8),
+                          _buildRadioGroup(
                             groupValue: _umurPelapor,
-                            onChanged: (value) {
+                            onChange: (value) {
                               setState(() {
                                 _umurPelapor = value;
                               });
                             },
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                          ),
-                          RadioListTile<String>(
-                            title: Text('Lebih dari 60 tahun'),
-                            value: '60<',
-                            groupValue: _umurPelapor,
-                            onChanged: (value) {
-                              setState(() {
-                                _umurPelapor = value;
-                              });
-                            },
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
+                            options: [
+                              {'value': '20-40', 'label': '20 - 40 tahun'},
+                              {'value': '41-60', 'label': '41 - 60 tahun'},
+                              {'value': '60<', 'label': 'Lebih dari 60 tahun'},
+                            ],
+                            errorText: _errors['umur_pelapor'],
                           ),
                         ],
                       ),
                     ),
-                    if (_errors['umur_pelapor'] != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 8),
-                        child: Text(
-                          _errors['umur_pelapor'],
-                          style: TextStyle(color: Colors.red, fontSize: 12),
-                        ),
-                      ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 32),
 
                     // SECTION 3: IDENTITAS TERLAPOR
                     _buildSectionHeader('Identitas Terlapor/Terduga'),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      padding: const EdgeInsets.only(top: 8, bottom: 20),
                       child: Text(
                         'Opsional: Anda dapat mengosongkan semua field terlapor jika tidak ingin mengisikan.',
                         style: TextStyle(
-                            color: Colors.grey.shade700, fontSize: 13),
+                          color: Colors.grey.shade700,
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
 
                     // List of terlapor
                     ...List.generate(_terlaporList.length, (index) {
-                      return _buildTerlaporItem(index);
+                      return Column(
+                        children: [
+                          _buildTerlaporItem(index),
+                          SizedBox(height: 16),
+                        ],
+                      );
                     }),
 
                     // Button to add more terlapor
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: OutlinedButton.icon(
+                    Center(
+                      child: _buildOutlinedButton(
                         onPressed: _addTerlapor,
-                        icon: Icon(Icons.add),
-                        label: Text('Tambah Terlapor'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.blue,
-                          side: BorderSide(color: Colors.blue),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 16),
-                        ),
+                        icon: Icons.add,
+                        label: 'Tambah Terlapor',
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 32),
 
                     // SECTION 4: SAKSI
                     _buildSectionHeader('Saksi'),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      padding: const EdgeInsets.only(top: 8, bottom: 20),
                       child: Text(
                         'Opsional: Anda dapat mengosongkan semua field saksi jika tidak ingin mengisikan.',
                         style: TextStyle(
-                            color: Colors.grey.shade700, fontSize: 13),
+                          color: Colors.grey.shade700,
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
 
                     // List of saksi
                     ...List.generate(_saksiList.length, (index) {
-                      return _buildSaksiItem(index);
+                      return Column(
+                        children: [
+                          _buildSaksiItem(index),
+                          SizedBox(height: 16),
+                        ],
+                      );
                     }),
 
                     // Button to add more saksi
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: OutlinedButton.icon(
+                    Center(
+                      child: _buildOutlinedButton(
                         onPressed: _addSaksi,
-                        icon: Icon(Icons.add),
-                        label: Text('Tambah Saksi'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.blue,
-                          side: BorderSide(color: Colors.blue),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 16),
-                        ),
+                        icon: Icons.add,
+                        label: 'Tambah Saksi',
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 32),
 
                     // SECTION 5: PERNYATAAN
                     _buildSectionHeader('Pernyataan'),
-                    Container(
-                      margin: EdgeInsets.symmetric(vertical: 16),
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    SizedBox(height: 20),
+
+                    _buildFormCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Dengan ini saya menyatakan bahwa:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade800,
+                              fontSize: 15,
+                            ),
                           ),
-                          SizedBox(height: 12),
-                          _buildListItem(
-                              'Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.'),
-                          _buildListItem(
-                              'Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.'),
-                          _buildListItem(
-                              'Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.'),
                           SizedBox(height: 16),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Checkbox(
-                                value: _agreement,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _agreement = value ?? false;
-                                  });
-                                },
+                          ...[
+                            'Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.',
+                            'Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.',
+                            'Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.'
+                          ].map((text) => _buildStatementItem(text)),
+                          SizedBox(height: 20),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _agreement
+                                  ? Colors.blue.shade50
+                                  : Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _errors['agreement'] != null
+                                    ? Colors.red
+                                    : _agreement
+                                        ? Colors.blue.shade200
+                                        : Colors.grey.shade300,
                               ),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 10),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _agreement,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _agreement = value ?? false;
+                                      });
+                                    },
+                                    activeColor: Colors.blue,
+                                    checkColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
                                   child: Text(
                                     'Saya menyetujui pernyataan di atas',
                                     style: TextStyle(
                                       fontSize: 14,
+                                      color: Colors.grey.shade800,
+                                      fontWeight: _agreement
+                                          ? FontWeight.w500
+                                          : FontWeight.normal,
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           if (_errors['agreement'] != null)
                             Padding(
-                              padding: const EdgeInsets.only(left: 32, top: 4),
+                              padding: const EdgeInsets.only(top: 8, left: 12),
                               child: Text(
-                                _errors['agreement'],
-                                style:
-                                    TextStyle(color: Colors.red, fontSize: 12),
+                                _errors['agreement']!,
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 40),
 
                     // SUBMIT BUTTON
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _agreement ? _saveLaporan : null,
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.blue,
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          disabledForegroundColor:
-                              Colors.white.withOpacity(0.38),
-                          disabledBackgroundColor:
-                              Colors.blue.withOpacity(0.12),
-                        ),
-                        child: Text(
-                          'Kirim Laporan',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
+                      child: _buildSubmitButton(),
                     ),
+                    SizedBox(height: 60),
                   ],
                 ),
               ),
@@ -1180,57 +1364,344 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
 
   // Helper Widgets
   Widget _buildSectionHeader(String title) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.blue.shade800,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue.shade800,
+          ),
         ),
+        SizedBox(height: 8),
+        Container(
+          width: 40,
+          height: 3,
+          decoration: BoxDecoration(
+            color: Colors.blue.shade600,
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormCard({
+    String? title,
+    bool required = false,
+    required Widget child,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            _buildLabel(title, isRequired: required),
+            SizedBox(height: 16),
+          ],
+          child,
+        ],
       ),
     );
   }
 
   Widget _buildLabel(String text, {bool isRequired = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: RichText(
-        text: TextSpan(
-          style: TextStyle(fontSize: 14, color: Colors.black87),
-          children: [
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey[800],
+        ),
+        children: [
+          TextSpan(text: text),
+          if (isRequired)
             TextSpan(
-              text: text,
-              style: TextStyle(fontWeight: FontWeight.w500),
+              text: ' *',
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            if (isRequired)
-              TextSpan(
-                text: ' *',
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    String? errorText,
+    bool readOnly = false,
+    int maxLines = 1,
+    Color? backgroundColor,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      readOnly: readOnly,
+      style: TextStyle(fontSize: 15),
+      decoration: InputDecoration(
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: maxLines > 1 ? 16 : 0,
+        ),
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey.shade400),
+        errorText: errorText,
+        fillColor: backgroundColor ?? Colors.white,
+        filled: true,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: errorText != null ? Colors.red : Colors.grey.shade300,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: errorText != null ? Colors.red : Colors.blue.shade400,
+            width: 1.5,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.red,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.red,
+            width: 1.5,
+          ),
+        ),
+        errorStyle: TextStyle(fontSize: 12),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    dynamic value,
+    required List<DropdownMenuItem> items,
+    required void Function(dynamic)? onChanged,
+    required String hint,
+    String? errorText,
+  }) {
+    return DropdownButtonFormField(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
+      decoration: InputDecoration(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey.shade400),
+        errorText: errorText,
+        filled: true,
+        fillColor: Colors.white,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: errorText != null ? Colors.red : Colors.grey.shade300,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: errorText != null ? Colors.red : Colors.blue.shade400,
+            width: 1.5,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.red,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.red,
+            width: 1.5,
+          ),
+        ),
+        errorStyle: TextStyle(fontSize: 12),
+      ),
+      icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+      isExpanded: true,
+      dropdownColor: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+    );
+  }
+
+  Widget _buildRadioGroup({
+    required String? groupValue,
+    required Function(String?) onChange,
+    required List<Map<String, String>> options,
+    String? errorText,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: errorText != null ? Colors.red : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        children: options.map((option) {
+          bool isSelected = groupValue == option['value'];
+          return Container(
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.blue.shade50 : Colors.white,
+              borderRadius: options.indexOf(option) == 0
+                  ? BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    )
+                  : options.indexOf(option) == options.length - 1
+                      ? BorderRadius.only(
+                          bottomLeft: Radius.circular(12),
+                          bottomRight: Radius.circular(12),
+                        )
+                      : null,
+              border: Border(
+                bottom: options.indexOf(option) != options.length - 1
+                    ? BorderSide(color: Colors.grey.shade100)
+                    : BorderSide.none,
+              ),
+            ),
+            child: RadioListTile<String>(
+              title: Text(
+                option['label']!,
                 style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.grey.shade800,
+                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                 ),
               ),
-          ],
+              value: option['value']!,
+              groupValue: groupValue,
+              onChanged: (String? value) => onChange(value),
+              activeColor: Colors.blue,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              dense: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildElevatedButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: color,
+        padding: EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+    );
+  }
+
+  Widget _buildOutlinedButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.blue,
+        side: BorderSide(color: Colors.blue),
+        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
   }
 
-  Widget _buildListItem(String text) {
+  Widget _buildSubmitButton() {
+    return ElevatedButton(
+      onPressed: _agreement ? _saveLaporan : null,
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.blue,
+        disabledForegroundColor: Colors.white.withOpacity(0.38),
+        disabledBackgroundColor: Colors.blue.withOpacity(0.12),
+        padding: EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+      child: Text(
+        'Kirim Laporan',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatementItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+          Container(
+            margin: EdgeInsets.only(top: 6),
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: 12),
           Expanded(
-            child: Text(text),
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                height: 1.5,
+              ),
+            ),
           ),
         ],
       ),
@@ -1239,260 +1710,218 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
 
   Widget _buildTerlaporItem(int index) {
     final item = _terlaporList[index];
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return _buildFormCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Terlapor #${index + 1}',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Terlapor #${index + 1}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.amber.shade800,
+                    fontSize: 13,
+                  ),
                 ),
               ),
               if (_terlaporList.length > 1)
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
                   onPressed: () => _removeTerlapor(index),
                   tooltip: 'Hapus terlapor',
                   iconSize: 20,
-                  padding: EdgeInsets.all(4),
-                  constraints: BoxConstraints(),
                 ),
             ],
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 16),
 
           if (_errors['terlapor_$index'] != null)
             Container(
-              padding: EdgeInsets.all(8),
-              margin: EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.red.shade200),
               ),
-              child: Text(
-                _errors['terlapor_$index'],
-                style: TextStyle(color: Colors.red, fontSize: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
+                    size: 18,
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _errors['terlapor_$index']!,
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
           // Terlapor form fields
           _buildLabel('Nama Lengkap'),
-          TextFormField(
+          SizedBox(height: 8),
+          _buildTextField(
             controller: item['nama_lengkap'],
-            decoration: InputDecoration(
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              hintText: 'Nama lengkap terlapor',
-            ),
+            hint: 'Nama lengkap terlapor',
           ),
-          SizedBox(height: 12),
+          SizedBox(height: 16),
 
           _buildLabel('Email'),
-          TextFormField(
+          SizedBox(height: 8),
+          _buildTextField(
             controller: item['email'],
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              hintText: 'Email terlapor',
-            ),
+            hint: 'Email terlapor',
           ),
-          SizedBox(height: 12),
+          SizedBox(height: 16),
 
           _buildLabel('Nomor Telepon'),
-          TextFormField(
+          SizedBox(height: 8),
+          _buildTextField(
             controller: item['nomor_telepon'],
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              hintText: 'Nomor telepon terlapor',
-            ),
+            hint: 'Nomor telepon terlapor',
           ),
-          SizedBox(height: 12),
+          SizedBox(height: 24),
 
-          // Two columns for the rest of the form
+          // Two columns layout for gender and age
+          _buildLabel('Informasi Tambahan'),
+          SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Left column
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Two columns in a row for gender and age
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Left column
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildLabel('Jenis Kelamin'),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  RadioListTile<String>(
-                                    title: Text('Laki-laki'),
-                                    value: 'laki-laki',
-                                    groupValue: item['jenis_kelamin'],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        item['jenis_kelamin'] = value;
-                                      });
-                                    },
-                                    contentPadding:
-                                        EdgeInsets.symmetric(horizontal: 0),
-                                  ),
-                                  RadioListTile<String>(
-                                    title: Text('Perempuan'),
-                                    value: 'perempuan',
-                                    groupValue: item['jenis_kelamin'],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        item['jenis_kelamin'] = value;
-                                      });
-                                    },
-                                    contentPadding:
-                                        EdgeInsets.symmetric(horizontal: 0),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 12),
-                              _buildLabel('Status Warga UNS'),
-                              DropdownButtonFormField<String>(
-                                value: item['status_warga'],
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8)),
-                                ),
-                                items: [
-                                  DropdownMenuItem(
-                                      value: 'dosen', child: Text('Dosen')),
-                                  DropdownMenuItem(
-                                      value: 'mahasiswa',
-                                      child: Text('Mahasiswa')),
-                                  DropdownMenuItem(
-                                      value: 'staff', child: Text('Staff')),
-                                  DropdownMenuItem(
-                                      value: 'lainnya', child: Text('Lainnya')),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    item['status_warga'] = value;
-                                  });
-                                },
-                                hint: Text('Pilih status'),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 16),
-
-                        // Right column
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildLabel('Rentang Umur'),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  RadioListTile<String>(
-                                    title: Text('Kurang dari 20 tahun'),
-                                    value: '<20',
-                                    groupValue: item['umur_terlapor'],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        item['umur_terlapor'] = value;
-                                      });
-                                    },
-                                    contentPadding:
-                                        EdgeInsets.symmetric(horizontal: 0),
-                                  ),
-                                  RadioListTile<String>(
-                                    title: Text('20 - 40 tahun'),
-                                    value: '20-40',
-                                    groupValue: item['umur_terlapor'],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        item['umur_terlapor'] = value;
-                                      });
-                                    },
-                                    contentPadding:
-                                        EdgeInsets.symmetric(horizontal: 0),
-                                  ),
-                                  RadioListTile<String>(
-                                    title: Text('Lebih dari 40 tahun'),
-                                    value: '40<',
-                                    groupValue: item['umur_terlapor'],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        item['umur_terlapor'] = value;
-                                      });
-                                    },
-                                    contentPadding:
-                                        EdgeInsets.symmetric(horizontal: 0),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Unit Kerja placed below both columns
-                    SizedBox(height: 12),
-                    _buildLabel('Unit Kerja'),
-                    DropdownButtonFormField<String>(
-                      value: item['unit_kerja'],
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                    Text(
+                      'Jenis Kelamin',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
                       ),
+                    ),
+                    SizedBox(height: 8),
+                    _buildRadioGroup(
+                      groupValue: item['jenis_kelamin'],
+                      onChange: (value) {
+                        setState(() {
+                          item['jenis_kelamin'] = value;
+                        });
+                      },
+                      options: [
+                        {'value': 'laki-laki', 'label': 'Laki-laki'},
+                        {'value': 'perempuan', 'label': 'Perempuan'},
+                      ],
+                      errorText: null,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Status Warga UNS',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    _buildDropdown(
+                      value: item['status_warga'],
                       items: [
+                        DropdownMenuItem(value: 'dosen', child: Text('Dosen')),
                         DropdownMenuItem(
-                            value: 'Fakultas Teknik',
-                            child: Text('Fakultas Teknik')),
+                            value: 'mahasiswa', child: Text('Mahasiswa')),
+                        DropdownMenuItem(value: 'staff', child: Text('Staff')),
                         DropdownMenuItem(
-                            value: 'Fakultas MIPA',
-                            child: Text('Fakultas MIPA')),
-                        DropdownMenuItem(
-                            value: 'Fakultas Ekonomi',
-                            child: Text('Fakultas Ekonomi')),
-                        DropdownMenuItem(
-                            value: 'Fakultas Hukum',
-                            child: Text('Fakultas Hukum')),
-                        DropdownMenuItem(
-                            value: 'Fakultas Kedokteran',
-                            child: Text('Fakultas Kedokteran')),
+                            value: 'lainnya', child: Text('Lainnya')),
                       ],
                       onChanged: (value) {
                         setState(() {
-                          item['unit_kerja'] = value;
+                          item['status_warga'] = value;
                         });
                       },
-                      hint: Text('Pilih unit kerja'),
+                      hint: 'Pilih status',
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Rentang Umur',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    _buildRadioGroup(
+                      groupValue: item['umur_terlapor'],
+                      onChange: (value) {
+                        setState(() {
+                          item['umur_terlapor'] = value;
+                        });
+                      },
+                      options: [
+                        {'value': '<20', 'label': 'Kurang dari 20 tahun'},
+                        {'value': '20-40', 'label': '20 - 40 tahun'},
+                        {'value': '40<', 'label': 'Lebih dari 40 tahun'},
+                      ],
+                      errorText: null,
                     ),
                   ],
                 ),
               ),
             ],
+          ),
+          SizedBox(height: 16),
+
+          // Unit Kerja
+          Text(
+            'Unit Kerja',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          SizedBox(height: 8),
+          _buildDropdown(
+            value: item['unit_kerja'],
+            items: [
+              DropdownMenuItem(
+                  value: 'Fakultas Teknik', child: Text('Fakultas Teknik')),
+              DropdownMenuItem(
+                  value: 'Fakultas MIPA', child: Text('Fakultas MIPA')),
+              DropdownMenuItem(
+                  value: 'Fakultas Ekonomi', child: Text('Fakultas Ekonomi')),
+              DropdownMenuItem(
+                  value: 'Fakultas Hukum', child: Text('Fakultas Hukum')),
+              DropdownMenuItem(
+                  value: 'Fakultas Kedokteran',
+                  child: Text('Fakultas Kedokteran')),
+            ],
+            onChanged: (value) {
+              setState(() {
+                item['unit_kerja'] = value;
+              });
+            },
+            hint: 'Pilih unit kerja',
           ),
         ],
       ),
@@ -1501,88 +1930,86 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
 
   Widget _buildSaksiItem(int index) {
     final item = _saksiList[index];
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return _buildFormCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Saksi #${index + 1}',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.teal.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Saksi #${index + 1}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.teal.shade800,
+                    fontSize: 13,
+                  ),
                 ),
               ),
               if (_saksiList.length > 1)
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
                   onPressed: () => _removeSaksi(index),
                   tooltip: 'Hapus saksi',
                   iconSize: 20,
-                  padding: EdgeInsets.all(4),
-                  constraints: BoxConstraints(),
                 ),
             ],
           ),
-          SizedBox(height: 8),
-
+          SizedBox(height: 16),
           if (_errors['saksi_$index'] != null)
             Container(
-              padding: EdgeInsets.all(8),
-              margin: EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.red.shade200),
               ),
-              child: Text(
-                _errors['saksi_$index'],
-                style: TextStyle(color: Colors.red, fontSize: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
+                    size: 18,
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _errors['saksi_$index']!,
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-
-          // Form fields in a vertical layout
           _buildLabel('Nama Lengkap'),
-          TextFormField(
+          SizedBox(height: 8),
+          _buildTextField(
             controller: item['nama_lengkap'],
-            decoration: InputDecoration(
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              hintText: 'Nama lengkap saksi',
-            ),
+            hint: 'Nama lengkap saksi',
           ),
-          SizedBox(height: 12),
-
+          SizedBox(height: 16),
           _buildLabel('Email'),
-          TextFormField(
+          SizedBox(height: 8),
+          _buildTextField(
             controller: item['email'],
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              hintText: 'Email saksi',
-            ),
+            hint: 'Email saksi',
           ),
-          SizedBox(height: 12),
-
+          SizedBox(height: 16),
           _buildLabel('Nomor Telepon'),
-          TextFormField(
+          SizedBox(height: 8),
+          _buildTextField(
             controller: item['nomor_telepon'],
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              hintText: 'Nomor telepon saksi',
-            ),
+            hint: 'Nomor telepon saksi',
           ),
         ],
       ),

@@ -443,15 +443,15 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Belum Diverifikasi':
-        return Colors.grey;
+        return Colors.grey.shade700;
       case 'Diproses':
-        return Colors.orange;
+        return Colors.orange.shade700;
       case 'Ditolak':
-        return Colors.red;
+        return Colors.red.shade700;
       case 'Selesai':
-        return Colors.green;
+        return Colors.green.shade700;
       default:
-        return Colors.grey;
+        return Colors.grey.shade700;
     }
   }
 
@@ -494,18 +494,40 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Pelaporan Kejadian Dosen'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Text(
+          'Pelaporan Kejadian',
+          style: TextStyle(
+            color: Colors.grey.shade800,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        iconTheme: IconThemeData(color: Colors.grey.shade800),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _fetchData,
+            color: Colors.blue,
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1.0),
+          child: Container(
+            color: Colors.grey.shade200,
+            height: 1.0,
+          ),
+        ),
       ),
       drawer: SidebarDosen(),
       body: _loading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+            )
           : _error != null && _laporan.isEmpty
               ? _buildErrorWidget()
               : _buildMainContent(),
@@ -514,23 +536,74 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
 
   Widget _buildErrorWidget() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      child: Container(
+        margin: EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade100,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, color: Colors.red, size: 48),
-            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.red.shade100),
+              ),
+              child: Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 36,
+              ),
+            ),
+            SizedBox(height: 24),
             Text(
               'Terjadi kesalahan:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
             ),
-            SizedBox(height: 8),
-            Text(_error ?? 'Unknown error'),
-            SizedBox(height: 16),
+            SizedBox(height: 12),
+            Text(
+              _error ?? 'Unknown error',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 15,
+              ),
+            ),
+            SizedBox(height: 24),
             ElevatedButton(
               onPressed: _fetchData,
-              child: Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text(
+                'Coba Lagi',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         ),
@@ -540,73 +613,107 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
 
   Widget _buildMainContent() {
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Container(
+      child: Container(
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_error != null)
+                Container(
                   width: double.infinity,
-                  padding: EdgeInsets.all(12),
+                  margin: EdgeInsets.only(bottom: 16.0),
+                  padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.yellow.shade100,
-                    border: Border.all(color: Colors.yellow.shade700),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.yellow.shade700),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.warning, color: Colors.yellow.shade800),
-                      SizedBox(width: 12),
-                      Expanded(child: Text(_error!)),
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.yellow.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.yellow.shade800,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            _buildHeader(),
-            SizedBox(height: 16),
-            _buildDashboardCards(),
-            SizedBox(height: 16),
-            _buildSearchAndAddSection(),
-            SizedBox(height: 16),
-            _buildFiltersSection(),
-            SizedBox(height: 16),
-            _buildDataTable(),
-            SizedBox(height: 16),
-            if (_filteredLaporan.isNotEmpty) _buildPagination(),
-          ],
+              _buildHeader(),
+              SizedBox(height: 24),
+              _buildDashboardCards(),
+              SizedBox(height: 24),
+              _buildSearchAndAddSection(),
+              SizedBox(height: 24),
+              _buildFiltersSection(),
+              SizedBox(height: 24),
+              _buildDataTable(),
+              SizedBox(height: 16),
+              if (_filteredLaporan.isNotEmpty) _buildPagination(),
+              SizedBox(height: 32), // Bottom padding
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pelaporan Kejadian Dosen',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade50,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Pelaporan Kejadian',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade800,
+              letterSpacing: 0.5,
             ),
-            SizedBox(height: 8),
-            Text(
-              'Sistem pencatatan dan manajemen laporan kejadian oleh dosen di D3 TI SV UNS. Gunakan halaman ini untuk mengirim, memantau, dan mengelola laporan kejadian.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Sistem pencatatan dan manajemen laporan kejadian oleh dosen di D3 TI SV UNS. Gunakan halaman ini untuk mengirim, memantau, dan mengelola laporan kejadian.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: Colors.grey.shade600,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -618,23 +725,23 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
         return Column(
           children: [
             _buildStatCard(
-              icon: Icons.description,
+              icon: Icons.description_outlined,
               iconColor: Colors.blue,
               title: 'Total Laporan',
               count: _totalLaporan,
               fullWidth: true,
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 16),
             _buildStatCard(
-              icon: Icons.pending,
+              icon: Icons.pending_actions_outlined,
               iconColor: Colors.orange,
               title: 'Dalam Proses',
               count: _dalamProses,
               fullWidth: true,
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 16),
             _buildStatCard(
-              icon: Icons.check_circle,
+              icon: Icons.check_circle_outline,
               iconColor: Colors.green,
               title: 'Selesai',
               count: _selesai,
@@ -648,25 +755,25 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
           children: [
             Expanded(
               child: _buildStatCard(
-                icon: Icons.description,
+                icon: Icons.description_outlined,
                 iconColor: Colors.blue,
                 title: 'Total Laporan',
                 count: _totalLaporan,
               ),
             ),
-            SizedBox(width: 12),
+            SizedBox(width: 16),
             Expanded(
               child: _buildStatCard(
-                icon: Icons.pending,
+                icon: Icons.pending_actions_outlined,
                 iconColor: Colors.orange,
                 title: 'Dalam Proses',
                 count: _dalamProses,
               ),
             ),
-            SizedBox(width: 12),
+            SizedBox(width: 16),
             Expanded(
               child: _buildStatCard(
-                icon: Icons.check_circle,
+                icon: Icons.check_circle_outline,
                 iconColor: Colors.green,
                 title: 'Selesai',
                 count: _selesai,
@@ -685,82 +792,90 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
     required int count,
     bool fullWidth = false,
   }) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: fullWidth
-            ? Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: iconColor,
-                      size: 24,
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        count.toString(),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: iconColor,
-                      size: 24,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    count.toString(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: iconColor.withOpacity(0.3)),
       ),
+      child: fullWidth
+          ? Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: iconColor),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: 24,
+                  ),
+                ),
+                SizedBox(width: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      count.toString(),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: iconColor),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: 24,
+                  ),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -774,11 +889,26 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
               controller: _searchController,
               decoration: InputDecoration(
                 labelText: 'Cari laporan...',
-                prefixIcon: Icon(Icons.search),
+                labelStyle: TextStyle(color: Colors.grey.shade600),
+                prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                filled: true,
+                fillColor: Colors.white,
               ),
+              style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
@@ -786,17 +916,30 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
                 });
               },
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pushNamed(context, '/addlaporpkdosen');
                 },
-                icon: Icon(Icons.add),
-                label: Text('Tambah Laporan'),
+                icon: Icon(Icons.add, color: Colors.white),
+                label: Text(
+                  'Tambah Laporan',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    letterSpacing: 0.3,
+                    color: Colors.white,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                  backgroundColor: Colors.blue,
                 ),
               ),
             ),
@@ -811,11 +954,26 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   labelText: 'Cari laporan...',
-                  prefixIcon: Icon(Icons.search),
+                  labelStyle: TextStyle(color: Colors.grey.shade600),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
+                style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
@@ -827,12 +985,24 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
             SizedBox(width: 16),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pushNamed(context, '/addlaporkejadianDosen');
+                Navigator.pushNamed(context, '/addlaporpkdosen');
               },
               icon: Icon(Icons.add),
-              label: Text('Tambah Laporan'),
+              label: Text(
+                'Tambah Laporan',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  letterSpacing: 0.3,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+                backgroundColor: Colors.blue,
               ),
             ),
           ],
@@ -842,69 +1012,113 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
   }
 
   Widget _buildFiltersSection() {
-    return Card(
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Filter berdasarkan:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
+    return Container(
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.filter_list, color: Colors.grey.shade800, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Filter berdasarkan:',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Colors.grey.shade800,
+                ),
               ),
-            ),
-            SizedBox(height: 16),
-            LayoutBuilder(builder: (context, constraints) {
-              if (constraints.maxWidth < 600) {
-                // For smaller screens, stack widgets vertically
-                return Column(
-                  children: [
-                    _buildCategoryDropdown(),
-                    SizedBox(height: 12),
-                    _buildStatusDropdown(),
-                    SizedBox(height: 12),
-                    _buildStartDatePicker(),
-                    SizedBox(height: 12),
-                    _buildEndDatePicker(),
-                  ],
-                );
-              } else {
-                // For larger screens, use rows
-                return Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: _buildCategoryDropdown()),
-                        SizedBox(width: 16),
-                        Expanded(child: _buildStatusDropdown()),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(child: _buildStartDatePicker()),
-                        SizedBox(width: 16),
-                        Expanded(child: _buildEndDatePicker()),
-                      ],
-                    ),
-                  ],
-                );
-              }
-            }),
-            SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _resetFilters,
-              icon: Icon(Icons.refresh),
-              label: Text('Reset Filter'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[200],
-                foregroundColor: Colors.black87,
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          SizedBox(height: 20),
+          LayoutBuilder(builder: (context, constraints) {
+            if (constraints.maxWidth < 600) {
+              // For smaller screens, stack widgets vertically
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildCategoryDropdown(),
+                  SizedBox(height: 16),
+                  _buildStatusDropdown(),
+                  SizedBox(height: 16),
+                  _buildStartDatePicker(),
+                  SizedBox(height: 16),
+                  _buildEndDatePicker(),
+                  SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _resetFilters,
+                          icon: Icon(Icons.restart_alt),
+                          label: Text('Reset Filter'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.grey.shade700,
+                            elevation: 0,
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            } else {
+              // For larger screens, use rows
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _buildCategoryDropdown()),
+                      SizedBox(width: 16),
+                      Expanded(child: _buildStatusDropdown()),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildStartDatePicker()),
+                      SizedBox(width: 16),
+                      Expanded(child: _buildEndDatePicker()),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _resetFilters,
+                        icon: Icon(Icons.restart_alt),
+                        label: Text('Reset Filter'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.grey.shade700,
+                          elevation: 0,
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }
+          }),
+        ],
       ),
     );
   }
@@ -927,10 +1141,24 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: 'Kategori',
+        labelStyle: TextStyle(color: Colors.grey.shade600),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.blue),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        filled: true,
+        fillColor: Colors.white,
       ),
+      style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
       value: _filters['category_id'].toString().isEmpty
           ? null
           : _filters['category_id'].toString(),
@@ -953,6 +1181,11 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
           _currentPage = 1;
         });
       },
+      icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+      isExpanded: true,
+      hint:
+          Text('Pilih Kategori', style: TextStyle(color: Colors.grey.shade500)),
+      dropdownColor: Colors.white,
     );
   }
 
@@ -960,10 +1193,24 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: 'Status',
+        labelStyle: TextStyle(color: Colors.grey.shade600),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.blue),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        filled: true,
+        fillColor: Colors.white,
       ),
+      style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
       value: _filters['status'].toString().isEmpty ? null : _filters['status'],
       items: [
         DropdownMenuItem(
@@ -993,6 +1240,10 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
           _currentPage = 1;
         });
       },
+      icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+      isExpanded: true,
+      hint: Text('Pilih Status', style: TextStyle(color: Colors.grey.shade500)),
+      dropdownColor: Colors.white,
     );
   }
 
@@ -1000,15 +1251,31 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
     return TextFormField(
       decoration: InputDecoration(
         labelText: 'Tanggal Mulai',
+        labelStyle: TextStyle(color: Colors.grey.shade600),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
-        suffixIcon: Icon(Icons.calendar_today),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.blue),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        filled: true,
+        fillColor: Colors.white,
+        suffixIcon:
+            Icon(Icons.calendar_today, color: Colors.grey.shade600, size: 20),
       ),
+      style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
       readOnly: true,
       controller: TextEditingController(
         text: _filters['startDate'] != null
-            ? DateFormat('yyyy-MM-dd').format(_filters['startDate'] as DateTime)
+            ? DateFormat('dd MMM yyyy')
+                .format(_filters['startDate'] as DateTime)
             : '',
       ),
       onTap: () async {
@@ -1017,6 +1284,20 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
           initialDate: _filters['startDate'] ?? DateTime.now(),
           firstDate: DateTime(2020),
           lastDate: DateTime(2030),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.light(
+                  primary: Colors.blue,
+                  onPrimary: Colors.white,
+                  surface: Colors.white,
+                  onSurface: Colors.grey.shade800,
+                ),
+                dialogBackgroundColor: Colors.white,
+              ),
+              child: child!,
+            );
+          },
         );
         if (picked != null) {
           setState(() {
@@ -1032,15 +1313,30 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
     return TextFormField(
       decoration: InputDecoration(
         labelText: 'Tanggal Akhir',
+        labelStyle: TextStyle(color: Colors.grey.shade600),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
-        suffixIcon: Icon(Icons.calendar_today),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.blue),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        filled: true,
+        fillColor: Colors.white,
+        suffixIcon:
+            Icon(Icons.calendar_today, color: Colors.grey.shade600, size: 20),
       ),
+      style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
       readOnly: true,
       controller: TextEditingController(
         text: _filters['endDate'] != null
-            ? DateFormat('yyyy-MM-dd').format(_filters['endDate'] as DateTime)
+            ? DateFormat('dd MMM yyyy').format(_filters['endDate'] as DateTime)
             : '',
       ),
       onTap: () async {
@@ -1049,6 +1345,20 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
           initialDate: _filters['endDate'] ?? DateTime.now(),
           firstDate: DateTime(2020),
           lastDate: DateTime(2030),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.light(
+                  primary: Colors.blue,
+                  onPrimary: Colors.white,
+                  surface: Colors.white,
+                  onSurface: Colors.grey.shade800,
+                ),
+                dialogBackgroundColor: Colors.white,
+              ),
+              child: child!,
+            );
+          },
         );
         if (picked != null) {
           setState(() {
@@ -1062,179 +1372,273 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
 
   Widget _buildDataTable() {
     if (_filteredLaporan.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              Icon(Icons.search_off, size: 48, color: Colors.grey[400]),
-              SizedBox(height: 16),
-              Text(
+      return Container(
+        padding: EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Icon(
                 _searchQuery.isNotEmpty ||
                         _filters.values
                             .any((v) => v != null && v.toString().isNotEmpty)
-                    ? 'Tidak ada hasil yang ditemukan'
-                    : 'Belum ada laporan yang dibuat',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
+                    ? Icons.search_off_rounded
+                    : Icons.note_add_outlined,
+                size: 40,
+                color: Colors.grey.shade400,
               ),
-            ],
-          ),
+            ),
+            SizedBox(height: 24),
+            Text(
+              _searchQuery.isNotEmpty ||
+                      _filters.values
+                          .any((v) => v != null && v.toString().isNotEmpty)
+                  ? 'Tidak ada hasil yang ditemukan'
+                  : 'Belum ada laporan yang dibuat',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              _searchQuery.isNotEmpty ||
+                      _filters.values
+                          .any((v) => v != null && v.toString().isNotEmpty)
+                  ? 'Coba ubah kriteria pencarian atau reset filter'
+                  : 'Klik tombol "Tambah Laporan" untuk membuat laporan baru',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
     }
 
     // Always use table view regardless of screen size
-    return Card(
-      elevation: 2,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columns: [
-            DataColumn(label: Text('No')),
-            DataColumn(
-              label: GestureDetector(
-                onTap: () => _sortBy('nomor_laporan'),
-                child: Row(
-                  children: [
-                    Text('Nomor Laporan'),
-                    SizedBox(width: 4),
-                    Icon(
-                      _sortField == 'nomor_laporan'
-                          ? (_sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward)
-                          : Icons.unfold_more,
-                      size: 16,
-                    ),
-                  ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade50,
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
+            dataRowColor: MaterialStateProperty.all(Colors.white),
+            headingTextStyle: TextStyle(
+              color: Colors.grey.shade800,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+            dataTextStyle: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 14,
+            ),
+            horizontalMargin: 24,
+            columnSpacing: 16,
+            dividerThickness: 0.5,
+            columns: [
+              DataColumn(
+                label: Container(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text('No'),
                 ),
               ),
-            ),
-            DataColumn(
-              label: GestureDetector(
-                onTap: () => _sortBy('created_at'),
-                child: Row(
-                  children: [
-                    Text('Tanggal'),
-                    SizedBox(width: 4),
-                    Icon(
-                      _sortField == 'created_at'
-                          ? (_sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward)
-                          : Icons.unfold_more,
-                      size: 16,
-                    ),
-                  ],
+              DataColumn(
+                label: GestureDetector(
+                  onTap: () => _sortBy('nomor_laporan'),
+                  child: Row(
+                    children: [
+                      Text('Nomor Laporan'),
+                      SizedBox(width: 4),
+                      Icon(
+                        _sortField == 'nomor_laporan'
+                            ? (_sortAscending
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward)
+                            : Icons.unfold_more,
+                        size: 16,
+                        color: _sortField == 'nomor_laporan'
+                            ? Colors.blue
+                            : Colors.grey.shade600,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            DataColumn(
-              label: GestureDetector(
-                onTap: () => _sortBy('judul'),
-                child: Row(
-                  children: [
-                    Text('Judul'),
-                    SizedBox(width: 4),
-                    Icon(
-                      _sortField == 'judul'
-                          ? (_sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward)
-                          : Icons.unfold_more,
-                      size: 16,
-                    ),
-                  ],
+              DataColumn(
+                label: GestureDetector(
+                  onTap: () => _sortBy('created_at'),
+                  child: Row(
+                    children: [
+                      Text('Tanggal'),
+                      SizedBox(width: 4),
+                      Icon(
+                        _sortField == 'created_at'
+                            ? (_sortAscending
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward)
+                            : Icons.unfold_more,
+                        size: 16,
+                        color: _sortField == 'created_at'
+                            ? Colors.blue
+                            : Colors.grey.shade600,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            DataColumn(label: Text('Kategori')),
-            DataColumn(label: Text('Pelapor')),
-            DataColumn(
-              label: GestureDetector(
-                onTap: () => _sortBy('status'),
-                child: Row(
-                  children: [
-                    Text('Status'),
-                    SizedBox(width: 4),
-                    Icon(
-                      _sortField == 'status'
-                          ? (_sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward)
-                          : Icons.unfold_more,
-                      size: 16,
-                    ),
-                  ],
+              DataColumn(
+                label: GestureDetector(
+                  onTap: () => _sortBy('judul'),
+                  child: Row(
+                    children: [
+                      Text('Judul'),
+                      SizedBox(width: 4),
+                      Icon(
+                        _sortField == 'judul'
+                            ? (_sortAscending
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward)
+                            : Icons.unfold_more,
+                        size: 16,
+                        color: _sortField == 'judul'
+                            ? Colors.blue
+                            : Colors.grey.shade600,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            DataColumn(label: Text('Aksi')),
-          ],
-          rows: _paginatedLaporan.asMap().entries.map((entry) {
-            final index = entry.key;
-            final laporan = entry.value;
-            final formattedStatus =
-                _formatStatus(laporan.status ?? 'unverified');
+              DataColumn(label: Text('Kategori')),
+              DataColumn(label: Text('Pelapor')),
+              DataColumn(
+                label: GestureDetector(
+                  onTap: () => _sortBy('status'),
+                  child: Row(
+                    children: [
+                      Text('Status'),
+                      SizedBox(width: 4),
+                      Icon(
+                        _sortField == 'status'
+                            ? (_sortAscending
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward)
+                            : Icons.unfold_more,
+                        size: 16,
+                        color: _sortField == 'status'
+                            ? Colors.blue
+                            : Colors.grey.shade600,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              DataColumn(label: Text('Aksi')),
+            ],
+            rows: _paginatedLaporan.asMap().entries.map((entry) {
+              final index = entry.key;
+              final laporan = entry.value;
+              final formattedStatus =
+                  _formatStatus(laporan.status ?? 'unverified');
+              final statusColor = _getStatusColor(formattedStatus);
 
-            return DataRow(
-              cells: [
-                DataCell(Text(((_currentPage - 1) * _itemsPerPage + index + 1)
-                    .toString())),
-                DataCell(Text(laporan.nomorLaporan ?? '-')),
-                DataCell(Text(_formatDate(laporan.createdAt))),
-                DataCell(Text(laporan.judul ?? '-')),
-                DataCell(Text(
-                    _categories[laporan.categoryId] ?? 'Tidak ada kategori')),
-                DataCell(Text(laporan.namaPelapor ?? '-')),
-                DataCell(
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(formattedStatus).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      formattedStatus,
-                      style: TextStyle(
-                        color: _getStatusColor(formattedStatus),
-                        fontWeight: FontWeight.bold,
+              return DataRow(
+                cells: [
+                  DataCell(
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        ((_currentPage - 1) * _itemsPerPage + index + 1)
+                            .toString(),
                       ),
                     ),
                   ),
-                ),
-                DataCell(
-                  IconButton(
-                    icon: Icon(Icons.visibility, color: Colors.blue),
-                    onPressed: () {
-                      // Check if laporan.id is not null before navigating
-                      if (laporan.id != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DetailLaporanPKDosen(
-                              laporan: laporan,
-                              id: laporan.id!,
-                            ),
-                          ),
-                        );
-                      } else {
-                        // Handle the null id case
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                                'Tidak dapat melihat detail, ID laporan tidak valid'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
+                  DataCell(Text(laporan.nomorLaporan ?? '-')),
+                  DataCell(Text(_formatDate(laporan.createdAt))),
+                  DataCell(Text(laporan.judul ?? '-')),
+                  DataCell(Text(
+                      _categories[laporan.categoryId] ?? 'Tidak ada kategori')),
+                  DataCell(Text(laporan.namaPelapor ?? '-')),
+                  DataCell(
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: statusColor),
+                      ),
+                      child: Text(
+                        formattedStatus,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            );
-          }).toList(),
+                  DataCell(
+                    IconButton(
+                      icon: Icon(Icons.visibility_outlined),
+                      color: Colors.blue,
+                      tooltip: 'Lihat Detail',
+                      onPressed: () {
+                        // Check if laporan.id is not null before navigating
+                        if (laporan.id != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetailLaporanPKDosen(
+                                laporan: laporan,
+                                id: laporan.id!,
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Handle the null id case
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Tidak dapat melihat detail, ID laporan tidak valid'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -1243,43 +1647,65 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
   Widget _buildPagination() {
     final totalPages = (_filteredLaporan.length / _itemsPerPage).ceil();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'Menampilkan ${(_currentPage - 1) * _itemsPerPage + 1}-${_currentPage * _itemsPerPage > _filteredLaporan.length ? _filteredLaporan.length : _currentPage * _itemsPerPage} dari ${_filteredLaporan.length} laporan',
-          style: TextStyle(
-            color: Colors.grey[600],
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Menampilkan ${(_currentPage - 1) * _itemsPerPage + 1}-${_currentPage * _itemsPerPage > _filteredLaporan.length ? _filteredLaporan.length : _currentPage * _itemsPerPage} dari ${_filteredLaporan.length} laporan',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 13,
+            ),
           ),
-        ),
-        Row(
-          children: [
-            IconButton(
-              onPressed: _currentPage > 1
-                  ? () {
-                      setState(() {
-                        _currentPage--;
-                      });
-                    }
-                  : null,
-              icon: Icon(Icons.chevron_left),
-              color: _currentPage > 1 ? Colors.blue : Colors.grey,
-            ),
-            Text('$_currentPage / $totalPages'),
-            IconButton(
-              onPressed: _currentPage < totalPages
-                  ? () {
-                      setState(() {
-                        _currentPage++;
-                      });
-                    }
-                  : null,
-              icon: Icon(Icons.chevron_right),
-              color: _currentPage < totalPages ? Colors.blue : Colors.grey,
-            ),
-          ],
-        ),
-      ],
+          Row(
+            children: [
+              IconButton(
+                onPressed: _currentPage > 1
+                    ? () {
+                        setState(() {
+                          _currentPage--;
+                        });
+                      }
+                    : null,
+                icon: Icon(Icons.chevron_left),
+                color: _currentPage > 1 ? Colors.blue : Colors.grey.shade400,
+                tooltip: 'Halaman sebelumnya',
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Text(
+                  '$_currentPage / $totalPages',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: _currentPage < totalPages
+                    ? () {
+                        setState(() {
+                          _currentPage++;
+                        });
+                      }
+                    : null,
+                icon: Icon(Icons.chevron_right),
+                color: _currentPage < totalPages
+                    ? Colors.blue
+                    : Colors.grey.shade400,
+                tooltip: 'Halaman berikutnya',
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
