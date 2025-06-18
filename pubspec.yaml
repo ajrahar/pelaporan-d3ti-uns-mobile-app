@@ -81,6 +81,7 @@ flutter:
   assets:
     - assets/images/d3ti_logo.png
     - assets/images/d3ti.png
+    - assets/images/d3tisvuns.png
     - assets/images/halal.jpg
     - web/html/recaptcha.html
 
