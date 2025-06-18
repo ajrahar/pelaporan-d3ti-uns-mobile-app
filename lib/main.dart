@@ -1,6 +1,6 @@
-// File: lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:google_fonts/google_fonts.dart'; // Add this import
 import 'package:pelaporan_d3ti/auth_screen/login_dosen.dart';
 import 'package:pelaporan_d3ti/auth_screen/login_mhs.dart';
 import 'package:pelaporan_d3ti/auth_screen/register_mhs.dart';
@@ -19,9 +19,7 @@ import 'package:pelaporan_d3ti/mahasiswa/pelaporan/add_lapor_kejadian.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan/lapor_kejadian.dart';
 import 'package:pelaporan_d3ti/mahasiswa/pelaporan/add_lapor_kejadian_mendesak.dart';
 import 'package:pelaporan_d3ti/services/notification_service.dart';
-import 'package:pelaporan_d3ti/settings/settings_screen.dart'; // You'll need to create this
-// Remove this import since we're replacing it with native splash
-// import 'splash_screen/splash_screen.dart';
+import 'package:pelaporan_d3ti/settings/settings_screen.dart';
 import 'package:timezone/data/latest.dart' as tz_init;
 
 void main() async {
@@ -52,6 +50,17 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false, // Hide debug banner
       initialRoute:
           '/login', // Changed initial route to login since splash is now native
+
+      // Set Poppins as the default font for the entire application
+      theme: ThemeData(
+        textTheme: GoogleFonts.poppinsTextTheme(
+          Theme.of(context).textTheme,
+        ),
+        // You can also customize other theme properties here
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+
       routes: {
         // Removed the splash screen route since we're using native splash
         // '/': (context) => SplashScreen(),

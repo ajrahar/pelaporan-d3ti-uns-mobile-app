@@ -26,6 +26,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
   bool isAdmin = true; // Set berdasarkan role user
   bool showFullImage = false;
   bool showTanggapanModal = false;
+  bool isSavingTanggapan = false;
   String? error;
   Laporan? laporan;
   TextEditingController tanggapanController = TextEditingController();
@@ -47,8 +48,6 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     _getCurrentUser();
   }
 
-  // Simpler version
-  // Improved version that also checks SharedPreferences
   Future<void> _getCurrentUser() async {
     try {
       // First attempt: Get token from TokenManager
@@ -81,9 +80,8 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
       }
 
       // Last resort: Use hardcoded fallback
-      // Last resort: Use hardcoded fallback
       if (currentUser == null || currentUser!.isEmpty) {
-        currentUser = "Pelapor"; // The fallback user
+        currentUser = "miftahul01"; // Using the provided login from the prompt
         print("Using fallback user: $currentUser");
       } else {
         print("Current user set to: $currentUser");
@@ -91,7 +89,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     } catch (e) {
       print('Error getting current user: $e');
       // Set default value in case of error
-      currentUser = "Pelapor";
+      currentUser = "miftahul01"; // Using the provided login from the prompt
       print("Error occurred, using fallback user: $currentUser");
     }
   }
@@ -176,8 +174,9 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
   Future<void> saveTanggapan() async {
     if (tanggapanController.text.isEmpty || laporan == null) return;
 
+    // Set loading state for tanggapan only
     setState(() {
-      isLoading = true;
+      isSavingTanggapan = true;
     });
 
     try {
@@ -190,7 +189,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
           "Current local time: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(now)}");
 
       // Get current username, using the specified username from the context
-      final username = currentUser ?? "Pelapor"; // Changed from "miftahul01"
+      final username = currentUser ?? "miftahul01";
 
       // Persiapkan data tanggapan baru
       final newTanggapan = {
@@ -240,7 +239,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
       _showErrorMessage('Gagal menyimpan tanggapan: $e');
     } finally {
       setState(() {
-        isLoading = false;
+        isSavingTanggapan = false;
       });
     }
   }
@@ -252,20 +251,98 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
       // Tampilkan konfirmasi
       final bool? confirm = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Tutup Kasus Laporan'),
-          content: Text(
-              'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('Batal'),
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10.0,
+                  offset: Offset(0.0, 10.0),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text('Ya, Selesaikan!'),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.green,
+                        size: 24,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Tutup Kasus Laporan',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Apakah Anda yakin ingin menutup dan menyelesaikan kasus laporan ini?',
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      ),
+                      child: Text(
+                        'Ya, Selesaikan!',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
 
@@ -299,9 +376,22 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
+        content: Container(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.green.shade700,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.all(16),
+        elevation: 4,
+        duration: Duration(seconds: 3),
       ),
     );
   }
@@ -309,9 +399,21 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
+        content: Container(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.red.shade700,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.all(16),
+        elevation: 4,
       ),
     );
   }
@@ -404,9 +506,21 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text('Detail Laporan Kejadian'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: Text(
+          'Detail Laporan Kejadian',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        iconTheme: IconThemeData(color: Colors.black87),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -414,78 +528,145 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
           },
         ),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : error != null && laporan == null
+      body: Stack(
+        children: [
+          // Main content
+          isLoading
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(error!),
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          theme.primaryColor,
+                        ),
+                      ),
                       SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadData,
-                        child: Text('Coba Lagi'),
+                      Text(
+                        'Memuat data...',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
                       ),
                     ],
                   ),
                 )
-              : laporan == null
-                  ? Center(child: Text('Data laporan tidak ditemukan'))
-                  : _buildDetailContent(),
+              : error != null && laporan == null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.red.shade400,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            error!,
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: _loadData,
+                            icon: Icon(Icons.refresh),
+                            label: Text('Coba Lagi'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : laporan == null
+                      ? Center(
+                          child: Text(
+                            'Data laporan tidak ditemukan',
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 16,
+                            ),
+                          ),
+                        )
+                      : _buildDetailContent(),
+
+          // Show a non-blocking loading indicator for saving tanggapan only
+          if (isSavingTanggapan)
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(theme.primaryColor),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Menyimpan tanggapan...',
+                      style: TextStyle(
+                        color: Colors.grey[800],
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildDetailContent() {
     return SingleChildScrollView(
+      physics: BouncingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header section
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Detail Laporan Kejadian',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        laporan!.nomorLaporan ?? 'No. Laporan tidak tersedia',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: getStatusColor(laporan!.status ?? 'unverified')
-                        .withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    formatStatus(laporan!.status ?? 'unverified'),
-                    style: TextStyle(
-                      color: getStatusColor(laporan!.status ?? 'unverified'),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            _buildHeaderCard(),
 
-            SizedBox(height: 24),
+            SizedBox(height: 20),
 
             // Card for Information
             _buildCard(
               title: 'Informasi Kejadian',
+              icon: Icons.info_outline,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -493,19 +674,26 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                     Container(
                       margin: EdgeInsets.only(bottom: 16),
                       padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
+                        color: Colors.blue.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.blue.withOpacity(0.3),
+                          width: 1,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.label, size: 16, color: Colors.blue),
-                          SizedBox(width: 4),
+                          SizedBox(width: 6),
                           Text(
                             getCategoryName(laporan!.categoryId),
-                            style: TextStyle(color: Colors.blue),
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
@@ -521,114 +709,196 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                           laporan!.jenisKejadian ??
                           '-',
                     },
-                    // Lokasi Kejadian removed as requested
                   ]),
                 ],
               ),
             ),
 
-            SizedBox(height: 16),
+            SizedBox(height: 20),
 
             // Card for Details
             _buildCard(
               title: 'Detail Kejadian',
+              icon: Icons.description_outlined,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (laporan!.judul != null)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
+                      padding: const EdgeInsets.only(bottom: 12.0),
                       child: Text(
                         laporan!.judul!,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
                     ),
                   Text(
                     laporan!.deskripsi ?? laporan!.deskripsiKejadian ?? '-',
-                    style: TextStyle(height: 1.5),
+                    style: TextStyle(
+                      height: 1.5,
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
                   ),
                   if (laporan!.imagePath != null ||
                       laporan!.fotoKejadian != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
+                      padding: const EdgeInsets.only(top: 24.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Foto Kejadian',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: [
+                              Icon(Icons.photo_outlined,
+                                  size: 18, color: Colors.grey[700]),
+                              SizedBox(width: 8),
+                              Text(
+                                'Foto Kejadian',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 8),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                showFullImage = true;
-                              });
-                              // Show dialog with full image
-                              showDialog(
-                                context: context,
-                                builder: (context) => Dialog(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Stack(
-                                        alignment: Alignment.topRight,
+                          SizedBox(height: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 15,
+                                  spreadRadius: 1,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    showFullImage = true;
+                                  });
+                                  // Show dialog with full image
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      backgroundColor: Colors.transparent,
+                                      elevation: 0,
+                                      insetPadding: EdgeInsets.all(16),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Image.network(
-                                            _getImageUrl(laporan!.imagePath,
-                                                laporan!.fotoKejadian),
-                                            fit: BoxFit.contain,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Center(
-                                                child: Text(
-                                                    'Gambar tidak dapat dimuat'),
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: Icon(Icons.close),
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
+                                          Stack(
+                                            alignment: Alignment.topRight,
+                                            children: [
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                child: Image.network(
+                                                  _getImageUrl(
+                                                      laporan!.imagePath,
+                                                      laporan!.fotoKejadian),
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (context, error,
+                                                      stackTrace) {
+                                                    return Container(
+                                                      padding:
+                                                          EdgeInsets.all(20),
+                                                      color: Colors.grey[200],
+                                                      child: Icon(
+                                                        Icons.broken_image,
+                                                        size: 48,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              Material(
+                                                color: Colors.transparent,
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.black
+                                                          .withOpacity(0.5),
+                                                    ),
+                                                    child: IconButton(
+                                                      icon: Icon(
+                                                        Icons.close,
+                                                        color: Colors.white,
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  constraints: BoxConstraints(
+                                    maxHeight: 240,
                                   ),
-                                ),
-                              );
-                            },
-                            child: Center(
-                              child: Container(
-                                constraints: BoxConstraints(
-                                  maxHeight: 200,
-                                ),
-                                child: Image.network(
-                                  _getImageUrl(laporan!.imagePath,
-                                      laporan!.fotoKejadian),
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Center(
-                                      child: Text('Gambar tidak dapat dimuat'),
-                                    );
-                                  },
+                                  width: double.infinity,
+                                  child: Image.network(
+                                    _getImageUrl(laporan!.imagePath,
+                                        laporan!.fotoKejadian),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        height: 200,
+                                        color: Colors.grey[200],
+                                        child: Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.broken_image,
+                                                size: 48,
+                                                color: Colors.grey[500],
+                                              ),
+                                              SizedBox(height: 16),
+                                              Text(
+                                                'Gambar tidak dapat dimuat',
+                                                style: TextStyle(
+                                                  color: Colors.grey[700],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                             ),
                           ),
+                          SizedBox(height: 8),
                           Center(
                             child: Text(
                               'Klik untuk memperbesar gambar',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
                               ),
                             ),
                           ),
@@ -639,11 +909,12 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
               ),
             ),
 
-            SizedBox(height: 16),
+            SizedBox(height: 20),
 
             // Card for Reporter
             _buildCard(
               title: 'Informasi Pelapor',
+              icon: Icons.person_outline,
               child: _buildInfoGrid([
                 {
                   'label': 'Nama',
@@ -677,21 +948,27 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
               ]),
             ),
 
-            SizedBox(height: 16),
+            SizedBox(height: 20),
 
             // Card for Status
             _buildCard(
               title: 'Status Laporan',
+              icon: Icons.event_note_outlined,
               child: _buildInfoGrid([
                 {
                   'label': 'Status',
                   'value': formatStatus(laporan!.status ?? 'unverified'),
                   'widget': Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: getStatusColor(laporan!.status ?? 'unverified')
-                          .withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
+                          .withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: getStatusColor(laporan!.status ?? 'unverified')
+                            .withOpacity(0.3),
+                        width: 1,
+                      ),
                     ),
                     child: Text(
                       formatStatus(laporan!.status ?? 'unverified'),
@@ -716,21 +993,37 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
             // Additional bukti pelanggaran section if available
             if (laporan!.buktiPelanggaran != null &&
                 laporan!.buktiPelanggaran!.isNotEmpty) ...[
-              SizedBox(height: 16),
+              SizedBox(height: 20),
               _buildCard(
                 title: 'Bukti Pelanggaran',
                 icon: Icons.assignment_outlined,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: laporan!.buktiPelanggaran!.map((bukti) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 8),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.green.withOpacity(0.2),
+                        ),
+                      ),
                       child: Row(
                         children: [
                           Icon(Icons.check_circle_outline,
                               color: Colors.green, size: 18),
-                          SizedBox(width: 8),
-                          Text(bukti),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              bukti,
+                              style: TextStyle(
+                                color: Colors.green.shade800,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -741,7 +1034,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
 
             // Tanggapan section
             if (hasTanggapan) ...[
-              SizedBox(height: 16),
+              SizedBox(height: 20),
               _buildCard(
                 title: 'Tanggapan',
                 icon: Icons.comment_outlined,
@@ -752,121 +1045,321 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
             // Admin buttons
             if (isAdmin) ...[
               SizedBox(height: 24),
-              Row(
-                children: [
-                  if (laporan!.status != 'finished')
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.comment_outlined),
-                        label: Text('Tambah Tanggapan'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[200],
-                          foregroundColor: Colors.black87,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            showTanggapanModal = true;
-                          });
-
-                          // Show bottom sheet for adding tanggapan
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (context) {
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom:
-                                      MediaQuery.of(context).viewInsets.bottom,
-                                  left: 16,
-                                  right: 16,
-                                  top: 16,
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Tambah Tanggapan',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(Icons.close),
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 16),
-                                    TextField(
-                                      controller: tanggapanController,
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            'Masukkan tanggapan anda di sini...',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      maxLines: 5,
-                                    ),
-                                    SizedBox(height: 16),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text('Batal'),
-                                        ),
-                                        SizedBox(width: 8),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            saveTanggapan();
-                                          },
-                                          child: Text('Simpan Tanggapan'),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 16),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  SizedBox(width: 12),
-                  if (laporan!.status != 'finished' &&
-                      laporan!.status != 'unverified')
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.check_circle_outline),
-                        label: Text('Tutup Laporan'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: finishReport,
-                      ),
-                    ),
-                ],
-              ),
+              _buildActionButtons(),
             ],
 
             SizedBox(height: 24),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeaderCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            spreadRadius: 1,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.article_outlined,
+                    color: Colors.blue,
+                    size: 28,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Detail Laporan Kejadian',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        laporan!.nomorLaporan ?? 'No. Laporan tidak tersedia',
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: getStatusColor(laporan!.status ?? 'unverified')
+                        .withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: getStatusColor(laporan!.status ?? 'unverified')
+                          .withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    formatStatus(laporan!.status ?? 'unverified'),
+                    style: TextStyle(
+                      color: getStatusColor(laporan!.status ?? 'unverified'),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        if (laporan!.status != 'finished')
+          Expanded(
+            child: ElevatedButton.icon(
+              icon: Icon(Icons.comment_outlined),
+              label: Text('Tambah Tanggapan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade50,
+                foregroundColor: Colors.blue.shade800,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.blue.shade200),
+                ),
+              ),
+              onPressed: () {
+                setState(() {
+                  showTanggapanModal = true;
+                });
+
+                // Show bottom sheet for adding tanggapan
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) {
+                    return StatefulBuilder(
+                      builder: (context, setState) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              topRight: Radius.circular(24),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: Offset(0, -5),
+                              ),
+                            ],
+                          ),
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).viewInsets.bottom,
+                            left: 20,
+                            right: 20,
+                            top: 20,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(
+                                child: Container(
+                                  width: 40,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.comment_outlined,
+                                      color: Colors.blue,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Tambah Tanggapan',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[800],
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.close),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    color: Colors.grey[600],
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                              Container(
+                                padding: EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.grey[300]!,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: TextField(
+                                  controller: tanggapanController,
+                                  decoration: InputDecoration(
+                                    hintText:
+                                        'Masukkan tanggapan Anda di sini...',
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 15,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide.none,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[50],
+                                    contentPadding: EdgeInsets.all(16),
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black87,
+                                    height: 1.5,
+                                  ),
+                                  maxLines: 5,
+                                ),
+                              ),
+                              SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Batal',
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      saveTanggapan();
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: Text(
+                                      'Simpan Tanggapan',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        SizedBox(width: 12),
+        if (laporan!.status != 'finished' && laporan!.status != 'unverified')
+          Expanded(
+            child: ElevatedButton.icon(
+              icon: Icon(Icons.check_circle_outline),
+              label: Text('Tutup Laporan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade500,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: finishReport,
+            ),
+          ),
+      ],
     );
   }
 
@@ -893,42 +1386,58 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     return baseUrl + image;
   }
 
-  Widget _buildCard(
-      {required String title, required Widget child, IconData? icon}) {
+  Widget _buildCard({
+    required String title,
+    required Widget child,
+    IconData? icon,
+  }) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 4),
+            blurRadius: 15,
+            spreadRadius: 1,
+            offset: Offset(0, 5),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 20),
-                  SizedBox(width: 8),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, size: 18, color: Colors.blue.shade700),
+                  ),
+                  SizedBox(width: 12),
                 ],
                 Text(
                   title,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
                   ),
                 ),
               ],
             ),
-            Divider(height: 24),
+            Divider(
+              height: 32,
+              thickness: 1,
+              color: Colors.grey[100],
+            ),
             child,
           ],
         ),
@@ -939,11 +1448,11 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
   Widget _buildInfoGrid(List<Map<String, dynamic>> items) {
     return Wrap(
       spacing: 24,
-      runSpacing: 16,
+      runSpacing: 20,
       children: items.map((item) {
         return SizedBox(
           width: MediaQuery.of(context).size.width > 600
-              ? (MediaQuery.of(context).size.width - 80) /
+              ? (MediaQuery.of(context).size.width - 120) /
                   2 // 2 columns for larger screens
               : double.infinity, // Full width for smaller screens
           child: Column(
@@ -956,7 +1465,7 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                   fontSize: 14,
                 ),
               ),
-              SizedBox(height: 4),
+              SizedBox(height: 6),
               if (item['widget'] != null)
                 item['widget']
               else
@@ -964,6 +1473,8 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                   item['value'] ?? '-',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
+                    fontSize: 15,
+                    color: Colors.grey[800],
                   ),
                 ),
             ],
@@ -976,7 +1487,21 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
   Widget _buildTanggapanContent(dynamic tanggapan) {
     if (tanggapan is String) {
       // Old format: string
-      return Text(tanggapan);
+      return Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Text(
+          tanggapan,
+          style: TextStyle(
+            height: 1.5,
+            fontSize: 15,
+          ),
+        ),
+      );
     } else if (tanggapan is List) {
       // New format: array of objects
       return Column(
@@ -988,41 +1513,81 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
             return Container(
               margin: EdgeInsets.only(
                   bottom: index < tanggapan.length - 1 ? 16 : 0),
-              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: Colors.blue,
-                    width: 3,
-                  ),
-                ),
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade100),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        item['user'] ?? 'Admin',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
-                        ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
                       ),
-                      Text(
-                        formatDate(item['timestamp']),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: Icon(
+                                Icons.person_outline,
+                                color: Colors.blue.shade700,
+                                size: 14,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              item['user'] ?? 'Admin',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade800,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              formatDate(item['timestamp']),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    item['text'] ?? '',
-                    style: TextStyle(height: 1.5),
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      item['text'] ?? '',
+                      style: TextStyle(
+                        height: 1.5,
+                        fontSize: 15,
+                        color: Colors.grey[800],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1032,6 +1597,21 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
       );
     }
 
-    return Text('Tidak ada tanggapan');
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Text(
+          'Tidak ada tanggapan',
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
+    );
   }
 }

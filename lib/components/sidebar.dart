@@ -19,10 +19,28 @@ class _SidebarState extends State<Sidebar> {
   String? _userRole;
   bool _isLoading = true;
 
+  // Define elegant theme colors
+  final Color _primaryColor = Colors.indigo.shade600;
+  final Color _accentColor = Colors.indigoAccent;
+  final Color _lightAccent = Colors.indigo.shade50;
+  final Color _darkGrey = Colors.grey.shade800;
+  final Color _mediumGrey = Colors.grey.shade500;
+  final Color _lightGrey = Colors.grey.shade200;
+
+  // Track current active route
+  String _currentRoute = '';
+
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    // Determine current route from Navigator
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final route = ModalRoute.of(context)?.settings.name ?? '/';
+      setState(() {
+        _currentRoute = route;
+      });
+    });
   }
 
   Future<void> _loadUserData() async {
@@ -130,252 +148,382 @@ class _SidebarState extends State<Sidebar> {
 
   @override
   Widget build(BuildContext context) {
+    // Determine if we should use compact layout based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 768;
+
     return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue[800]!,
-              Colors.blue[700]!,
-              Colors.blue[600]!,
-            ],
+      elevation: 0,
+      backgroundColor: Colors.white,
+      child: Column(
+        children: [
+          // Header with app logo and title
+          _buildHeader(isCompact),
+
+          // User profile section
+          _buildUserProfile(isCompact),
+
+          // Divider
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Divider(color: _lightGrey, thickness: 1.5),
           ),
-        ),
-        child: Column(
-          children: [
-            // App Title Section
-            Container(
-              padding: EdgeInsets.only(top: 50, bottom: 20),
-              width: double.infinity,
-              color: Colors.blue[900],
-              child: Column(
-                children: [
-                  // App logo or icon
-                  Container(
-                    height: 70,
-                    width: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/images/d3ti_logo.png',
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  // App title text
-                  Text(
-                    "Pelaporan D3TI UNS",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          SizedBox(height: 8),
 
-            // User info section
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-              width: double.infinity,
-              color: Colors.blue.withOpacity(0.8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 25,
-                        child: Icon(
-                          Icons.person,
-                          size: 30,
-                          color: Colors.blue[800],
-                        ),
-                      ),
-                      SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _isLoading ? "Loading..." : _userName,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 3),
-                            Text(
-                              _userEmail ??
-                                  (_userRole != null ? "Role: $_userRole" : ""),
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 12,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          // Menu items - always vertical
+          Expanded(
+            child: _buildVerticalMenu(isCompact),
+          ),
 
-            // Menu items
-            Expanded(
-              child: Container(
-                color: Colors.white,
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    _buildMenuItem(
-                      icon: Icons.dashboard,
-                      title: 'Dashboard',
-                      onTap: () {
-                        Navigator.pushReplacementNamed(context, '/home');
-                      },
-                      gradientColors: [Colors.blue[400]!, Colors.blue[600]!],
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.report_outlined,
-                      title: 'Laporan Kejadian',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/reports');
-                      },
-                      gradientColors: [Colors.green[400]!, Colors.green[600]!],
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.privacy_tip_outlined,
-                      title: 'Laporan Kekerasan Seksual',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/violence-reports');
-                      },
-                      gradientColors: [Colors.red[400]!, Colors.red[600]!],
-                    ),
-                    Divider(thickness: 1),
-                    _buildMenuItem(
-                      icon: Icons.logout,
-                      title: 'Logout',
-                      onTap: () async {
-                        try {
-                          await TokenManager.clearToken();
-                          Navigator.pushReplacementNamed(context, '/login');
-                        } catch (e) {
-                          print('Error during logout: $e');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error during logout: $e')),
-                          );
-                        }
-                      },
-                      gradientColors: [Colors.grey[400]!, Colors.grey[700]!],
-                    ),
-                  ],
+          // Footer with version
+          _buildFooter(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(bool isCompact) {
+    return Container(
+      padding: EdgeInsets.only(
+          top: isCompact ? 40 : 50, bottom: isCompact ? 16 : 20),
+      width: double.infinity,
+      color: Colors.white,
+      child: Column(
+        children: [
+          // App logo with elegant shadow
+          Container(
+            height: isCompact ? 60 : 70,
+            width: isCompact ? 60 : 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: _primaryColor.withOpacity(0.2),
+                  blurRadius: 12,
+                  offset: Offset(0, 5),
                 ),
+              ],
+            ),
+            child: Center(
+              child: Image.asset(
+                'assets/images/d3ti_logo.png',
+                width: isCompact ? 44 : 50,
+                height: isCompact ? 44 : 50,
+                fit: BoxFit.contain,
               ),
             ),
+          ),
+          SizedBox(height: isCompact ? 14 : 18),
+          // App title with elegant typography
+          Text(
+            "Pelaporan D3TI",
+            style: TextStyle(
+              fontSize: isCompact ? 20 : 22,
+              fontWeight: FontWeight.w600,
+              color: _primaryColor,
+              letterSpacing: 0.5,
+            ),
+          ),
+          Text(
+            "Sekolah Vokasi",
+            style: TextStyle(
+              fontSize: isCompact ? 12 : 14,
+              color: _mediumGrey,
+              letterSpacing: 0.3,
+            ),
+          ),
+          Text(
+            "Universitas Sebelas Maret",
+            style: TextStyle(
+              fontSize: isCompact ? 12 : 14,
+              color: _mediumGrey,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Footer with version info
-            Container(
-              width: double.infinity,
-              color: Colors.blue[900],
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                'v1.0.0',
-                style: TextStyle(color: Colors.white.withOpacity(0.6)),
-                textAlign: TextAlign.center,
+  Widget _buildUserProfile(bool isCompact) {
+    return Container(
+      margin:
+          EdgeInsets.symmetric(horizontal: 16, vertical: isCompact ? 10 : 16),
+      padding: EdgeInsets.all(isCompact ? 12 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // User avatar with subtle gradient border
+          Container(
+            padding: EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_primaryColor, _accentColor],
               ),
             ),
-          ],
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              radius: isCompact ? 18 : 22,
+              child: Icon(
+                Icons.person,
+                size: isCompact ? 22 : 26,
+                color: _primaryColor,
+              ),
+            ),
+          ),
+          SizedBox(width: 15),
+          // User info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isLoading ? "Loading..." : _userName,
+                  style: TextStyle(
+                    fontSize: isCompact ? 14 : 16,
+                    fontWeight: FontWeight.w600,
+                    color: _darkGrey,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 4),
+                Text(
+                  _userEmail ?? (_userRole != null ? "Role: $_userRole" : ""),
+                  style: TextStyle(
+                    color: _mediumGrey,
+                    fontSize: isCompact ? 10 : 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Vertical menu layout for all screen sizes
+  Widget _buildVerticalMenu(bool isCompact) {
+    return ListView(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        _buildMenuHeader("MAIN MENU"),
+        _buildMenuItem(
+          icon: Icons.dashboard_outlined,
+          title: 'Dashboard',
+          onTap: () => _navigateTo(context, '/home'),
+          isActive: _isActivePage('/home'),
+          isCompact: isCompact,
+        ),
+        _buildMenuHeader("REPORTS"),
+        _buildMenuItem(
+          icon: Icons.report_outlined,
+          title: 'Laporan Kejadian',
+          onTap: () => _navigateTo(context, '/reports'),
+          isActive: _isActivePage('/reports'),
+          iconColor: Colors.green.shade600,
+          isCompact: isCompact,
+        ),
+        _buildMenuItem(
+          icon: Icons.privacy_tip_outlined,
+          title: 'Laporan Kekerasan Seksual',
+          onTap: () => _navigateTo(context, '/violence-reports'),
+          isActive: _isActivePage('/violence-reports'),
+          iconColor: Colors.red.shade600,
+          isCompact: isCompact,
+        ),
+        SizedBox(height: 16),
+        _buildMenuHeader("ACCOUNT"),
+        _buildMenuItem(
+          icon: Icons.logout_outlined,
+          title: 'Logout',
+          onTap: _performLogout,
+          isDanger: true,
+          isCompact: isCompact,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, top: 16.0, bottom: 8.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: _mediumGrey,
+          letterSpacing: 1.2,
         ),
       ),
     );
   }
 
-  // Custom menu item widget with gradient background
+  // Standard menu item with responsive sizing
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
     required Function() onTap,
-    required List<Color> gradientColors,
+    bool isActive = false,
+    bool isDanger = false,
+    Color? iconColor,
+    required bool isCompact,
   }) {
+    // Define colors based on state and type
+    Color bgColor = isActive ? _lightAccent : Colors.transparent;
+    Color textIconColor = isDanger
+        ? Colors.red.shade400
+        : (isActive ? _primaryColor : (iconColor ?? _darkGrey));
+
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      margin: EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
       ),
       child: Material(
-        borderRadius: BorderRadius.circular(10),
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: onTap,
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          splashColor: _lightAccent,
+          highlightColor: _lightAccent.withOpacity(0.5),
+          hoverColor: _lightAccent.withOpacity(0.3),
+          child: Ink(
             decoration: BoxDecoration(
+              color: bgColor,
               borderRadius: BorderRadius.circular(10),
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: gradientColors,
-              ),
+              border: isActive
+                  ? Border.all(color: textIconColor.withOpacity(0.3), width: 1)
+                  : null,
             ),
+            padding: EdgeInsets.symmetric(
+                horizontal: 16, vertical: isCompact ? 10 : 12),
             child: Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(8),
+                  padding: EdgeInsets.all(isCompact ? 6 : 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: textIconColor.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     icon,
-                    color: Colors.white,
-                    size: 22,
+                    color: textIconColor,
+                    size: isCompact ? 16 : 18,
                   ),
                 ),
-                SizedBox(width: 15),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: textIconColor,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                      fontSize: isCompact ? 13 : 14,
+                    ),
                   ),
                 ),
+                if (isActive) ...[
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: textIconColor,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Divider(color: _lightGrey, thickness: 1.5),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'v1.0.0',
+            style: TextStyle(
+              color: _mediumGrey,
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 4),
+          Text(
+            '© 2025 D3TI UNS',
+            style: TextStyle(
+              color: _darkGrey,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to navigate and update current route
+  void _navigateTo(BuildContext context, String route) {
+    Navigator.pushReplacementNamed(context, route);
+    setState(() {
+      _currentRoute = route;
+    });
+  }
+
+  // Helper method to check if a page is active
+  bool _isActivePage(String route) {
+    return _currentRoute == route ||
+        (_currentRoute.isEmpty && route == '/home'); // Default to home if empty
+  }
+
+  // Logout helper method
+  Future<void> _performLogout() async {
+    try {
+      await TokenManager.clearToken();
+      Navigator.pushReplacementNamed(context, '/login');
+    } catch (e) {
+      print('Error during logout: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error during logout: $e')),
+      );
+    }
   }
 }
