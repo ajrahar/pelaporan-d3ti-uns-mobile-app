@@ -54,6 +54,7 @@ dependencies:
   timezone: ^0.10.1
   flutter_recaptcha_v2_compat: ^1.0.3+3
   flutter_native_splash: ^2.4.4
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
