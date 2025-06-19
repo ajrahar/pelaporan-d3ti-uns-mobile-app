@@ -1279,6 +1279,8 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
         ),
       ),
       child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.start, // Align to top for multi-line text
         children: [
           Container(
             width: 4,
@@ -1287,14 +1289,20 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
               color: primaryColor,
               borderRadius: BorderRadius.circular(2),
             ),
-            margin: EdgeInsets.only(right: 8),
+            margin: EdgeInsets.only(
+                right: 8, top: 4), // Added top margin to align with text
           ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: textColor,
+          Expanded(
+            // Add Expanded to allow text to take available width and wrap
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+              softWrap: true, // Ensure text wraps to next line
+              overflow: TextOverflow.visible, // Don't clip or ellipsize text
             ),
           ),
         ],
@@ -2283,8 +2291,9 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
   }
 
   Widget _buildFormActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+    return Wrap(
+      alignment: WrapAlignment.end,
+      spacing: 16,
       children: [
         OutlinedButton(
           onPressed: () {
@@ -2292,7 +2301,7 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
           },
           style: OutlinedButton.styleFrom(
             foregroundColor: textColor,
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
             ),
@@ -2303,7 +2312,6 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
             style: TextStyle(fontWeight: FontWeight.w500),
           ),
         ),
-        SizedBox(width: 16),
         ElevatedButton(
           onPressed:
               (!report['agreement'] || !recaptchaVerified || isSubmitting)
@@ -2312,7 +2320,7 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
           style: ElevatedButton.styleFrom(
             backgroundColor: accentColor,
             foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             disabledBackgroundColor: Colors.grey[400],
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
@@ -2331,7 +2339,7 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
-                    SizedBox(width: 10),
+                    SizedBox(width: 8),
                     Text(
                       'Mengirim...',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -2341,10 +2349,10 @@ class _AddKSPublicPageState extends State<AddKSPublicPage> {
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.send),
-                    SizedBox(width: 8),
+                    Icon(Icons.send, size: 18),
+                    SizedBox(width: 6),
                     Text(
-                      'Simpan Laporan',
+                      'Simpan',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
