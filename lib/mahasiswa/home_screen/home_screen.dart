@@ -671,6 +671,8 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSpacing: 12.0,
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.only(
+              bottom: 24.0), // Added padding at the bottom to prevent overflow
           children: [
             _buildStatCard(
               icon: Icons.description_outlined,
@@ -698,6 +700,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+        // Additional spacing at the bottom of the entire section
+        SizedBox(height: 16),
       ],
     );
   }
@@ -946,55 +950,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAddReportButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: _canSubmitRegularReport
-            ? () {
-                Navigator.pushNamed(context, '/addlaporkejadian');
-              }
-            : null,
-        icon: Icon(Icons.add),
-        label: Text(
-          _canSubmitRegularReport
-              ? 'Tambah Laporan Kejadian'
-              : 'Batas Laporan Tercapai (Maks. 3 belum diverifikasi)',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.3,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          backgroundColor:
-              _canSubmitRegularReport ? _primaryColor : Colors.grey.shade300,
-          foregroundColor:
-              _canSubmitRegularReport ? Colors.white : Colors.grey.shade600,
-          elevation: _canSubmitRegularReport ? 0 : 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<Laporan> _getSortedRecentActivities() {
-    // Make a copy of the list to avoid modifying the original
-    final sortedReports = List<Laporan>.from(_userLaporan);
-
-    // Sort by created_at date, most recent first
-    sortedReports.sort((a, b) {
-      if (a.createdAt == null) return 1; // Null dates go to the end
-      if (b.createdAt == null) return -1;
-      return b.createdAt!.compareTo(a.createdAt!); // Descending order
-    });
-
-    return sortedReports;
-  }
-
   Widget _buildActivityItem(Laporan report) {
     // Format status for display
     String statusText = 'Belum Diverifikasi';
@@ -1079,6 +1034,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Title
                     Text(
                       report.judul ?? 'No Title',
                       style: TextStyle(
@@ -1090,6 +1046,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: 6),
+
+                    // Status - now between title and time
+                    Container(
+                      margin: EdgeInsets.only(bottom: 6),
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+
+                    // Time
                     Row(
                       children: [
                         Icon(
@@ -1103,23 +1079,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             color: _mediumGrey,
-                          ),
-                        ),
-                        Spacer(),
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            statusText,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: statusColor,
-                              fontWeight: FontWeight.w600,
-                            ),
                           ),
                         ),
                       ],
@@ -1137,6 +1096,55 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildAddReportButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: _canSubmitRegularReport
+            ? () {
+                Navigator.pushNamed(context, '/addlaporkejadian');
+              }
+            : null,
+        icon: Icon(Icons.add),
+        label: Text(
+          _canSubmitRegularReport
+              ? 'Tambah Laporan Kejadian'
+              : 'Batas Laporan Tercapai (Maks. 3 belum diverifikasi)',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          backgroundColor:
+              _canSubmitRegularReport ? _primaryColor : Colors.grey.shade300,
+          foregroundColor:
+              _canSubmitRegularReport ? Colors.white : Colors.grey.shade600,
+          elevation: _canSubmitRegularReport ? 0 : 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Laporan> _getSortedRecentActivities() {
+    // Make a copy of the list to avoid modifying the original
+    final sortedReports = List<Laporan>.from(_userLaporan);
+
+    // Sort by created_at date, most recent first
+    sortedReports.sort((a, b) {
+      if (a.createdAt == null) return 1; // Null dates go to the end
+      if (b.createdAt == null) return -1;
+      return b.createdAt!.compareTo(a.createdAt!); // Descending order
+    });
+
+    return sortedReports;
   }
 
   // Create a method for the urgent report button
@@ -1599,23 +1607,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             color: _mediumGrey,
-                          ),
-                        ),
-                        Spacer(),
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _dangerColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            "Laporan Tertutup",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _dangerColor,
-                              fontWeight: FontWeight.w600,
-                            ),
                           ),
                         ),
                       ],

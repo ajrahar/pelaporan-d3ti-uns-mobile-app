@@ -649,83 +649,6 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // User and Time Info
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _borderColor),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(Icons.person, color: _primaryColor, size: 18),
-                      SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Login Sebagai',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _subtleTextColor,
-                            ),
-                          ),
-                          Text(
-                            _currentUserLogin,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: _textColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: 24,
-                  width: 1,
-                  color: _borderColor,
-                ),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Icon(Icons.access_time, color: _primaryColor, size: 18),
-                      SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Waktu UTC',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _subtleTextColor,
-                            ),
-                          ),
-                          Text(
-                            _currentDateTime,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: _textColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
-
           // Report limit warning if needed
           if (!_canAddNewReport)
             Container(
@@ -846,6 +769,8 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.start, // Align to top for multi-line text
             children: [
               Container(
                 padding: EdgeInsets.all(10),
@@ -860,14 +785,30 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                 ),
               ),
               SizedBox(width: 16),
-              Text(
-                'Pelaporan Kejadian',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _textColor,
-                  letterSpacing: 0.2,
-                ),
+              // Title split into two lines
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pelaporan',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: _textColor,
+                      letterSpacing: 0.2,
+                      height: 1.1, // Tighter line height for the title
+                    ),
+                  ),
+                  Text(
+                    'Kejadian',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: _textColor,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1181,28 +1122,18 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Filter Pencarian',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: _textColor,
-                ),
-              ),
-              TextButton.icon(
-                onPressed: _resetFilters,
-                icon: Icon(Icons.refresh, size: 18),
-                label: Text('Reset Filter'),
-                style: TextButton.styleFrom(
-                  foregroundColor: _primaryColor,
-                ),
-              ),
-            ],
+          // Title without the reset button
+          Text(
+            'Filter Pencarian',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: _textColor,
+            ),
           ),
           SizedBox(height: 20),
+
+          // Filter sections
           LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth < 800) {
@@ -1241,6 +1172,25 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                 );
               }
             },
+          ),
+
+          // Reset button moved below the filters
+          SizedBox(height: 24),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: _resetFilters,
+              icon: Icon(Icons.refresh, size: 18),
+              label: Text('Reset Filter'),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: _primaryColor,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -1606,8 +1556,8 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(20.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Daftar Laporan',
@@ -1617,31 +1567,34 @@ class _LaporKejadianPageState extends State<LaporKejadianPage> {
                     color: _textColor,
                   ),
                 ),
-                // Display report limitation badge
-                if (!_canAddNewReport)
+                // Display report limitation badge BELOW the title instead of next to it
+                if (!_canAddNewReport) ...[
+                  SizedBox(height: 12),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: _accentColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: _accentColor.withOpacity(0.3)),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.warning_amber_rounded,
-                            color: _accentColor, size: 14),
-                        SizedBox(width: 4),
+                            color: _accentColor, size: 16),
+                        SizedBox(width: 8),
                         Text(
                           'Batas laporan tercapai',
                           style: TextStyle(
                             color: _accentColor,
                             fontWeight: FontWeight.w500,
-                            fontSize: 12,
+                            fontSize: 13,
                           ),
                         ),
                       ],
                     ),
                   ),
+                ],
               ],
             ),
           ),

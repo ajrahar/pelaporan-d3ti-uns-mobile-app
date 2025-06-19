@@ -477,7 +477,7 @@ class _DetailLaporanKekerasanPageState
               Icon(Icons.event_note, color: _lightTextColor, size: 16),
               SizedBox(width: 8),
               Text(
-                'Dilaporkan pada ${_formatDate(_laporan!.createdAt)}',
+                ' ${_formatDate(_laporan!.createdAt)}',
                 style: TextStyle(
                   color: _lightTextColor,
                   fontSize: 14,

@@ -1066,12 +1066,17 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
     required Widget content,
     IconData? icon,
   }) {
+    // Check if this is the title that causes overflow
+    bool isTerlaporTitle = title == 'Informasi Terduga/Terlapor';
+
     return Container(
       margin: EdgeInsets.only(bottom: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.start, // Align to top for multiline title
             children: [
               if (icon != null) ...[
                 Container(
@@ -1084,13 +1089,38 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
                 ),
                 SizedBox(width: 12),
               ],
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: _textColor,
-                ),
+              Expanded(
+                // Wrap in Expanded to prevent overflow
+                child: isTerlaporTitle
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Informasi',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: _textColor,
+                            ),
+                          ),
+                          Text(
+                            'Terduga/Terlapor',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: _textColor,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: _textColor,
+                        ),
+                      ),
               ),
             ],
           ),
@@ -1848,7 +1878,6 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
                               ),
                             ),
 
-                            // Informasi Terduga/Terlapor Section
                             _buildSection(
                               title: 'Informasi Terduga/Terlapor',
                               icon: Icons.person_search_outlined,

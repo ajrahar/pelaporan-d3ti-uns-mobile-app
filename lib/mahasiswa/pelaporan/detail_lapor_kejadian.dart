@@ -1102,7 +1102,33 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                           color: Colors.black87,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 8),
+                      // Status badge added here - between title and report number
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: getStatusColor(laporan!.status ?? 'unverified')
+                              .withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color:
+                                getStatusColor(laporan!.status ?? 'unverified')
+                                    .withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          formatStatus(laporan!.status ?? 'unverified'),
+                          style: TextStyle(
+                            color:
+                                getStatusColor(laporan!.status ?? 'unverified'),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8),
                       Text(
                         laporan!.nomorLaporan ?? 'No. Laporan tidak tersedia',
                         style: TextStyle(
@@ -1111,27 +1137,6 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: getStatusColor(laporan!.status ?? 'unverified')
-                        .withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: getStatusColor(laporan!.status ?? 'unverified')
-                          .withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    formatStatus(laporan!.status ?? 'unverified'),
-                    style: TextStyle(
-                      color: getStatusColor(laporan!.status ?? 'unverified'),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
                   ),
                 ),
               ],
