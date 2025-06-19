@@ -286,12 +286,6 @@ class _LoginPageState extends State<LoginPage> {
                 Expanded(
                   flex: 5,
                   child: Container(
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/d3ti_background.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
