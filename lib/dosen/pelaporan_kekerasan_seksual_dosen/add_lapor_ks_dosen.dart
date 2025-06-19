@@ -603,14 +603,44 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Sukses!'),
-          content: const Text('Laporan berhasil dikirimkan'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.green,
+                  size: 24,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Sukses!'),
+            ],
+          ),
+          content: Text(
+            'Laporan berhasil dikirimkan. Tim kami akan segera memproses laporan Anda.',
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey[800],
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child: Text('OK'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.green,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
             ),
           ],
         );
@@ -623,14 +653,44 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(title),
-          content: Text(message),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 24,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text(title),
+            ],
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey[800],
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child: Text('OK'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
             ),
           ],
         );
@@ -643,41 +703,60 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
-          ),
-          child: Text(
-            'Verifikasi reCAPTCHA',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
+        _buildSectionTitle('Verifikasi reCAPTCHA'),
         SizedBox(height: 16),
         Container(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: Colors.grey[300]!),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 15,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Verifikasi bahwa Anda bukan robot sebelum mengirimkan laporan',
-                style: TextStyle(fontSize: 14),
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.security,
+                      size: 18,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Verifikasi bahwa Anda bukan robot sebelum mengirimkan laporan',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 20),
 
               // Directly display the reCAPTCHA widget in the form itself
               Container(
                 width: double.infinity,
                 height: 120, // Fixed height to contain the widget
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey.shade50,
                 ),
                 child: RecaptchaV2(
                   apiKey: "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
@@ -693,7 +772,14 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
                     if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                            content: Text('Verifikasi reCAPTCHA berhasil')),
+                          content: Text('Verifikasi reCAPTCHA berhasil'),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          margin: EdgeInsets.all(15),
+                        ),
                       );
                     }
                   },
@@ -707,39 +793,83 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
                 ),
               ),
 
-              SizedBox(height: 10),
+              SizedBox(height: 16),
               Center(
                 child: recaptchaVerified
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle, color: Colors.green),
-                          SizedBox(width: 8),
-                          Text(
-                            'Verifikasi berhasil',
-                            style: TextStyle(color: Colors.green),
-                          ),
-                        ],
+                    ? Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.green.shade100),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle,
+                                color: Colors.green, size: 16),
+                            SizedBox(width: 8),
+                            Text(
+                              'Verifikasi berhasil',
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.info, color: Colors.orange),
-                          SizedBox(width: 8),
-                          Text(
-                            'Harap selesaikan verifikasi reCAPTCHA',
-                            style: TextStyle(color: Colors.orange),
-                          ),
-                        ],
+                    : Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.orange.shade100),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.info_outline,
+                                color: Colors.orange[700], size: 16),
+                            SizedBox(width: 8),
+                            Text(
+                              'Harap selesaikan verifikasi reCAPTCHA',
+                              style: TextStyle(
+                                color: Colors.orange[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
               ),
               if (recaptchaError != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    recaptchaError!,
-                    style: TextStyle(color: Colors.red, fontSize: 12),
-                    textAlign: TextAlign.center,
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade100),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red, size: 16),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            recaptchaError!,
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
             ],
@@ -752,527 +882,658 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Laporan Kekerasan Seksual'),
+        title: Text(
+          'Laporan Kekerasan Seksual',
+          style: TextStyle(
+            color: Colors.grey[800],
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.grey[800]),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Colors.grey.shade200,
+          ),
+        ),
       ),
       body: Stack(
         children: [
           SingleChildScrollView(
+            physics: ClampingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
                   // Form Card
-                  Card(
-                    elevation: 4,
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 15,
+                          spreadRadius: 1,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+                    ),
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(24.0),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Center(
+                              child: Container(
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade50,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(
+                                  Icons.privacy_tip_outlined,
+                                  color: Colors.red,
+                                  size: 40,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 16),
                             Text(
                               'Laporan Kekerasan Seksual',
-                              style: Theme.of(context).textTheme.titleLarge,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[800],
+                              ),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(height: 24),
+                            SizedBox(height: 8),
+                            Text(
+                              'Silakan isi formulir dengan lengkap dan sesuai dengan kejadian yang dialami. Data pelapor akan terjaga kerahasiaannya.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 32),
 
                             // Detail Laporan Section
                             _buildSectionTitle('Detail Laporan'),
-                            SizedBox(height: 16),
-
-                            // Judul Laporan
-                            TextFormField(
-                              decoration: _inputDecoration('Judul Laporan',
-                                  isRequired: true),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
+                            SizedBox(height: 20),
+                            _buildFormCard(
+                              children: [
+                                _buildLabel('Judul Laporan', isRequired: true),
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  hintText: 'Masukkan judul laporan',
+                                  errorText: report['title'].isEmpty
                                       ? 'Masukkan judul laporan'
                                       : null,
-                              onChanged: (value) => report['title'] = value,
-                            ),
-                            SizedBox(height: 16),
+                                  onChanged: (value) =>
+                                      setState(() => report['title'] = value),
+                                  controller: TextEditingController(
+                                      text: report['title']),
+                                ),
+                                SizedBox(height: 20),
 
-                            // Kategori Dropdown
-                            DropdownButtonFormField<String>(
-                              decoration: _inputDecoration('Kategori',
-                                  isRequired: true),
-                              value: report['category'].isEmpty
-                                  ? null
-                                  : report['category'],
-                              hint: Text('Pilih Kategori'),
-                              items: getFilteredCategories().map((category) {
-                                return DropdownMenuItem<String>(
-                                  value: category['category_id'].toString(),
-                                  child: Text(category['nama']),
-                                );
-                              }).toList(),
-                              validator: (value) =>
-                                  value == null ? 'Pilih kategori' : null,
-                              onChanged: (value) =>
-                                  setState(() => report['category'] = value!),
-                            ),
-                            SizedBox(height: 16),
+                                // Kategori Dropdown
+                                _buildLabel('Kategori', isRequired: true),
+                                SizedBox(height: 8),
+                                _buildDropdownField(
+                                  value: report['category'].isEmpty
+                                      ? null
+                                      : report['category'],
+                                  hint: 'Pilih Kategori',
+                                  items:
+                                      getFilteredCategories().map((category) {
+                                    return DropdownMenuItem<String>(
+                                      value: category['category_id'].toString(),
+                                      child: Text(category['nama']),
+                                    );
+                                  }).toList(),
+                                  errorText: report['category'].isEmpty
+                                      ? 'Pilih kategori'
+                                      : null,
+                                  onChanged: (value) => setState(
+                                      () => report['category'] = value!),
+                                ),
+                                SizedBox(height: 20),
 
-                            // Bukti Pelanggaran Checkboxes
-                            Text(
-                              'Bukti Pelanggaran *',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Column(
-                                children: [
-                                  ...buktiOptions.map(
-                                    (option) => CheckboxListTile(
-                                      title: Text(option,
-                                          style: TextStyle(fontSize: 14)),
-                                      value: selectedBukti.contains(option),
-                                      controlAffinity:
-                                          ListTileControlAffinity.leading,
-                                      contentPadding: EdgeInsets.zero,
-                                      dense: true,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            selectedBukti.add(option);
-                                          } else {
-                                            selectedBukti.remove(option);
-                                          }
-                                          updateBuktiPelanggaran();
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  CheckboxListTile(
-                                    title: Text('Lainnya',
-                                        style: TextStyle(fontSize: 14)),
-                                    value: showLainnyaInput,
-                                    controlAffinity:
-                                        ListTileControlAffinity.leading,
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                    onChanged: (bool? value) {
-                                      setState(() {
-                                        showLainnyaInput = value ?? false;
-                                        updateBuktiPelanggaran();
-                                      });
-                                    },
-                                  ),
-                                  if (showLainnyaInput)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 32.0, top: 8.0),
-                                      child: TextFormField(
-                                        decoration: InputDecoration(
-                                          hintText: 'Sebutkan bukti lainnya',
-                                          border: OutlineInputBorder(),
-                                          contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 8),
-                                        ),
-                                        onChanged: (value) {
+                                // Bukti Pelanggaran Checkboxes
+                                _buildLabel('Bukti Pelanggaran',
+                                    isRequired: true),
+                                SizedBox(height: 8),
+                                _buildCheckboxesCard(
+                                  children: [
+                                    ...buktiOptions.map(
+                                      (option) => _buildCheckboxTile(
+                                        title: option,
+                                        value: selectedBukti.contains(option),
+                                        onChanged: (bool? value) {
                                           setState(() {
-                                            buktiLainnya = value;
+                                            if (value == true) {
+                                              selectedBukti.add(option);
+                                            } else {
+                                              selectedBukti.remove(option);
+                                            }
                                             updateBuktiPelanggaran();
+                                            showBuktiWarning =
+                                                report['bukti_pelanggaran']
+                                                    .isEmpty;
                                           });
                                         },
                                       ),
                                     ),
-                                  if (showBuktiWarning)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Text(
-                                        'Pilih setidaknya satu bukti pelanggaran',
-                                        style: TextStyle(
-                                            color: Colors.red, fontSize: 12),
-                                      ),
+                                    _buildCheckboxTile(
+                                      title: 'Lainnya',
+                                      value: showLainnyaInput,
+                                      onChanged: (bool? value) {
+                                        setState(() {
+                                          showLainnyaInput = value ?? false;
+                                          updateBuktiPelanggaran();
+                                        });
+                                      },
                                     ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 16),
-
-                            // Link Lampiran
-                            TextFormField(
-                              decoration: _inputDecoration(
-                                'Link Lampiran Tambahan',
-                                helperText:
-                                    'Masukkan URL Google Drive, Dropbox, atau layanan cloud lainnya',
-                              ),
-                              onChanged: (value) =>
-                                  report['lampiran_link'] = value,
-                            ),
-                            SizedBox(height: 16),
-
-                            // Deskripsi Laporan
-                            TextFormField(
-                              decoration: _inputDecoration(
-                                'Deskripsi',
-                                isRequired: true,
-                                hintText:
-                                    'Berikan Deskripsi atau Kronologi Kejadian',
-                              ),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Masukkan deskripsi laporan'
-                                      : null,
-                              onChanged: (value) =>
-                                  report['description'] = value,
-                              maxLines: 5,
-                            ),
-                            SizedBox(height: 16),
-
-                            // Tanggal & Waktu Kejadian
-                            InkWell(
-                              onTap: () async {
-                                final DateTime? pickedDate =
-                                    await showDatePicker(
-                                  context: context,
-                                  initialDate:
-                                      report['incidentDate'] ?? DateTime.now(),
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime.now(),
-                                );
-
-                                if (pickedDate != null) {
-                                  final TimeOfDay? pickedTime =
-                                      await showTimePicker(
-                                    context: context,
-                                    initialTime: TimeOfDay.fromDateTime(
-                                        report['incidentDate'] ??
-                                            DateTime.now()),
-                                  );
-
-                                  if (pickedTime != null) {
-                                    setState(() {
-                                      report['incidentDate'] = DateTime(
-                                        pickedDate.year,
-                                        pickedDate.month,
-                                        pickedDate.day,
-                                        pickedTime.hour,
-                                        pickedTime.minute,
-                                      );
-                                    });
-                                  }
-                                }
-                              },
-                              child: InputDecorator(
-                                decoration: _inputDecoration(
-                                    'Tanggal & Waktu Kejadian',
-                                    isRequired: true),
-                                child: Text(
-                                  report['incidentDate'] != null
-                                      ? "${report['incidentDate'].toLocal()}"
-                                          .split('.')[0]
-                                      : "Pilih Tanggal & Waktu",
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 16),
-
-                            // Multiple Image Upload
-                            Text(
-                              'Lampiran Foto *',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 8),
-                            InkWell(
-                              onTap: handleFileUpload,
-                              child: Container(
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.grey[300]!,
-                                      width: 2,
-                                      style: BorderStyle.solid),
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: Colors.grey[50],
-                                ),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.cloud_upload,
-                                          size: 48, color: Colors.grey[400]),
-                                      SizedBox(height: 8),
-                                      Text(
-                                          'Klik untuk memilih beberapa file foto'),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        'Format: JPG, PNG, GIF (Maks 5MB)',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600]),
+                                    if (showLainnyaInput)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 34.0, top: 8.0, right: 8.0),
+                                        child: _buildTextField(
+                                          hintText: 'Sebutkan bukti lainnya',
+                                          onChanged: (value) {
+                                            setState(() {
+                                              buktiLainnya = value;
+                                              updateBuktiPelanggaran();
+                                            });
+                                          },
+                                        ),
                                       ),
-                                    ],
+                                    if (showBuktiWarning)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            top: 8.0, left: 34.0),
+                                        child: Text(
+                                          'Pilih setidaknya satu bukti pelanggaran',
+                                          style: TextStyle(
+                                              color: Colors.red, fontSize: 12),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                SizedBox(height: 20),
+
+                                // Link Lampiran
+                                _buildLabel('Link Lampiran Tambahan'),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Masukkan URL Google Drive, Dropbox, atau layanan cloud lainnya',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontStyle: FontStyle.italic,
                                   ),
                                 ),
-                              ),
-                            ),
-
-                            // Image Previews
-                            if (imagePreviewBytes.isNotEmpty) ...[
-                              SizedBox(height: 16),
-                              Text(
-                                'Preview Foto (${imagePreviewBytes.length} file)',
-                                style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                              SizedBox(height: 8),
-                              GridView.builder(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  hintText: 'https://',
+                                  onChanged: (value) =>
+                                      report['lampiran_link'] = value,
+                                  prefixIcon: Icons.link,
                                 ),
-                                itemCount: imagePreviewBytes.length,
-                                itemBuilder: (context, index) {
-                                  return Stack(
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Colors.grey[300]!),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Image.memory(
-                                            imagePreviewBytes[index],
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            height: double.infinity,
+                                SizedBox(height: 20),
+
+                                // Deskripsi Laporan
+                                _buildLabel('Deskripsi', isRequired: true),
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  hintText:
+                                      'Berikan Deskripsi atau Kronologi Kejadian',
+                                  errorText: report['description'].isEmpty
+                                      ? 'Masukkan deskripsi laporan'
+                                      : null,
+                                  onChanged: (value) =>
+                                      report['description'] = value,
+                                  maxLines: 5,
+                                ),
+                                SizedBox(height: 20),
+
+                                // Tanggal & Waktu Kejadian
+                                _buildLabel('Tanggal & Waktu Kejadian',
+                                    isRequired: true),
+                                SizedBox(height: 8),
+                                GestureDetector(
+                                  onTap: () async {
+                                    final DateTime? pickedDate =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: report['incidentDate'] ??
+                                          DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime.now(),
+                                      builder: (context, child) {
+                                        return Theme(
+                                          data: Theme.of(context).copyWith(
+                                            colorScheme: ColorScheme.light(
+                                              primary: Colors.red,
+                                              onPrimary: Colors.white,
+                                              surface: Colors.white,
+                                              onSurface: Colors.grey[800]!,
+                                            ),
+                                            dialogBackgroundColor: Colors.white,
+                                          ),
+                                          child: child!,
+                                        );
+                                      },
+                                    );
+
+                                    if (pickedDate != null) {
+                                      final TimeOfDay? pickedTime =
+                                          await showTimePicker(
+                                        context: context,
+                                        initialTime: TimeOfDay.fromDateTime(
+                                            report['incidentDate'] ??
+                                                DateTime.now()),
+                                        builder: (context, child) {
+                                          return Theme(
+                                            data: Theme.of(context).copyWith(
+                                              colorScheme: ColorScheme.light(
+                                                primary: Colors.red,
+                                                onPrimary: Colors.white,
+                                                surface: Colors.white,
+                                                onSurface: Colors.grey[800]!,
+                                              ),
+                                              dialogBackgroundColor:
+                                                  Colors.white,
+                                            ),
+                                            child: child!,
+                                          );
+                                        },
+                                      );
+
+                                      if (pickedTime != null) {
+                                        setState(() {
+                                          report['incidentDate'] = DateTime(
+                                            pickedDate.year,
+                                            pickedDate.month,
+                                            pickedDate.day,
+                                            pickedTime.hour,
+                                            pickedTime.minute,
+                                          );
+                                        });
+                                      }
+                                    }
+                                  },
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 15, horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                          color: Colors.grey.shade300),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          report['incidentDate'] != null
+                                              ? "${report['incidentDate'].toLocal()}"
+                                                  .split('.')[0]
+                                              : "Pilih Tanggal & Waktu",
+                                          style: TextStyle(
+                                            color:
+                                                report['incidentDate'] != null
+                                                    ? Colors.grey[800]
+                                                    : Colors.grey[500],
+                                            fontSize: 15,
                                           ),
                                         ),
+                                        Icon(
+                                          Icons.calendar_today,
+                                          size: 18,
+                                          color: Colors.grey[500],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 24),
+
+                            // Multiple Image Upload
+                            _buildSectionTitle('Lampiran Foto'),
+                            SizedBox(height: 20),
+                            _buildFormCard(
+                              children: [
+                                GestureDetector(
+                                  onTap: handleFileUpload,
+                                  child: Container(
+                                    height: 160,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: Colors.grey.shade50,
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                        width: 1,
                                       ),
-                                      Positioned(
-                                        top: 4,
-                                        right: 4,
-                                        child: InkWell(
-                                          onTap: () => removeImage(index),
-                                          child: Container(
-                                            padding: EdgeInsets.all(4),
+                                    ),
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.all(16),
                                             decoration: BoxDecoration(
-                                              color: Colors.red,
+                                              color: Colors.grey.shade100,
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
-                                              Icons.close,
-                                              size: 14,
-                                              color: Colors.white,
+                                              Icons.cloud_upload_outlined,
+                                              size: 40,
+                                              color: Colors.grey.shade500,
                                             ),
                                           ),
+                                          SizedBox(height: 16),
+                                          Text(
+                                            'Klik untuk memilih beberapa file foto',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade700,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                          SizedBox(height: 6),
+                                          Text(
+                                            'Format: JPG, PNG, GIF (Maks 5MB)',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Image Previews
+                                if (imagePreviewBytes.isNotEmpty) ...[
+                                  SizedBox(height: 20),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade50,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: Icon(
+                                          Icons.photo_library_outlined,
+                                          size: 16,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Preview Foto (${imagePreviewBytes.length} file)',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.grey[700],
                                         ),
                                       ),
                                     ],
-                                  );
-                                },
-                              ),
-                            ],
+                                  ),
+                                  SizedBox(height: 12),
+                                  GridView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 12,
+                                      mainAxisSpacing: 12,
+                                      childAspectRatio: 1,
+                                    ),
+                                    itemCount: imagePreviewBytes.length,
+                                    itemBuilder: (context, index) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.05),
+                                              blurRadius: 5,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              child: Image.memory(
+                                                imagePreviewBytes[index],
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                height: double.infinity,
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 6,
+                                              right: 6,
+                                              child: GestureDetector(
+                                                onTap: () => removeImage(index),
+                                                child: Container(
+                                                  padding: EdgeInsets.all(4),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black
+                                                        .withOpacity(0.5),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    size: 16,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
                             SizedBox(height: 24),
 
                             // Informasi Pelapor Section
                             _buildSectionTitle('Informasi Pelapor'),
-                            SizedBox(height: 16),
-
-                            // Nama Pelapor
-                            TextFormField(
-                              decoration: _inputDecoration('Nama Pelapor',
-                                  isRequired: true),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
+                            SizedBox(height: 20),
+                            _buildFormCard(
+                              children: [
+                                // Nama Pelapor
+                                _buildLabel('Nama Pelapor', isRequired: true),
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  controller: TextEditingController(
+                                      text: report['reporterName']),
+                                  hintText: 'Masukkan nama pelapor',
+                                  errorText: report['reporterName'].isEmpty
                                       ? 'Masukkan nama pelapor'
                                       : null,
-                              onChanged: (value) =>
-                                  report['reporterName'] = value,
-                            ),
-                            SizedBox(height: 16),
+                                  onChanged: (value) =>
+                                      report['reporterName'] = value,
+                                ),
+                                SizedBox(height: 20),
 
-                            // NIM Pelapor
-                            TextFormField(
-                              decoration: _inputDecoration('NIM Pelapor',
-                                  isRequired: true),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
+                                // NIM Pelapor
+                                _buildLabel('NIM Pelapor', isRequired: true),
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  controller: TextEditingController(
+                                      text: report['nim']),
+                                  hintText: 'Masukkan NIM pelapor',
+                                  errorText: report['nim'].isEmpty
                                       ? 'Masukkan NIM pelapor'
                                       : null,
-                              onChanged: (value) => report['nim'] = value,
-                            ),
-                            SizedBox(height: 16),
+                                  onChanged: (value) => report['nim'] = value,
+                                ),
+                                SizedBox(height: 20),
 
-                            // Nomor HP Pelapor
-                            TextFormField(
-                              decoration: _inputDecoration('Nomor HP Pelapor',
-                                  isRequired: true),
-                              keyboardType: TextInputType.phone,
-                              validator: (value) =>
-                                  value == null || value.isEmpty
+                                // Nomor HP Pelapor
+                                _buildLabel('Nomor HP Pelapor',
+                                    isRequired: true),
+                                SizedBox(height: 8),
+                                _buildTextField(
+                                  controller: TextEditingController(
+                                      text: report['phone']),
+                                  hintText: 'Masukkan nomor HP pelapor',
+                                  keyboardType: TextInputType.phone,
+                                  errorText: report['phone'].isEmpty
                                       ? 'Masukkan nomor HP pelapor'
                                       : null,
-                              onChanged: (value) => report['phone'] = value,
-                            ),
-                            SizedBox(height: 16),
-
-                            // Profesi
-                            DropdownButtonFormField<String>(
-                              decoration:
-                                  _inputDecoration('Profesi', isRequired: true),
-                              value: report['profesi'].isEmpty
-                                  ? null
-                                  : report['profesi'],
-                              hint: Text('Pilih Profesi'),
-                              items: [
-                                DropdownMenuItem(
-                                    value: 'dosen', child: Text('Dosen')),
-                                DropdownMenuItem(
-                                    value: 'mahasiswa',
-                                    child: Text('Mahasiswa')),
-                                DropdownMenuItem(
-                                    value: 'staff', child: Text('Staff')),
-                                DropdownMenuItem(
-                                    value: 'lainnya', child: Text('Lainnya')),
-                              ],
-                              validator: (value) =>
-                                  value == null ? 'Pilih profesi' : null,
-                              onChanged: (value) =>
-                                  setState(() => report['profesi'] = value!),
-                            ),
-                            SizedBox(height: 16),
-
-                            // Jenis Kelamin
-                            Text(
-                              'Jenis Kelamin *',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: RadioListTile<String>(
-                                    title: Text('Laki-laki'),
-                                    value: 'laki-laki',
-                                    groupValue: report['jenis_kelamin'],
-                                    onChanged: (value) {
-                                      setState(() =>
-                                          report['jenis_kelamin'] = value!);
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                  ),
+                                  onChanged: (value) => report['phone'] = value,
                                 ),
-                                Expanded(
-                                  child: RadioListTile<String>(
-                                    title: Text('Perempuan'),
-                                    value: 'perempuan',
-                                    groupValue: report['jenis_kelamin'],
-                                    onChanged: (value) {
-                                      setState(() =>
-                                          report['jenis_kelamin'] = value!);
+                                SizedBox(height: 20),
+
+                                // Profesi
+                                _buildLabel('Profesi', isRequired: true),
+                                SizedBox(height: 8),
+                                _buildDropdownField(
+                                  value: report['profesi'].isEmpty
+                                      ? null
+                                      : report['profesi'],
+                                  hint: 'Pilih Profesi',
+                                  items: [
+                                    DropdownMenuItem(
+                                        value: 'dosen', child: Text('Dosen')),
+                                    DropdownMenuItem(
+                                        value: 'mahasiswa',
+                                        child: Text('Mahasiswa')),
+                                    DropdownMenuItem(
+                                        value: 'staff', child: Text('Staff')),
+                                    DropdownMenuItem(
+                                        value: 'lainnya',
+                                        child: Text('Lainnya')),
+                                  ],
+                                  errorText: report['profesi'].isEmpty
+                                      ? 'Pilih profesi'
+                                      : null,
+                                  onChanged: (value) => setState(
+                                      () => report['profesi'] = value!),
+                                ),
+                                SizedBox(height: 20),
+
+                                // Jenis Kelamin
+                                _buildLabel('Jenis Kelamin', isRequired: true),
+                                SizedBox(height: 8),
+                                _buildRadioGroup(
+                                  options: [
+                                    {
+                                      'value': 'laki-laki',
+                                      'label': 'Laki-laki'
                                     },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                  ),
+                                    {
+                                      'value': 'perempuan',
+                                      'label': 'Perempuan'
+                                    },
+                                  ],
+                                  groupValue: report['jenis_kelamin'],
+                                  onChanged: (value) {
+                                    setState(
+                                        () => report['jenis_kelamin'] = value!);
+                                  },
+                                ),
+                                SizedBox(height: 20),
+
+                                // Umur Pelapor
+                                _buildLabel('Rentang Umur', isRequired: true),
+                                SizedBox(height: 8),
+                                _buildRadioGroup(
+                                  options: [
+                                    {
+                                      'value': '<20',
+                                      'label': 'Kurang dari 20 tahun'
+                                    },
+                                    {
+                                      'value': '20-40',
+                                      'label': '20 - 40 tahun'
+                                    },
+                                    {
+                                      'value': '40<',
+                                      'label': 'Lebih dari 40 tahun'
+                                    },
+                                  ],
+                                  groupValue: report['umur_pelapor'],
+                                  onChanged: (value) {
+                                    setState(
+                                        () => report['umur_pelapor'] = value!);
+                                  },
                                 ),
                               ],
-                            ),
-                            SizedBox(height: 16),
-
-                            // Umur Pelapor
-                            Text(
-                              'Rentang Umur *',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Column(
-                                children: [
-                                  RadioListTile<String>(
-                                    title: Text('Kurang dari 20 tahun'),
-                                    value: '<20',
-                                    groupValue: report['umur_pelapor'],
-                                    onChanged: (value) {
-                                      setState(() =>
-                                          report['umur_pelapor'] = value!);
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                  ),
-                                  RadioListTile<String>(
-                                    title: Text('20 - 40 tahun'),
-                                    value: '20-40',
-                                    groupValue: report['umur_pelapor'],
-                                    onChanged: (value) {
-                                      setState(() =>
-                                          report['umur_pelapor'] = value!);
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                  ),
-                                  RadioListTile<String>(
-                                    title: Text('Lebih dari 40 tahun'),
-                                    value: '40<',
-                                    groupValue: report['umur_pelapor'],
-                                    onChanged: (value) {
-                                      setState(() =>
-                                          report['umur_pelapor'] = value!);
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                  ),
-                                ],
-                              ),
                             ),
                             SizedBox(height: 24),
 
                             // Informasi Terduga/Terlapor Section
                             _buildSectionTitle('Informasi Terduga/Terlapor'),
-                            SizedBox(height: 8),
-
+                            SizedBox(height: 16),
                             // Anonymous Instruction Info Box
                             Container(
-                              padding: EdgeInsets.all(12),
+                              padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.blue[50],
-                                border: Border(
-                                  left:
-                                      BorderSide(color: Colors.blue, width: 4),
-                                ),
-                                borderRadius: BorderRadius.circular(4),
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.info, color: Colors.blue),
-                                  SizedBox(width: 8),
+                                  Container(
+                                    padding: EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade100,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.info_outline,
+                                      color: Colors.blue.shade700,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
                                   Expanded(
                                     child: Text(
                                       'Jika terduga adalah anonim, berikan inputan "anonim" untuk nama dan "anonim@gmail.com" untuk email.',
-                                      style: TextStyle(color: Colors.blue[700]),
+                                      style: TextStyle(
+                                        color: Colors.blue.shade800,
+                                        height: 1.4,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            SizedBox(height: 16),
+                            SizedBox(height: 20),
 
                             // Terduga/Terlapor List
                             ...List.generate(report['terlapor'].length,
@@ -1281,29 +1542,32 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
                             }),
 
                             // Add Terduga Button
-                            SizedBox(height: 8),
-                            OutlinedButton.icon(
-                              onPressed: addTerduga,
-                              icon: Icon(Icons.add),
-                              label: Text('Tambah Terduga/Terlapor'),
+                            SizedBox(height: 16),
+                            Center(
+                              child: _buildOutlinedButton(
+                                icon: Icons.add,
+                                text: 'Tambah Terduga/Terlapor',
+                                onPressed: addTerduga,
+                              ),
                             ),
                             SizedBox(height: 24),
 
                             // Informasi Saksi Section
                             _buildSectionTitle('Informasi Saksi'),
-                            SizedBox(height: 16),
-
+                            SizedBox(height: 20),
                             // Saksi List
                             ...List.generate(report['saksi'].length, (index) {
                               return _buildSaksiCard(index);
                             }),
 
                             // Add Saksi Button
-                            SizedBox(height: 8),
-                            OutlinedButton.icon(
-                              onPressed: addSaksi,
-                              icon: Icon(Icons.add),
-                              label: Text('Tambah Saksi'),
+                            SizedBox(height: 16),
+                            Center(
+                              child: _buildOutlinedButton(
+                                icon: Icons.add,
+                                text: 'Tambah Saksi',
+                                onPressed: addSaksi,
+                              ),
                             ),
                             SizedBox(height: 24),
 
@@ -1312,68 +1576,106 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
 
                             // Pernyataan Section
                             _buildSectionTitle('Pernyataan'),
-                            SizedBox(height: 16),
-                            Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Dengan ini saya menyatakan bahwa:',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  SizedBox(height: 8),
-                                  _buildNumberedItem(1,
-                                      'Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.'),
-                                  _buildNumberedItem(2,
-                                      'Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.'),
-                                  _buildNumberedItem(3,
-                                      'Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.'),
-                                  SizedBox(height: 12),
-                                  CheckboxListTile(
-                                    title: Text(
-                                      'Saya menyetujui pernyataan di atas *',
-                                      style: TextStyle(fontSize: 14),
-                                    ),
-                                    value: report['agreement'] == true,
-                                    controlAffinity:
-                                        ListTileControlAffinity.leading,
-                                    contentPadding: EdgeInsets.zero,
-                                    onChanged: (bool? value) {
-                                      setState(() {
-                                        report['agreement'] = value ?? false;
-                                        showAgreementWarning = false;
-                                      });
-                                    },
+                            SizedBox(height: 20),
+                            _buildFormCard(
+                              children: [
+                                Text(
+                                  'Dengan ini saya menyatakan bahwa:',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey[800],
                                   ),
-                                  if (showAgreementWarning)
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 32.0),
-                                      child: Text(
-                                        'Anda harus menyetujui pernyataan ini untuk melanjutkan',
-                                        style: TextStyle(
-                                            color: Colors.red, fontSize: 12),
-                                      ),
+                                ),
+                                SizedBox(height: 16),
+                                _buildNumberedItem(1,
+                                    'Segala informasi yang saya berikan dalam laporan ini adalah benar dan dapat dipertanggungjawabkan.'),
+                                _buildNumberedItem(2,
+                                    'Saya bersedia memberikan keterangan lebih lanjut apabila diperlukan untuk proses penanganan laporan.'),
+                                _buildNumberedItem(3,
+                                    'Saya memahami bahwa memberikan laporan palsu dapat dikenakan sanksi sesuai dengan peraturan yang berlaku.'),
+                                SizedBox(height: 20),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: report['agreement'] == true
+                                        ? Colors.green.shade50
+                                        : Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: showAgreementWarning
+                                          ? Colors.red
+                                          : report['agreement'] == true
+                                              ? Colors.green.shade200
+                                              : Colors.grey.shade300,
                                     ),
-                                ],
-                              ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: Checkbox(
+                                          value: report['agreement'] == true,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              report['agreement'] =
+                                                  value ?? false;
+                                              showAgreementWarning = false;
+                                            });
+                                          },
+                                          activeColor: Colors.green,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          'Saya menyetujui pernyataan di atas',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.grey[800],
+                                            fontWeight:
+                                                report['agreement'] == true
+                                                    ? FontWeight.w500
+                                                    : FontWeight.normal,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (showAgreementWarning)
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.only(top: 8, left: 12),
+                                    child: Text(
+                                      'Anda harus menyetujui pernyataan ini untuk melanjutkan',
+                                      style: TextStyle(
+                                          color: Colors.red, fontSize: 12),
+                                    ),
+                                  ),
+                              ],
                             ),
-                            SizedBox(height: 24),
+                            SizedBox(height: 32),
 
                             // Form Actions
-                            SizedBox(height: 24),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                OutlinedButton(
+                                TextButton(
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.grey[700],
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 12),
+                                  ),
                                   child: Text('Batal'),
                                 ),
                                 SizedBox(width: 16),
@@ -1385,6 +1687,15 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
                                       : submitForm,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red[600],
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 24, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    disabledBackgroundColor: Colors.grey[300],
+                                    disabledForegroundColor: Colors.grey[500],
                                   ),
                                   child: isSubmitting
                                       ? Row(
@@ -1400,11 +1711,21 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
                                                         Color>(Colors.white),
                                               ),
                                             ),
-                                            SizedBox(width: 8),
-                                            Text('Mengirim...'),
+                                            SizedBox(width: 12),
+                                            Text(
+                                              'Mengirim...',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                           ],
                                         )
-                                      : Text('Simpan Laporan'),
+                                      : Text(
+                                          'Simpan Laporan',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                 ),
                               ],
                             ),
@@ -1413,7 +1734,131 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 40),
                 ],
+              ),
+            ),
+          ),
+          // Loading overlay
+          if (isSubmitting)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: Container(
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Mengirimkan laporan...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 6),
+        Container(
+          width: 40,
+          height: 3,
+          decoration: BoxDecoration(
+            color: Colors.red.shade600,
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormCard({required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 12,
+            spreadRadius: 0,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildNumberedItem(int number, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$number',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.grey[700],
+                height: 1.5,
+                fontSize: 14,
               ),
             ),
           ),
@@ -1422,114 +1867,384 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
-      ),
-      child: Text(
-        title,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
+  Widget _buildLabel(String label, {bool isRequired = false}) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+            color: Colors.grey[700],
+          ),
+        ),
+        if (isRequired)
+          Text(
+            ' *',
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildBulletPoint(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNumberedItem(int number, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('$number. ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(
-    String label, {
-    bool isRequired = false,
-    String? helperText,
-    String? hintText,
+  Widget _buildTextField({
+    TextEditingController? controller,
+    required String hintText,
+    String? errorText,
+    Function(String)? onChanged,
+    TextInputType? keyboardType,
+    int? maxLines = 1,
+    bool readOnly = false,
+    IconData? prefixIcon,
   }) {
-    return InputDecoration(
-      labelText: isRequired ? '$label *' : label,
-      hintText: hintText,
-      helperText: helperText,
-      helperMaxLines: 2,
-      border: OutlineInputBorder(),
-      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.01),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+          errorText: errorText,
+          errorStyle: TextStyle(color: Colors.red, fontSize: 12),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: maxLines! > 1 ? 16 : 15,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: errorText != null ? Colors.red : Colors.red.shade400,
+              width: 1.5,
+            ),
+          ),
+          prefixIcon: prefixIcon != null
+              ? Icon(prefixIcon, color: Colors.grey.shade500, size: 18)
+              : null,
+        ),
+        style: TextStyle(
+          fontSize: 15,
+          color: Colors.grey[800],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String? value,
+    required String hint,
+    required List<DropdownMenuItem<String>> items,
+    required Function(String?) onChanged,
+    String? errorText,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.01),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        hint: Text(
+          hint,
+          style: TextStyle(color: Colors.grey[400], fontSize: 14),
+        ),
+        items: items,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          errorText: errorText,
+          errorStyle: TextStyle(color: Colors.red, fontSize: 12),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 15,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+                color: errorText != null ? Colors.red : Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: errorText != null ? Colors.red : Colors.red.shade400,
+              width: 1.5,
+            ),
+          ),
+        ),
+        style: TextStyle(
+          fontSize: 15,
+          color: Colors.grey[800],
+        ),
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.grey.shade600,
+        ),
+        isExpanded: true,
+        dropdownColor: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildCheckboxesCard({required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: showBuktiWarning ? Colors.red : Colors.grey.shade300),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckboxTile({
+    required String title,
+    required bool value,
+    required Function(bool?) onChanged,
+  }) {
+    return Theme(
+      data: ThemeData(
+        checkboxTheme: CheckboxThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ),
+      child: CheckboxListTile(
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[800],
+            fontWeight: value ? FontWeight.w500 : FontWeight.normal,
+          ),
+        ),
+        value: value,
+        onChanged: onChanged,
+        activeColor: Colors.red.shade600,
+        controlAffinity: ListTileControlAffinity.leading,
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        dense: true,
+        tileColor: value ? Colors.red.shade50 : Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadioGroup({
+    required List<Map<String, String>> options,
+    required String? groupValue,
+    required Function(String?) onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        children: options.map((option) {
+          final bool isSelected = groupValue == option['value'];
+          return Container(
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.red.shade50 : Colors.white,
+              borderRadius: options.indexOf(option) == 0
+                  ? BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    )
+                  : options.indexOf(option) == options.length - 1
+                      ? BorderRadius.only(
+                          bottomLeft: Radius.circular(12),
+                          bottomRight: Radius.circular(12),
+                        )
+                      : null,
+              border: Border(
+                bottom: options.indexOf(option) != options.length - 1
+                    ? BorderSide(color: Colors.grey.shade200)
+                    : BorderSide.none,
+              ),
+            ),
+            child: RadioListTile<String>(
+              title: Text(
+                option['label']!,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                  color: Colors.grey[800],
+                ),
+              ),
+              value: option['value']!,
+              groupValue: groupValue,
+              onChanged: onChanged,
+              activeColor: Colors.red.shade600,
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              dense: true,
+              selected: isSelected,
+              selectedTileColor: Colors.red.shade50,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildOutlinedButton({
+    required IconData icon,
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(text),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.red.shade700,
+        side: BorderSide(color: Colors.red.shade300),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
     );
   }
 
   Widget _buildTerdugaCard(int index) {
     final Map<String, dynamic> terduga = report['terlapor'][index];
 
-    return Card(
+    return Container(
+      width: double.infinity,
       margin: EdgeInsets.only(bottom: 16),
-      color: Colors.grey[50],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 12,
+            spreadRadius: 0,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Terduga ${index + 1}',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Text(
+                    'Terlapor ${index + 1}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.amber.shade800,
+                    ),
+                  ),
+                ),
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: Colors.red.shade700,
+                      size: 16,
+                    ),
+                  ),
                   onPressed: () => removeTerduga(index),
                   tooltip: 'Hapus Terduga',
-                  padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
+                  padding: EdgeInsets.all(4),
                 ),
               ],
             ),
             SizedBox(height: 16),
 
             // Nama Terduga
-            TextFormField(
-              decoration: _inputDecoration('Nama Lengkap',
-                  isRequired: true, hintText: "Masukkan nama atau 'anonim'"),
-              initialValue: terduga['nama_lengkap'],
+            _buildLabel('Nama Lengkap', isRequired: true),
+            SizedBox(height: 8),
+            _buildTextField(
+              controller: TextEditingController(text: terduga['nama_lengkap']),
+              hintText: "Masukkan nama atau 'anonim'",
               onChanged: (value) =>
                   setState(() => terduga['nama_lengkap'] = value),
             ),
             SizedBox(height: 16),
 
             // Email Terduga
-            TextFormField(
-              decoration: _inputDecoration('Email',
-                  hintText: "Masukkan email atau 'anonim@gmail.com'"),
-              initialValue: terduga['email'],
+            _buildLabel('Email'),
+            SizedBox(height: 8),
+            _buildTextField(
+              controller: TextEditingController(text: terduga['email']),
+              hintText: "Masukkan email atau 'anonim@gmail.com'",
               keyboardType: TextInputType.emailAddress,
               onChanged: (value) => setState(() => terduga['email'] = value),
             ),
             SizedBox(height: 16),
 
             // Nomor Telepon Terduga
-            TextFormField(
-              decoration: _inputDecoration('Nomor Telepon'),
-              initialValue: terduga['nomor_telepon'],
+            _buildLabel('Nomor Telepon'),
+            SizedBox(height: 8),
+            _buildTextField(
+              controller: TextEditingController(text: terduga['nomor_telepon']),
+              hintText: "Masukkan nomor telepon",
               keyboardType: TextInputType.phone,
               onChanged: (value) =>
                   setState(() => terduga['nomor_telepon'] = value),
@@ -1537,96 +2252,44 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
             SizedBox(height: 16),
 
             // Jenis Kelamin
-            Text(
-              'Jenis Kelamin *',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: Text('Laki-laki'),
-                    value: 'laki-laki',
-                    groupValue: terduga['jenis_kelamin'],
-                    onChanged: (value) {
-                      setState(() => terduga['jenis_kelamin'] = value!);
-                    },
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                  ),
-                ),
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: Text('Perempuan'),
-                    value: 'perempuan',
-                    groupValue: terduga['jenis_kelamin'],
-                    onChanged: (value) {
-                      setState(() => terduga['jenis_kelamin'] = value!);
-                    },
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                  ),
-                ),
+            _buildLabel('Jenis Kelamin', isRequired: true),
+            SizedBox(height: 8),
+            _buildRadioGroup(
+              options: [
+                {'value': 'laki-laki', 'label': 'Laki-laki'},
+                {'value': 'perempuan', 'label': 'Perempuan'},
               ],
+              groupValue: terduga['jenis_kelamin'],
+              onChanged: (value) {
+                setState(() => terduga['jenis_kelamin'] = value);
+              },
             ),
             SizedBox(height: 16),
 
             // Rentang Umur Terduga
-            Text(
-              'Rentang Umur *',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                children: [
-                  RadioListTile<String>(
-                    title: Text('Kurang dari 20 tahun'),
-                    value: '<20',
-                    groupValue: terduga['umur_terlapor'],
-                    onChanged: (value) {
-                      setState(() => terduga['umur_terlapor'] = value!);
-                    },
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                    dense: true,
-                  ),
-                  RadioListTile<String>(
-                    title: Text('20 - 40 tahun'),
-                    value: '20-40',
-                    groupValue: terduga['umur_terlapor'],
-                    onChanged: (value) {
-                      setState(() => terduga['umur_terlapor'] = value!);
-                    },
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                    dense: true,
-                  ),
-                  RadioListTile<String>(
-                    title: Text('Lebih dari 40 tahun'),
-                    value: '40<',
-                    groupValue: terduga['umur_terlapor'],
-                    onChanged: (value) {
-                      setState(() => terduga['umur_terlapor'] = value!);
-                    },
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                    dense: true,
-                  ),
-                ],
-              ),
+            _buildLabel('Rentang Umur', isRequired: true),
+            SizedBox(height: 8),
+            _buildRadioGroup(
+              options: [
+                {'value': '<20', 'label': 'Kurang dari 20 tahun'},
+                {'value': '20-40', 'label': '20 - 40 tahun'},
+                {'value': '40<', 'label': 'Lebih dari 40 tahun'},
+              ],
+              groupValue: terduga['umur_terlapor'],
+              onChanged: (value) {
+                setState(() => terduga['umur_terlapor'] = value);
+              },
             ),
             SizedBox(height: 16),
 
             // Status Warga
-            DropdownButtonFormField<String>(
-              decoration: _inputDecoration('Status Warga', isRequired: true),
+            _buildLabel('Status Warga', isRequired: true),
+            SizedBox(height: 8),
+            _buildDropdownField(
               value: terduga['status_warga'].isEmpty
                   ? null
                   : terduga['status_warga'],
-              hint: Text('Pilih Status'),
+              hint: 'Pilih Status',
               items: [
                 DropdownMenuItem(value: 'dosen', child: Text('Dosen')),
                 DropdownMenuItem(value: 'mahasiswa', child: Text('Mahasiswa')),
@@ -1645,55 +2308,95 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
   Widget _buildSaksiCard(int index) {
     final Map<String, dynamic> saksi = report['saksi'][index];
 
-    return Card(
+    return Container(
+      width: double.infinity,
       margin: EdgeInsets.only(bottom: 16),
-      color: Colors.grey[50],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 12,
+            spreadRadius: 0,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Saksi ${index + 1}',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Text(
+                    'Saksi ${index + 1}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green.shade800,
+                    ),
+                  ),
+                ),
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: Colors.red.shade700,
+                      size: 16,
+                    ),
+                  ),
                   onPressed: () => removeSaksi(index),
                   tooltip: 'Hapus Saksi',
-                  padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
+                  padding: EdgeInsets.all(4),
                 ),
               ],
             ),
             SizedBox(height: 16),
 
             // Nama Saksi
-            TextFormField(
-              decoration:
-                  _inputDecoration('Nama Lengkap Saksi', isRequired: true),
-              initialValue: saksi['nama_lengkap'],
+            _buildLabel('Nama Lengkap Saksi', isRequired: true),
+            SizedBox(height: 8),
+            _buildTextField(
+              controller: TextEditingController(text: saksi['nama_lengkap']),
+              hintText: "Masukkan nama lengkap saksi",
               onChanged: (value) =>
                   setState(() => saksi['nama_lengkap'] = value),
             ),
             SizedBox(height: 16),
 
             // Email Saksi
-            TextFormField(
-              decoration: _inputDecoration('Email Saksi', isRequired: true),
-              initialValue: saksi['email'],
+            _buildLabel('Email Saksi', isRequired: true),
+            SizedBox(height: 8),
+            _buildTextField(
+              controller: TextEditingController(text: saksi['email']),
+              hintText: "Masukkan email saksi",
               keyboardType: TextInputType.emailAddress,
               onChanged: (value) => setState(() => saksi['email'] = value),
             ),
             SizedBox(height: 16),
 
             // Nomor Telepon Saksi
-            TextFormField(
-              decoration:
-                  _inputDecoration('Nomor Telepon Saksi', isRequired: true),
-              initialValue: saksi['nomor_telepon'],
+            _buildLabel('Nomor Telepon Saksi', isRequired: true),
+            SizedBox(height: 8),
+            _buildTextField(
+              controller: TextEditingController(text: saksi['nomor_telepon']),
+              hintText: "Masukkan nomor telepon saksi",
               keyboardType: TextInputType.phone,
               onChanged: (value) =>
                   setState(() => saksi['nomor_telepon'] = value),
