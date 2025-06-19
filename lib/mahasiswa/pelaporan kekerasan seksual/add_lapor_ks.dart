@@ -88,11 +88,11 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
   List<Map<String, dynamic>> categories = [];
   List<String> selectedBukti = [];
   List<String> buktiOptions = [
-    'Dokumen dan/atau rekaman video',
-    'Foto dokumentasi kejadian',
-    'Surat pernyataan kejadian',
-    'Keterangan saksi kejadian',
-    'Identitas sumber informasi pihak ketiga'
+    'Bukti pemeriksaan medis',
+    'Dokumen dan/atau rekaman',
+    'Foto dan/atau video dokumentasi',
+    'Surat atau kesaksian tertulis',
+    'Identitas sumber informasi'
   ];
   bool showLainnyaInput = false;
   String buktiLainnya = '';

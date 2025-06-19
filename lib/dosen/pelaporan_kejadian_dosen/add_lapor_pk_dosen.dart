@@ -70,14 +70,14 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
 
   // Daftar bukti pelanggaran
   List<Map<String, dynamic>> _buktiOptions = [
+    {'value': 'dokumen_rekaman', 'label': 'Dokumen dan/atau rekaman video'},
+    {'value': 'foto_dokumentasi', 'label': 'Foto dokumentasi kejadian'},
+    {'value': 'surat_pernyataan', 'label': 'Surat pernyataan kejadian'},
+    {'value': 'laporan_saksi', 'label': 'Keterangan saksi kejadian'},
     {
-      'value': 'bukti_transfer',
-      'label': 'Bukti transfer, cek, bukti penyetoran, dan rekening koran bank'
+      'value': 'identitas_sumber',
+      'label': 'Identitas sumber informasi pihak ketiga'
     },
-    {'value': 'dokumen_rekaman', 'label': 'Dokumen dan/atau rekaman'},
-    {'value': 'foto_dokumentasi', 'label': 'Foto dokumentasi'},
-    {'value': 'surat_disposisi', 'label': 'Surat disposisi perintah'},
-    {'value': 'identitas_sumber', 'label': 'Identitas sumber informasi'},
     {'value': 'lainnya', 'label': 'Lainnya'},
   ];
   List<String> _selectedBuktiPelanggaran = [];
