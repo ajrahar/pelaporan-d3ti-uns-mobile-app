@@ -819,7 +819,7 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Column(
                             children: [
                               Icon(Icons.verified_user,
                                   color: _primaryColor, size: 20),

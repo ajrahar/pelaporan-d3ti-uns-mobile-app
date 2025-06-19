@@ -390,6 +390,7 @@ class _LoginPageState extends State<LoginPage> {
                           color: _darkTextColor,
                           letterSpacing: 0.5,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 8),
 

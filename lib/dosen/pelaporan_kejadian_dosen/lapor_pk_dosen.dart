@@ -35,6 +35,12 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
   int _dalamProses = 0;
   int _selesai = 0;
 
+  // Add a new variable to track unverified reports count
+  int _unverifiedReportsCount = 0;
+
+  // Add a new variable for the maximum allowed unverified reports
+  final int _maxUnverifiedReports = 3;
+
   // Search and filters
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -109,6 +115,7 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
         _totalLaporan = 0;
         _dalamProses = 0;
         _selesai = 0;
+        _unverifiedReportsCount = 0; // Reset the unverified count
       });
       print("No user info available. Not showing any reports.");
       return;
@@ -197,6 +204,10 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
       print("Showing first ${filtered.length} reports as fallback.");
     }
 
+    // Count unverified reports
+    int unverifiedCount =
+        filtered.where((report) => report.status == 'unverified').length;
+
     setState(() {
       _dosenLaporan = filtered;
       _totalLaporan = _dosenLaporan.length;
@@ -204,6 +215,7 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
           _dosenLaporan.where((item) => item.status == 'verified').length;
       _selesai =
           _dosenLaporan.where((item) => item.status == 'finished').length;
+      _unverifiedReportsCount = unverifiedCount; // Set the unverified count
 
       // Add debug info to show in the UI
       _error = filtered.isEmpty
@@ -213,6 +225,13 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
 
     print(
         'Filtered ${_laporan.length} reports down to ${_dosenLaporan.length} for dosen $_currentUserName');
+    print(
+        'Unverified reports count: $_unverifiedReportsCount'); // Add debug print for unverified count
+  }
+
+  // Create a getter to check if the user can add more reports
+  bool get _canAddNewReport {
+    return _unverifiedReportsCount < _maxUnverifiedReports;
   }
 
   // Dummy data for testing when API is not available
@@ -874,6 +893,7 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
                     color: Colors.grey.shade800,
                   ),
                 ),
+                SizedBox(height: 12), // Added extra space at the bottom
               ],
             ),
     );
@@ -920,17 +940,22 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/addlaporpkdosen');
-                },
-                icon: Icon(Icons.add, color: Colors.white),
+                onPressed: _canAddNewReport
+                    ? () {
+                        Navigator.pushNamed(context, '/addlaporpkdosen');
+                      }
+                    : null, // Disable button if max unverified reports reached
+                icon: Icon(Icons.add,
+                    color:
+                        _canAddNewReport ? Colors.white : Colors.grey.shade400),
                 label: Text(
                   'Tambah Laporan',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                     letterSpacing: 0.3,
-                    color: Colors.white,
+                    color:
+                        _canAddNewReport ? Colors.white : Colors.grey.shade400,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -939,72 +964,143 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 0,
-                  backgroundColor: Colors.blue,
+                  backgroundColor:
+                      _canAddNewReport ? Colors.blue : Colors.grey.shade300,
+                  disabledBackgroundColor: Colors.grey.shade200,
+                  disabledForegroundColor: Colors.grey.shade500,
                 ),
               ),
             ),
+            // Add warning message when the limit is reached
+            if (!_canAddNewReport)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded,
+                          color: Colors.orange.shade800, size: 16),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Anda memiliki $_unverifiedReportsCount laporan yang belum diverifikasi. Harap tunggu verifikasi sebelum menambahkan laporan baru.',
+                          style: TextStyle(
+                            color: Colors.orange.shade800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         );
       } else {
         // For larger screens, use a row
-        return Row(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  labelText: 'Cari laporan...',
-                  labelStyle: TextStyle(color: Colors.grey.shade600),
-                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Cari laporan...',
+                      labelStyle: TextStyle(color: Colors.grey.shade600),
+                      prefixIcon:
+                          Icon(Icons.search, color: Colors.grey.shade600),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.blue),
+                      ),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                        _currentPage = 1;
+                      });
+                    },
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
-                style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                    _currentPage = 1;
-                  });
-                },
-              ),
+                SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: _canAddNewReport
+                      ? () {
+                          Navigator.pushNamed(context, '/addlaporpkdosen');
+                        }
+                      : null, // Disable button if max unverified reports reached
+                  icon: Icon(Icons.add),
+                  label: Text(
+                    'Tambah Laporan',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                    backgroundColor: Colors.blue,
+                    disabledBackgroundColor: Colors.grey.shade200,
+                    disabledForegroundColor: Colors.grey.shade500,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(context, '/addlaporpkdosen');
-              },
-              icon: Icon(Icons.add),
-              label: Text(
-                'Tambah Laporan',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                  letterSpacing: 0.3,
+            // Add warning message when the limit is reached
+            if (!_canAddNewReport)
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded,
+                          color: Colors.orange.shade800, size: 16),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Anda memiliki $_unverifiedReportsCount laporan yang belum diverifikasi. Harap tunggu verifikasi sebelum menambahkan laporan baru.',
+                          style: TextStyle(
+                            color: Colors.orange.shade800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-                backgroundColor: Colors.blue,
-              ),
-            ),
           ],
         );
       }
