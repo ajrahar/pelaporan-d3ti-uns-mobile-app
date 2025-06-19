@@ -1649,19 +1649,46 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
 
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
+          // Information text
           Text(
             'Menampilkan ${(_currentPage - 1) * _itemsPerPage + 1}-${_currentPage * _itemsPerPage > _filteredLaporan.length ? _filteredLaporan.length : _currentPage * _itemsPerPage} dari ${_filteredLaporan.length} laporan',
             style: TextStyle(
               color: Colors.grey.shade600,
               fontSize: 13,
             ),
+            textAlign: TextAlign.center,
           ),
+
+          SizedBox(height: 12),
+
+          // Page counter
+          Center(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Text(
+                '$_currentPage / $totalPages',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+            ),
+          ),
+
+          SizedBox(height: 12),
+
+          // Navigation buttons below
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton(
+              ElevatedButton.icon(
                 onPressed: _currentPage > 1
                     ? () {
                         setState(() {
@@ -1669,26 +1696,28 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
                         });
                       }
                     : null,
-                icon: Icon(Icons.chevron_left),
-                color: _currentPage > 1 ? Colors.blue : Colors.grey.shade400,
-                tooltip: 'Halaman sebelumnya',
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Text(
-                  '$_currentPage / $totalPages',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
+                icon: Icon(Icons.chevron_left, size: 18),
+                label: Text('Sebelumnya'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor:
+                      _currentPage > 1 ? Colors.blue : Colors.grey.shade400,
+                  disabledBackgroundColor: Colors.grey.shade100,
+                  disabledForegroundColor: Colors.grey.shade400,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: _currentPage > 1
+                          ? Colors.blue.shade200
+                          : Colors.grey.shade300,
+                    ),
                   ),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),
-              IconButton(
+              SizedBox(width: 16),
+              ElevatedButton.icon(
                 onPressed: _currentPage < totalPages
                     ? () {
                         setState(() {
@@ -1696,11 +1725,26 @@ class _LaporKejadianDosenPageState extends State<LaporKejadianDosenPage> {
                         });
                       }
                     : null,
-                icon: Icon(Icons.chevron_right),
-                color: _currentPage < totalPages
-                    ? Colors.blue
-                    : Colors.grey.shade400,
-                tooltip: 'Halaman berikutnya',
+                icon: Icon(Icons.chevron_right, size: 18),
+                label: Text('Selanjutnya'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: _currentPage < totalPages
+                      ? Colors.blue
+                      : Colors.grey.shade400,
+                  disabledBackgroundColor: Colors.grey.shade100,
+                  disabledForegroundColor: Colors.grey.shade400,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: _currentPage < totalPages
+                          ? Colors.blue.shade200
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
               ),
             ],
           ),

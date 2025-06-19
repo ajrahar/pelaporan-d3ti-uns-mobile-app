@@ -795,56 +795,68 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
 
               SizedBox(height: 16),
               Center(
-                child: recaptchaVerified
-                    ? Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.green.shade100),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.check_circle,
-                                color: Colors.green, size: 16),
-                            SizedBox(width: 8),
-                            Text(
-                              'Verifikasi berhasil',
-                              style: TextStyle(
-                                color: Colors.green[700],
-                                fontWeight: FontWeight.w500,
+                  child: recaptchaVerified
+                      ? Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.green.shade100),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_circle,
+                                  color: Colors.green, size: 16),
+                              SizedBox(width: 8),
+                              Text(
+                                'Verifikasi berhasil',
+                                style: TextStyle(
+                                  color: Colors.green[700],
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.orange.shade100),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.info_outline,
-                                color: Colors.orange[700], size: 16),
-                            SizedBox(width: 8),
-                            Text(
-                              'Harap selesaikan verifikasi reCAPTCHA',
-                              style: TextStyle(
+                            ],
+                          ),
+                        )
+                      : Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.orange.shade100),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
                                 color: Colors.orange[700],
-                                fontWeight: FontWeight.w500,
+                                size: 20,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Harap selesaikan',
+                                style: TextStyle(
+                                  color: Colors.orange[700],
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              Text(
+                                'verifikasi reCAPTCHA',
+                                style: TextStyle(
+                                  color: Colors.orange[700],
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )),
               if (recaptchaError != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12.0),
@@ -1249,17 +1261,38 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
                                             ),
                                           ),
                                           SizedBox(height: 16),
-                                          Text(
-                                            'Klik untuk memilih beberapa file foto',
-                                            style: TextStyle(
-                                              color: Colors.grey.shade700,
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 15,
-                                            ),
+                                          // Split text into two Text widgets to prevent overflow
+                                          Column(
+                                            children: [
+                                              Text(
+                                                'Klik untuk memilih',
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade700,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                              Text(
+                                                'beberapa file foto',
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade700,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                           SizedBox(height: 6),
+                                          // Split format text if needed
                                           Text(
-                                            'Format: JPG, PNG, GIF (Maks 5MB)',
+                                            'Format: JPG, PNG, GIF',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                          Text(
+                                            '(Maks 5MB)',
                                             style: TextStyle(
                                               fontSize: 13,
                                               color: Colors.grey.shade600,

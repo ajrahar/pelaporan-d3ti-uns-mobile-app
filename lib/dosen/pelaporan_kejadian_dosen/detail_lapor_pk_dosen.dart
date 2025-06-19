@@ -1478,6 +1478,7 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // User info row
                   Row(
                     children: [
                       Container(
@@ -1501,35 +1502,39 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
                           fontSize: 14,
                         ),
                       ),
-                      Spacer(),
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              size: 12,
-                              color: Colors.grey[600],
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              formatDate(item['timestamp']),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
+
+                  // Timestamp moved below user info
+                  SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 12,
+                          color: Colors.grey[600],
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          formatDate(item['timestamp']),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Message content
                   SizedBox(height: 12),
                   Container(
                     width: double.infinity,

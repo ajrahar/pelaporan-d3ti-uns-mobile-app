@@ -974,7 +974,8 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
       child: Container(
         padding: EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+              MainAxisAlignment.start, // Changed from center to start
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
@@ -989,7 +990,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
                 size: 28,
               ),
             ),
-            Spacer(),
+            Spacer(), // This creates flexible space
             Text(
               count.toString(),
               style: TextStyle(
@@ -1008,6 +1009,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               ),
               textAlign: TextAlign.center,
             ),
+            SizedBox(height: 12), // Added extra space at the bottom
           ],
         ),
       ),
