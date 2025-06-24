@@ -315,7 +315,7 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
   Future<void> fetchCategories() async {
     try {
       final response = await http.get(
-        Uri.parse('https://v3422040.mhs.d3tiuns.com/api/category'),
+        Uri.parse('hhttp://pelaporan-d3ti.my.id/api/category'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -587,7 +587,7 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
       var formData = http.MultipartRequest(
           'POST',
           Uri.parse(
-              'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan'));
+              'http://pelaporan-d3ti.my.id/api/laporan_kekerasan/add_laporan'));
 
       // Get current username for the request
       final prefs = await SharedPreferences.getInstance();

@@ -225,7 +225,7 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
   Future<void> fetchCategories() async {
     try {
       final response = await http.get(
-        Uri.parse('https://v3422040.mhs.d3tiuns.com/api/category'),
+        Uri.parse('http://pelaporan-d3ti.my.id/api/category'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -471,7 +471,7 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
       var formData = http.MultipartRequest(
           'POST',
           Uri.parse(
-              'https://v3422040.mhs.d3tiuns.com/api/laporan_kekerasan/add_laporan'));
+              'http://pelaporan-d3ti.my.id/api/laporan_kekerasan/add_laporan'));
 
       // Add text fields
       formData.fields.addAll({

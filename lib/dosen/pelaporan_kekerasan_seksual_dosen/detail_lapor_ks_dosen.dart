@@ -867,7 +867,7 @@ class _DetailLaporanKekerasanDosenPageState
 
         // Construct full image URL
         final String baseUrl =
-            'https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporankekerasan/';
+            'http://pelaporan-d3ti.my.id/Backend-Port/backend/engine/public/storage/laporankekerasan/';
         final String imageUrl = '$baseUrl$fileName';
 
         return Container(

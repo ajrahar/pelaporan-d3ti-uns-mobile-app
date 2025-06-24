@@ -222,8 +222,8 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http
-          .get(Uri.parse('https://v3422040.mhs.d3tiuns.com/api/category'));
+      final response =
+          await http.get(Uri.parse('http://pelaporan-d3ti.my.id/api/category'));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -323,7 +323,7 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
       // Create multipart request
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://v3422040.mhs.d3tiuns.com/api/laporan/add_laporan'),
+        Uri.parse('http://pelaporan-d3ti.my.id/api/laporan/add_laporan'),
       );
 
       // Get token from shared preferences
