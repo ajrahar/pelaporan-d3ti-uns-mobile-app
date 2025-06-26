@@ -17,7 +17,7 @@ class Laporan {
   final String? nomorLaporan;
   final int? categoryId;
   final String? jenisKejadian;
-  final String? imagePath;
+  final dynamic imagePath; // Untuk menangani kemungkinan format yang berbeda
   final String? fotoKejadian;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -26,9 +26,10 @@ class Laporan {
   final String? jenisKelamin;
   final String? umurPelapor;
   final List<String>? buktiPelanggaran;
-  final dynamic terlapor;
-  final dynamic saksi;
+  final List<Map<String, dynamic>>? terlapor;
+  final List<Map<String, dynamic>>? saksi;
   final String? lampiranLink;
+  final int? userId;
 
   Laporan({
     required this.id,
@@ -59,59 +60,160 @@ class Laporan {
     this.terlapor,
     this.saksi,
     this.lampiranLink,
+    this.userId,
   });
 
   factory Laporan.fromJson(Map<String, dynamic> json) {
-    // Process image_path - could be a JSON string containing array
-    String? processedImagePath = json['image_path'];
-    if (processedImagePath != null &&
-        processedImagePath.startsWith("[") &&
-        processedImagePath.endsWith("]")) {
-      try {
-        // This will handle cases where image_path is a JSON string containing an array
-        List<dynamic> images = jsonDecode(processedImagePath);
-        processedImagePath = images.isNotEmpty ? images.join(',') : null;
-      } catch (e) {
-        // If parsing fails, keep the original string
+    // Penanganan laporan_id yang bisa integer atau string
+    int? laporanId;
+    if (json['laporan_id'] != null) {
+      laporanId = json['laporan_id'] is int
+          ? json['laporan_id']
+          : int.tryParse(json['laporan_id'].toString());
+    } else if (json['id'] != null) {
+      laporanId =
+          json['id'] is int ? json['id'] : int.tryParse(json['id'].toString());
+    }
+
+    // Penanganan category_id yang bisa integer atau string
+    int? catId;
+    if (json['category_id'] != null) {
+      catId = json['category_id'] is int
+          ? json['category_id']
+          : int.tryParse(json['category_id'].toString());
+    }
+
+    // Penanganan user_id yang bisa integer atau string
+    int? userId;
+    if (json['user_id'] != null) {
+      userId = json['user_id'] is int
+          ? json['user_id']
+          : int.tryParse(json['user_id'].toString());
+    }
+
+    // Penanganan image_path yang bisa string JSON atau array langsung
+    List<String>? imagePathList;
+    if (json['image_path'] != null) {
+      if (json['image_path'] is List) {
+        // Jika sudah dalam bentuk List
+        imagePathList = List<String>.from(
+            json['image_path'].map((item) => item.toString()));
+      } else if (json['image_path'] is String) {
+        // Jika dalam bentuk string JSON
+        try {
+          List<dynamic> decoded = jsonDecode(json['image_path']);
+          imagePathList =
+              List<String>.from(decoded.map((item) => item.toString()));
+        } catch (e) {
+          // Jika gagal parse, gunakan string aslinya
+          imagePathList = [json['image_path'].toString()];
+        }
+      }
+    }
+
+    // Penanganan bukti_pelanggaran
+    List<String>? buktiPelanggaranList;
+    if (json['bukti_pelanggaran'] != null) {
+      if (json['bukti_pelanggaran'] is List) {
+        buktiPelanggaranList = List<String>.from(
+            json['bukti_pelanggaran'].map((item) => item.toString()));
+      } else if (json['bukti_pelanggaran'] is String) {
+        try {
+          List<dynamic> decoded = jsonDecode(json['bukti_pelanggaran']);
+          buktiPelanggaranList =
+              List<String>.from(decoded.map((item) => item.toString()));
+        } catch (e) {
+          buktiPelanggaranList = [json['bukti_pelanggaran'].toString()];
+        }
+      }
+    }
+
+    // Penanganan terlapor
+    List<Map<String, dynamic>>? terlaporList;
+    if (json['terlapor'] != null) {
+      if (json['terlapor'] is List) {
+        terlaporList = List<Map<String, dynamic>>.from(json['terlapor'].map(
+            (item) => item is Map
+                ? Map<String, dynamic>.from(item)
+                : {"data": item}));
+      } else if (json['terlapor'] is String) {
+        try {
+          List<dynamic> decoded = jsonDecode(json['terlapor']);
+          terlaporList = List<Map<String, dynamic>>.from(decoded.map((item) =>
+              item is Map ? Map<String, dynamic>.from(item) : {"data": item}));
+        } catch (e) {
+          // Handle other cases if needed
+        }
+      }
+    }
+
+    // Penanganan saksi
+    List<Map<String, dynamic>>? saksiList;
+    if (json['saksi'] != null) {
+      if (json['saksi'] is List) {
+        saksiList = List<Map<String, dynamic>>.from(json['saksi'].map((item) =>
+            item is Map ? Map<String, dynamic>.from(item) : {"data": item}));
+      } else if (json['saksi'] is String) {
+        try {
+          List<dynamic> decoded = jsonDecode(json['saksi']);
+          saksiList = List<Map<String, dynamic>>.from(decoded.map((item) =>
+              item is Map ? Map<String, dynamic>.from(item) : {"data": item}));
+        } catch (e) {
+          // Handle other cases if needed
+        }
       }
     }
 
     return Laporan(
-      id: json['laporan_id'] ?? json['id'],
-      judul: json['judul'],
-      deskripsi: json['deskripsi'],
-      deskripsiKejadian: json['deskripsi_kejadian'],
-      lokasi: json['lokasi'],
-      tanggalKejadian: json['tanggal_kejadian'],
-      status: json['status'],
-      namaPelapor: json['nama_pelapor'],
-      niPelapor: json['ni_pelapor'],
-      nomorTelepon: json['nomor_telepon'],
-      teleponPelapor: json['telepon_pelapor'],
-      email: json['email'],
-      emailPelapor: json['email_pelapor'],
-      nomorLaporan: json['nomor_laporan'],
-      categoryId: json['category_id'],
-      jenisKejadian: json['jenis_kejadian'],
-      imagePath: processedImagePath,
-      fotoKejadian: json['foto_kejadian'],
+      id: laporanId,
+      judul: json['judul']?.toString(),
+      deskripsi: json['deskripsi']?.toString(),
+      deskripsiKejadian: json['deskripsi_kejadian']?.toString(),
+      lokasi: json['lokasi']?.toString(),
+      tanggalKejadian: json['tanggal_kejadian']?.toString(),
+      status: json['status']?.toString(),
+      namaPelapor: json['nama_pelapor']?.toString(),
+      niPelapor: json['ni_pelapor']?.toString(),
+      nomorTelepon: json['nomor_telepon']?.toString(),
+      teleponPelapor: json['telepon_pelapor']?.toString(),
+      email: json['email']?.toString(),
+      emailPelapor: json['email_pelapor']?.toString(),
+      nomorLaporan: json['nomor_laporan']?.toString(),
+      categoryId: catId,
+      jenisKejadian: json['jenis_kejadian']?.toString(),
+      imagePath: imagePathList, // Simpan sebagai List<String>
+      fotoKejadian: json['foto_kejadian']?.toString(),
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.parse(json['created_at'].toString())
           : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.parse(json['updated_at'].toString())
           : null,
       tanggapan: json['tanggapan'],
-      profesi: json['profesi'],
-      jenisKelamin: json['jenis_kelamin'],
-      umurPelapor: json['umur_pelapor'],
-      buktiPelanggaran: json['bukti_pelanggaran'] != null
-          ? List<String>.from(json['bukti_pelanggaran'])
-          : null,
-      terlapor: json['terlapor'],
-      saksi: json['saksi'],
-      lampiranLink: json['lampiran_link'],
+      profesi: json['profesi']?.toString(),
+      jenisKelamin: json['jenis_kelamin']?.toString(),
+      umurPelapor: json['umur_pelapor']?.toString(),
+      buktiPelanggaran: buktiPelanggaranList,
+      terlapor: terlaporList,
+      saksi: saksiList,
+      lampiranLink: json['lampiran_link']?.toString(),
+      userId: userId,
     );
+  }
+
+  // Metode untuk mendapatkan URL gambar pertama
+  String? get firstImageUrl {
+    if (imagePath == null) {
+      return null;
+    }
+
+    if (imagePath is List && imagePath.isNotEmpty) {
+      return imagePath[0].toString();
+    } else if (imagePath is String) {
+      return imagePath;
+    }
+
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -132,7 +234,7 @@ class Laporan {
       'nomor_laporan': nomorLaporan,
       'category_id': categoryId,
       'jenis_kejadian': jenisKejadian,
-      'image_path': imagePath,
+      'image_path': imagePath is List ? jsonEncode(imagePath) : imagePath,
       'foto_kejadian': fotoKejadian,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
@@ -144,6 +246,7 @@ class Laporan {
       'terlapor': terlapor,
       'saksi': saksi,
       'lampiran_link': lampiranLink,
+      'user_id': userId,
     };
   }
 
@@ -183,6 +286,7 @@ class Laporan {
       terlapor: this.terlapor,
       saksi: this.saksi,
       lampiranLink: lampiranLink ?? this.lampiranLink,
+      userId: this.userId,
     );
   }
 }
