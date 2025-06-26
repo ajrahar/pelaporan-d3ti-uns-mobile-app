@@ -18,6 +18,10 @@ import 'dart:html' if (dart.library.io) 'stub_html.dart' as html;
 // ignore: uri_does_not_exist
 import 'dart:ui_web' if (dart.library.io) 'stub_ui_web.dart' as ui_web;
 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_init;
+
 // Create stub classes for non-web platforms
 class HtmlElementPlaceholder {
   // Empty stub class
@@ -31,6 +35,9 @@ class AddLaporKsDosenPage extends StatefulWidget {
 }
 
 class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   final _formKey = GlobalKey<FormState>();
   bool isSubmitting = false;
 
@@ -105,6 +112,93 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
     if (kIsWeb) {
       _initializeWebViewForWeb();
     }
+
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    // Initialize timezone
+    tz_init.initializeTimeZones();
+
+    // Initialize settings for Android
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // Initialize settings for iOS
+    final DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    // Complete initialization settings
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
+
+    // Initialize the plugin
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        // Handle notification tap
+        if (response.payload != null) {
+          debugPrint('Notification payload: ${response.payload}');
+          // Navigasi atau aksi lain bisa ditambahkan di sini
+        }
+      },
+    );
+
+    // Request permission untuk Android 13+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+
+// Metode untuk menampilkan notifikasi
+  Future<void> _showNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    // Konfigurasi untuk Android
+    AndroidNotificationDetails androidDetails =
+        const AndroidNotificationDetails(
+      'laporan_kekerasan_channel',
+      'Laporan Kekerasan',
+      channelDescription: 'Notifications for laporan kekerasan submission',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+      color: Color(0xFF00A2EA), // Warna biru untuk notifikasi
+      icon: '@mipmap/ic_launcher',
+      enableVibration: true,
+    );
+
+    // Konfigurasi untuk iOS
+    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    // Gabungkan untuk semua platform
+    NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
+    // Tampilkan notifikasi
+    await flutterLocalNotificationsPlugin.show(
+      DateTime.now().millisecond, // ID unik berdasarkan waktu saat ini
+      title,
+      body,
+      notificationDetails,
+      payload: payload,
+    );
   }
 
   // Web-specific method
@@ -424,8 +518,14 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
     resetRecaptcha();
   }
 
-  void submitForm() async {
+  Future<void> submitForm() async {
     if (!_formKey.currentState!.validate()) {
+      // Tampilkan notifikasi validasi form gagal
+      await _showNotification(
+        title: 'Form Tidak Lengkap',
+        body: 'Mohon lengkapi semua field yang wajib diisi.',
+        payload: 'validation_error',
+      );
       return;
     }
 
@@ -436,6 +536,13 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
       });
       _showErrorDialog(
           'Error', 'Anda harus menyetujui pernyataan untuk melanjutkan');
+
+      // Tampilkan notifikasi persetujuan
+      await _showNotification(
+        title: 'Persetujuan Diperlukan',
+        body: 'Anda harus menyetujui pernyataan untuk melanjutkan.',
+        payload: 'agreement_error',
+      );
       return;
     }
 
@@ -447,6 +554,13 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
       });
       _showErrorDialog(
           'Error', 'Harap selesaikan verifikasi reCAPTCHA untuk melanjutkan');
+
+      // Tampilkan notifikasi reCAPTCHA
+      await _showNotification(
+        title: 'Verifikasi Diperlukan',
+        body: 'Harap selesaikan verifikasi reCAPTCHA untuk melanjutkan.',
+        payload: 'recaptcha_error',
+      );
       return;
     }
 
@@ -458,6 +572,13 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
       setState(() {
         showBuktiWarning = true;
       });
+
+      // Tampilkan notifikasi bukti pelanggaran
+      await _showNotification(
+        title: 'Bukti Diperlukan',
+        body: 'Pilih minimal satu alat bukti untuk melanjutkan.',
+        payload: 'bukti_error',
+      );
       return;
     }
 
@@ -465,6 +586,13 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
     setState(() {
       isSubmitting = true;
     });
+
+    // Tampilkan notifikasi proses pengiriman dimulai
+    await _showNotification(
+      title: 'Mengirim Laporan',
+      body: 'Laporan "${report['title']}" sedang dikirim...',
+      payload: 'sending',
+    );
 
     try {
       // Prepare form data
@@ -559,6 +687,14 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
 
       // Handle response
       if (responseData.statusCode >= 200 && responseData.statusCode < 300) {
+        // Success notification
+        await _showNotification(
+          title: 'Laporan Berhasil',
+          body:
+              'Laporan "${report['title']}" telah berhasil dikirim dan akan diproses.',
+          payload: 'success',
+        );
+
         // Success
         _showSuccessDialog();
         resetForm();
@@ -586,9 +722,24 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
           errorMessage += '\n- ${responseData.reasonPhrase}';
         }
 
+        // Error notification
+        await _showNotification(
+          title: 'Gagal Mengirim Laporan',
+          body:
+              'Terjadi kesalahan saat mengirim laporan. Status: ${responseData.statusCode}',
+          payload: 'api_error_${responseData.statusCode}',
+        );
+
         _showErrorDialog('Form Submission Error', errorMessage);
       }
     } catch (e) {
+      // Exception notification
+      await _showNotification(
+        title: 'Error Jaringan',
+        body: 'Server tidak merespon. Periksa koneksi internet Anda.',
+        payload: 'network_error',
+      );
+
       _showErrorDialog('Network Error',
           'Server tidak merespon. Periksa koneksi internet Anda.');
     } finally {
@@ -1265,15 +1416,7 @@ class _AddLaporKsDosenPageState extends State<AddLaporKsDosenPage> {
                                           Column(
                                             children: [
                                               Text(
-                                                'Klik untuk memilih',
-                                                style: TextStyle(
-                                                  color: Colors.grey.shade700,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15,
-                                                ),
-                                              ),
-                                              Text(
-                                                'beberapa file foto',
+                                                'Klik untuk memilih foto',
                                                 style: TextStyle(
                                                   color: Colors.grey.shade700,
                                                   fontWeight: FontWeight.w500,

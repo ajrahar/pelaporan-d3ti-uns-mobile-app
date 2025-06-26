@@ -6,6 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pelaporan_d3ti/services/api_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_init;
 
 class AddLaporPKDosenPage extends StatefulWidget {
   const AddLaporPKDosenPage({Key? key}) : super(key: key);
@@ -15,6 +18,9 @@ class AddLaporPKDosenPage extends StatefulWidget {
 }
 
 class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   // API service instance
   final ApiService _apiService = ApiService();
 
@@ -93,6 +99,87 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
     super.initState();
     _loadUserData();
     _fetchCategories();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    // Initialize timezone
+    tz_init.initializeTimeZones();
+
+    // Initialize Android settings
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // Initialize iOS settings
+    final DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    // Complete initialization settings
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
+
+    // Initialize the plugin
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        // Handle notification tap
+        if (response.payload != null) {
+          debugPrint('Notification payload: ${response.payload}');
+        }
+      },
+    );
+
+    // Request permission untuk Android 13+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+
+  // Method untuk menampilkan notifikasi
+  Future<void> _showNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'laporan_dosen_channel',
+      'Laporan Dosen',
+      channelDescription: 'Notifications for laporan dosen submission',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+      color: Colors.blue, // Warna untuk notifikasi
+      icon: '@mipmap/ic_launcher',
+      enableVibration: true,
+    );
+
+    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      DateTime.now().millisecond, // ID unik berdasarkan waktu saat ini
+      title,
+      body,
+      notificationDetails,
+      payload: payload,
+    );
   }
 
   Future<void> _fetchCategories() async {
@@ -387,7 +474,7 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
   // Fungsi untuk menyimpan data laporan ke API
   Future<void> _saveLaporan() async {
     // Validasi form
-    if (!_validateForm()) {
+    if (!await _validateForm()) {
       // Scroll ke error pertama
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -399,6 +486,14 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
+
+      // Tampilkan notifikasi untuk validasi form gagal
+      await _showNotification(
+        title: 'Form Tidak Lengkap',
+        body: 'Mohon lengkapi formulir yang ditandai merah.',
+        payload: 'form_invalid',
+      );
+
       return;
     }
 
@@ -406,6 +501,13 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
     setState(() {
       _isLoading = true;
     });
+
+    // Tampilkan notifikasi proses mengirim
+    await _showNotification(
+      title: 'Mengirim Laporan',
+      body: 'Laporan "${_judulController.text}" sedang dikirim...',
+      payload: 'sending',
+    );
 
     try {
       // Format tanggal dan waktu ke string
@@ -545,6 +647,14 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
         final jsonResponse = json.decode(response.body);
 
         if (jsonResponse['status'] == true) {
+          // Tampilkan notifikasi sukses
+          await _showNotification(
+            title: 'Laporan Berhasil',
+            body:
+                'Laporan "${_judulController.text}" telah berhasil dikirim dan akan diproses.',
+            payload: 'success_${DateTime.now().millisecondsSinceEpoch}',
+          );
+
           // Tampilkan dialog sukses
           showDialog(
             context: context,
@@ -590,6 +700,13 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
             ),
           );
         } else {
+          // Tampilkan notifikasi error API status false
+          await _showNotification(
+            title: 'Gagal',
+            body: jsonResponse['message'] ?? 'Gagal menyimpan laporan',
+            payload: 'api_logic_error',
+          );
+
           // Show error message from API
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -604,6 +721,13 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
           );
         }
       } else {
+        // Tampilkan notifikasi error HTTP status code
+        await _showNotification(
+          title: 'Error',
+          body: 'Gagal mengirim laporan. Status: ${response.statusCode}',
+          payload: 'http_error_${response.statusCode}',
+        );
+
         // Handle error response
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -617,6 +741,13 @@ class _AddLaporPKDosenPageState extends State<AddLaporPKDosenPage> {
         );
       }
     } catch (e) {
+      // Tampilkan notifikasi untuk error exception
+      await _showNotification(
+        title: 'Error',
+        body: 'Terjadi kesalahan: ${e.toString()}',
+        payload: 'exception',
+      );
+
       // Handle exception
       setState(() {
         _isLoading = false;

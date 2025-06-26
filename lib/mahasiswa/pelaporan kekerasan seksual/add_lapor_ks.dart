@@ -21,6 +21,10 @@ import 'dart:html' if (dart.library.io) 'stub_html.dart' as html;
 // ignore: uri_does_not_exist
 import 'dart:ui_web' if (dart.library.io) 'stub_ui_web.dart' as ui_web;
 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_init;
+
 // Create stub classes for non-web platforms
 class HtmlElementPlaceholder {
   // Empty stub class
@@ -34,6 +38,9 @@ class AddLaporKsPage extends StatefulWidget {
 }
 
 class _AddLaporKsPageState extends State<AddLaporKsPage> {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   final _formKey = GlobalKey<FormState>();
   bool isSubmitting = false;
 
@@ -154,6 +161,89 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
     if (kIsWeb) {
       _initializeWebViewForWeb();
     }
+
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    // Initialize timezone
+    tz_init.initializeTimeZones();
+
+    // Initialize Android settings
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // Initialize iOS settings
+    final DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    // Complete initialization settings
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
+
+    // Initialize the plugin
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        // Handle notification tap
+        if (response.payload != null) {
+          debugPrint('Notification payload: ${response.payload}');
+          // Navigasi ke halaman tertentu berdasarkan payload jika diperlukan
+        }
+      },
+    );
+
+    // Request permission untuk Android 13+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+
+  // Metode untuk menampilkan notifikasi
+  Future<void> _showNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'laporan_channel',
+      'Laporan Notifications',
+      channelDescription: 'Notifications for laporan kekerasan submission',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+      color: Color(0xFF00A2EA), // Warna biru untuk notifikasi
+      icon: '@mipmap/ic_launcher',
+      enableVibration: true,
+    );
+
+    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      DateTime.now().millisecond, // ID unik berdasarkan waktu saat ini
+      title,
+      body,
+      notificationDetails,
+      payload: payload,
+    );
   }
 
   // Update the current Indonesian time (UTC+7)
@@ -538,6 +628,14 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
     if (!_formKey.currentState!.validate()) {
       _showSnackbar('Formulir belum lengkap. Mohon periksa kembali.',
           isError: true);
+
+      // Tampilkan notifikasi untuk validasi gagal
+      await _showNotification(
+        title: 'Validasi Formulir',
+        body: 'Formulir belum lengkap. Mohon periksa kembali.',
+        payload: 'validation_error',
+      );
+
       return;
     }
 
@@ -548,6 +646,14 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
       });
       _showErrorDialog('Persetujuan Diperlukan',
           'Anda harus menyetujui pernyataan untuk melanjutkan');
+
+      // Tampilkan notifikasi untuk agreement
+      await _showNotification(
+        title: 'Persetujuan Diperlukan',
+        body: 'Anda harus menyetujui pernyataan untuk melanjutkan.',
+        payload: 'agreement_error',
+      );
+
       return;
     }
 
@@ -559,6 +665,13 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
       });
       _showErrorDialog('Verifikasi Diperlukan',
           'Harap selesaikan verifikasi reCAPTCHA untuk melanjutkan');
+
+      // Tampilkan notifikasi untuk recaptcha
+      await _showNotification(
+        title: 'Verifikasi Diperlukan',
+        body: 'Harap selesaikan verifikasi reCAPTCHA untuk melanjutkan.',
+        payload: 'recaptcha_error',
+      );
 
       // Scroll to reCAPTCHA
       _scrollToRecaptcha();
@@ -574,6 +687,14 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
         showBuktiWarning = true;
       });
       _showSnackbar('Pilih minimal satu bukti pelanggaran', isError: true);
+
+      // Tampilkan notifikasi untuk bukti pelanggaran
+      await _showNotification(
+        title: 'Bukti Diperlukan',
+        body: 'Pilih minimal satu bukti pelanggaran.',
+        payload: 'bukti_error',
+      );
+
       return;
     }
 
@@ -682,6 +803,14 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
         // Success
         _showSuccessDialog();
         resetForm();
+
+        // Tampilkan notifikasi sukses
+        await _showNotification(
+          title: 'Laporan Berhasil Terkirim',
+          body:
+              'Laporan "${report['title']}" telah berhasil dikirimkan. Terima kasih atas laporan Anda.',
+          payload: 'success',
+        );
       } else {
         // Error
         String errorMessage = 'Terjadi kesalahan:';
@@ -707,10 +836,25 @@ class _AddLaporKsPageState extends State<AddLaporKsPage> {
         }
 
         _showErrorDialog('Gagal Mengirim Formulir', errorMessage);
+
+        // Tampilkan notifikasi error API
+        await _showNotification(
+          title: 'Gagal Mengirim Formulir',
+          body:
+              'Terjadi kesalahan saat mengirim laporan. Status: ${responseData.statusCode}',
+          payload: 'api_error_${responseData.statusCode}',
+        );
       }
     } catch (e) {
       _showErrorDialog('Kesalahan Jaringan',
           'Server tidak merespon. Periksa koneksi internet Anda.');
+
+      // Tampilkan notifikasi error jaringan
+      await _showNotification(
+        title: 'Kesalahan Jaringan',
+        body: 'Server tidak merespon. Periksa koneksi internet Anda.',
+        payload: 'network_error',
+      );
     } finally {
       setState(() {
         isSubmitting = false;
