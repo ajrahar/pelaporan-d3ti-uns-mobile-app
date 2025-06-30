@@ -1182,7 +1182,8 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
 
   String _getImageUrl(String? imagePath, String? fotoKejadian) {
     final String baseUrl =
-        'http://pelaporan-d3ti.my.id/Backend-Port/backend/engine/public/storage/laporan/';
+        // 'http://pelaporan-d3ti.my.id/Backend-Port/backend/engine/public/storage/laporan/';
+        'https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporan/';
 
     // Pilih gambar yang tersedia
     String? image = imagePath ?? fotoKejadian;

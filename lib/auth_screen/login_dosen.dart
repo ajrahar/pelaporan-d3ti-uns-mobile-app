@@ -154,7 +154,8 @@ class _LoginDosenPageState extends State<LoginDosenPage> {
     });
 
     // Use the new API URL
-    final url = Uri.parse('http://pelaporan-d3ti.my.id/api/login/dosen');
+    // final url = Uri.parse('http://pelaporan-d3ti.my.id/api/login/dosen');
+    final url = Uri.parse('https://v3422040.mhs.d3tiuns.com/api/login/dosen');
 
     try {
       // Create form data

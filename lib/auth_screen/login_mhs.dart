@@ -153,7 +153,9 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     // Updated API URL to match the new endpoint
-    final url = Uri.parse('http://pelaporan-d3ti.my.id/api/login/mahasiswa');
+    // final url = Uri.parse('http://pelaporan-d3ti.my.id/api/login/mahasiswa');
+    final url =
+        Uri.parse('https://v3422040.mhs.d3tiuns.com/api/login/mahasiswa');
 
     try {
       // Create form data
