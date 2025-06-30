@@ -1088,7 +1088,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/my-reports');
+                  Navigator.pushNamed(context, '/laporpkdosen');
                 },
                 icon: Icon(Icons.visibility_rounded, size: 18),
                 label: Text(
@@ -1341,7 +1341,7 @@ class _HomeScreenDosenState extends State<HomeScreenDosen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/violence-reports');
+                  Navigator.pushNamed(context, '/laporksdosen');
                 },
                 icon: Icon(Icons.visibility_rounded, size: 18),
                 label: Text(

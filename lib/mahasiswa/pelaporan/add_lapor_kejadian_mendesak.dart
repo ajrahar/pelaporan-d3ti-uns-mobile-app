@@ -223,7 +223,9 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
 
     try {
       final response =
-          await http.get(Uri.parse('http://pelaporan-d3ti.my.id/api/category'));
+          // await http.get(Uri.parse('http://pelaporan-d3ti.my.id/api/category'));
+          await http
+              .get(Uri.parse('https://v3422040.mhs.d3tiuns.com/api/category'));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);

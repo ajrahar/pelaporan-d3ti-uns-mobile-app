@@ -1368,13 +1368,21 @@ class _DetailLaporanPageState extends State<DetailLaporanPage> {
     );
   }
 
-  String _getImageUrl(String? imagePath, String? fotoKejadian) {
+  String _getImageUrl(dynamic imagePath, String? fotoKejadian) {
     final String baseUrl =
         // 'http://pelaporan-d3ti.my.id/Backend-Port/backend/engine/public/storage/laporan/';
         'https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporan/';
 
-    // Pilih gambar yang tersedia
-    String? image = imagePath ?? fotoKejadian;
+    // Handle imagePath if it's a List<String>
+    String? image;
+    if (imagePath is List && imagePath.isNotEmpty) {
+      image = imagePath[0].toString();
+    } else if (imagePath is String) {
+      image = imagePath;
+    } else {
+      image = fotoKejadian;
+    }
+
     if (image == null) return '';
 
     // If it contains a comma, it might be a list of images
