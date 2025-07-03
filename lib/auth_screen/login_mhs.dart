@@ -80,11 +80,17 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _rememberMe = rememberValue;
 
-          // If remember me is true, load saved email
+          // If remember me is true, load saved email and password
           if (_rememberMe) {
             final savedEmail = prefs.getString('saved_email');
+            final savedPassword = prefs.getString('saved_password');
+
             if (savedEmail != null && savedEmail.isNotEmpty) {
               _emailController.text = savedEmail;
+            }
+
+            if (savedPassword != null && savedPassword.isNotEmpty) {
+              _passwordController.text = savedPassword;
             }
           }
 
@@ -110,16 +116,35 @@ class _LoginPageState extends State<LoginPage> {
       // Save remember me state
       await prefs.setBool('remember_me', value);
 
-      // If remember me is checked and we have an email, save it
-      if (value && _emailController.text.isNotEmpty) {
+      // If remember me is checked and we have credentials, save them
+      if (value &&
+          _emailController.text.isNotEmpty &&
+          _passwordController.text.isNotEmpty) {
         await prefs.setString('saved_email', _emailController.text);
+        await prefs.setString('saved_password', _passwordController.text);
       }
-      // If remember me is unchecked, clear saved email
+      // If remember me is unchecked, clear saved credentials
       else if (!value) {
         await prefs.remove('saved_email');
+        await prefs.remove('saved_password');
       }
     } catch (e) {
       print('Failed to save remember me state: $e');
+    }
+  }
+
+  Future<void> _saveCredentialsOnSuccessfulLogin() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Only save if remember me is checked
+      if (_rememberMe) {
+        await prefs.setString('saved_email', _emailController.text);
+        await prefs.setString('saved_password', _passwordController.text);
+        await prefs.setBool('remember_me', true);
+      }
+    } catch (e) {
+      print('Failed to save credentials: $e');
     }
   }
 
@@ -204,10 +229,8 @@ class _LoginPageState extends State<LoginPage> {
           // Save token using our TokenManager
           await TokenManager.setToken(token);
 
-          // Handle remember me
-          if (_rememberMe) {
-            await _saveRememberMeState(true);
-          }
+          // Save credentials if remember me is checked
+          await _saveCredentialsOnSuccessfulLogin();
 
           // Save user data using safer methods
           await _safeSetPrefs('user_id', userData['id'],

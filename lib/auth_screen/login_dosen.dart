@@ -73,7 +73,7 @@ class _LoginDosenPageState extends State<LoginDosenPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Get remember me value
+      // Get remember me value for dosen
       final rememberValue = prefs.getBool('remember_me_dosen');
 
       // Only if we have a valid value
@@ -81,11 +81,17 @@ class _LoginDosenPageState extends State<LoginDosenPage> {
         setState(() {
           _rememberMe = rememberValue;
 
-          // If remember me is true, load saved email
+          // If remember me is true, load saved email and password
           if (_rememberMe) {
             final savedEmail = prefs.getString('saved_email_dosen');
+            final savedPassword = prefs.getString('saved_password_dosen');
+
             if (savedEmail != null && savedEmail.isNotEmpty) {
               _emailController.text = savedEmail;
+            }
+
+            if (savedPassword != null && savedPassword.isNotEmpty) {
+              _passwordController.text = savedPassword;
             }
           }
 
@@ -108,19 +114,38 @@ class _LoginDosenPageState extends State<LoginDosenPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Save remember me state
+      // Save remember me state for dosen
       await prefs.setBool('remember_me_dosen', value);
 
-      // If remember me is checked and we have an email, save it
-      if (value && _emailController.text.isNotEmpty) {
+      // If remember me is checked and we have credentials, save them
+      if (value &&
+          _emailController.text.isNotEmpty &&
+          _passwordController.text.isNotEmpty) {
         await prefs.setString('saved_email_dosen', _emailController.text);
+        await prefs.setString('saved_password_dosen', _passwordController.text);
       }
-      // If remember me is unchecked, clear saved email
+      // If remember me is unchecked, clear saved credentials
       else if (!value) {
         await prefs.remove('saved_email_dosen');
+        await prefs.remove('saved_password_dosen');
       }
     } catch (e) {
       print('Failed to save remember me state: $e');
+    }
+  }
+
+  Future<void> _saveCredentialsOnSuccessfulLogin() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Only save if remember me is checked
+      if (_rememberMe) {
+        await prefs.setString('saved_email_dosen', _emailController.text);
+        await prefs.setString('saved_password_dosen', _passwordController.text);
+        await prefs.setBool('remember_me_dosen', true);
+      }
+    } catch (e) {
+      print('Failed to save credentials: $e');
     }
   }
 
@@ -204,10 +229,8 @@ class _LoginDosenPageState extends State<LoginDosenPage> {
           // Save token using our TokenManager
           await TokenManager.setToken(token);
 
-          // Handle remember me
-          if (_rememberMe) {
-            await _saveRememberMeState(true);
-          }
+          // Save credentials if remember me is checked
+          await _saveCredentialsOnSuccessfulLogin();
 
           // Save dosen data using safer methods
           await _safeSetPrefs('user_id', dosenData['id'],

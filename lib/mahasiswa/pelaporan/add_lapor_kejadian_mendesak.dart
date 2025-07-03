@@ -294,9 +294,10 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
       _errors['image_path'] = ['Lampiran foto harus diisi'];
     }
 
-    if (_lampiranLinkController.text.isEmpty) {
-      _errors['lampiran_link'] = ['Lampiran link harus diisi'];
-    } else if (!_lampiranLinkController.text.startsWith('http')) {
+    // Remove validation for lampiran_link as it's now optional
+    // Only validate format if the field is not empty
+    if (_lampiranLinkController.text.isNotEmpty &&
+        !_lampiranLinkController.text.startsWith('http')) {
       _errors['lampiran_link'] = [
         'Link harus dimulai dengan http:// atau https://'
       ];
@@ -348,7 +349,11 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
       request.fields['profesi'] = 'Mahasiswa';
       request.fields['jenis_kelamin'] = 'laki-laki';
       request.fields['umur_pelapor'] = '20-40';
-      request.fields['lampiran_link'] = _lampiranLinkController.text;
+
+      // Only add lampiran_link if it's not empty (since it's now optional)
+      if (_lampiranLinkController.text.isNotEmpty) {
+        request.fields['lampiran_link'] = _lampiranLinkController.text;
+      }
 
       // Add terlapor data
       request.fields['terlapor[0][nama_lengkap]'] = 'Nama Terlapor';
@@ -762,17 +767,17 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                       ),
                     ),
 
-                    // Lampiran Link
+                    // Lampiran Link - now optional
                     _buildFormField(
                       label: 'Lampiran Link',
-                      isRequired: true,
+                      isRequired: false, // Changed to false to make it optional
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           TextFormField(
                             controller: _lampiranLinkController,
                             decoration: _inputDecoration(
-                              hintText: 'https://www.example.com',
+                              hintText: 'https://www.example.com (opsional)',
                               errorText: _errors['lampiran_link']?.first,
                               prefixIcon: Icons.link,
                             ),
@@ -789,7 +794,7 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                                 SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Masukkan URL yang valid, contoh: https://www.example.com',
+                                    'Opsional - Masukkan URL yang valid jika ada, contoh: https://www.example.com',
                                     style: TextStyle(
                                         color: _subTextColor, fontSize: 12),
                                   ),

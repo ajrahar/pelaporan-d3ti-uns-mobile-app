@@ -352,9 +352,10 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
       _errors['image_path'] = ['Lampiran foto harus diisi'];
     }
 
-    if (_lampiranLinkController.text.isEmpty) {
-      _errors['lampiran_link'] = ['Lampiran link harus diisi'];
-    }
+    // Remove validation for lampiran_link as it's now optional
+    // if (_lampiranLinkController.text.isEmpty) {
+    //   _errors['lampiran_link'] = ['Lampiran link harus diisi'];
+    // }
 
     if (!_isAgreementChecked) {
       _errors['agreement'] = [
@@ -437,7 +438,11 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
       request.fields['profesi'] = 'Dosen';
       request.fields['jenis_kelamin'] = 'laki-laki';
       request.fields['umur_pelapor'] = '20-40';
-      request.fields['lampiran_link'] = _lampiranLinkController.text;
+
+      // Only add lampiran_link if it's not empty (since it's now optional)
+      if (_lampiranLinkController.text.isNotEmpty) {
+        request.fields['lampiran_link'] = _lampiranLinkController.text;
+      }
 
       // Add terlapor data
       request.fields['terlapor[0][nama_lengkap]'] = 'Nama Terlapor';
@@ -883,14 +888,14 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
                       ),
                     ),
 
-                    // Lampiran Link
+                    // Lampiran Link - now optional
                     _buildFormField(
                       label: 'Lampiran Link',
-                      isRequired: true,
+                      isRequired: false, // Changed to false to make it optional
                       child: TextFormField(
                         controller: _lampiranLinkController,
                         decoration: _inputDecoration(
-                          hintText: 'https://www.example.com',
+                          hintText: 'https://www.example.com (opsional)',
                           errorText: _errors['lampiran_link']?.first,
                           prefixIcon: Icons.link,
                         ),
