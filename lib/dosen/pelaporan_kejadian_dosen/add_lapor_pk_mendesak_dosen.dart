@@ -36,9 +36,9 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
   int? _selectedCategoryId;
   List<Map<String, dynamic>> _categories = [];
 
-  // Image data
+  // Image data - Changed from XFile to File to match add_lapor_pkdosen.dart
   final ImagePicker _picker = ImagePicker();
-  List<XFile> _selectedImages = [];
+  List<File> _imageFiles = []; // Changed from XFile to File
 
   // Agreement checkbox
   bool _isAgreementChecked = false;
@@ -237,36 +237,44 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
     });
   }
 
-  Future<void> _pickImages() async {
+  // Updated to use File instead of XFile, similar to add_lapor_pkdosen.dart
+  Future<void> _pickImage(ImageSource source) async {
     try {
-      final List<XFile> images = await _picker.pickMultiImage();
-      if (images.isNotEmpty) {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 80, // Compression quality
+      );
+
+      if (pickedFile != null) {
         setState(() {
-          _selectedImages.addAll(images);
+          _imageFiles.add(File(pickedFile.path));
         });
 
         // Notifikasi gambar berhasil dipilih
         await _showNotification(
           title: 'Sukses',
-          body: 'Gambar berhasil dipilih: ${images.length} file',
-          payload: 'images_selected',
+          body:
+              'Gambar berhasil dipilih dari ${source == ImageSource.camera ? 'kamera' : 'galeri'}',
+          payload: 'image_selected',
         );
       }
     } catch (e) {
       _showSnackBar('Error memilih gambar: $e', isError: true);
 
-      // Notifikasi error memilih gambar
+      // Show notification if image picking fails
       await _showNotification(
-        title: 'Error',
-        body: 'Gagal memilih gambar: ${e.toString()}',
+        title: 'Peringatan',
+        body: 'Tidak dapat mengambil gambar: ${e.toString()}',
         payload: 'image_error',
       );
     }
   }
 
+  // Function to remove image
   void _removeImage(int index) {
     setState(() {
-      _selectedImages.removeAt(index);
+      _imageFiles.removeAt(index);
     });
   }
 
@@ -348,7 +356,7 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
       _errors['tanggal_kejadian'] = ['Tanggal dan waktu kejadian harus diisi'];
     }
 
-    if (_selectedImages.isEmpty) {
+    if (_imageFiles.isEmpty) {
       _errors['image_path'] = ['Lampiran foto harus diisi'];
     }
 
@@ -464,13 +472,16 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
       // Add agreement
       request.fields['agreement'] = '1';
 
-      // Add images
-      for (var i = 0; i < _selectedImages.length; i++) {
-        final file = await http.MultipartFile.fromPath(
-          'image_path[]',
-          _selectedImages[i].path,
-        );
-        request.files.add(file);
+      // Add images - Updated to use File instead of XFile
+      for (int i = 0; i < _imageFiles.length; i++) {
+        final file = _imageFiles[i];
+        final stream = http.ByteStream(file.openRead());
+        final length = await file.length();
+        final fileName = file.path.split('/').last;
+
+        final multipartFile = http.MultipartFile('image_path[]', stream, length,
+            filename: fileName);
+        request.files.add(multipartFile);
       }
 
       // Send the request
@@ -803,7 +814,7 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
                       errorText: _errors['tanggal_kejadian']?.first,
                     ),
 
-                    // Lampiran Foto
+                    // Lampiran Foto - Updated with camera and gallery buttons like add_lapor_pkdosen.dart
                     _buildFormField(
                       label: 'Lampiran Foto',
                       isRequired: true,
@@ -811,20 +822,29 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ElevatedButton.icon(
-                            onPressed: _pickImages,
-                            icon: const Icon(Icons.photo_library),
-                            label: const Text('Pilih Foto'),
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              backgroundColor: _primaryColor,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          // Upload buttons - Similar to add_lapor_pkdosen.dart
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildElevatedButton(
+                                  onPressed: () =>
+                                      _pickImage(ImageSource.camera),
+                                  icon: Icons.camera_alt_outlined,
+                                  label: 'Kamera',
+                                  color: Colors.blue.shade600,
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildElevatedButton(
+                                  onPressed: () =>
+                                      _pickImage(ImageSource.gallery),
+                                  icon: Icons.photo_library_outlined,
+                                  label: 'Galeri',
+                                  color: Colors.teal.shade600,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -834,17 +854,83 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Anda dapat memilih beberapa foto sekaligus',
+                                  'Anda dapat mengambil foto dengan kamera atau memilih dari galeri',
                                   style: TextStyle(
                                       color: _subTextColor, fontSize: 13),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
-                          _selectedImages.isNotEmpty
-                              ? _buildImagePreviewGrid()
-                              : Container(),
+
+                          // Image previews
+                          if (_imageFiles.isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(top: 16),
+                              height: 120,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _imageFiles.length,
+                                itemBuilder: (context, index) {
+                                  return Stack(
+                                    children: [
+                                      Container(
+                                        margin:
+                                            const EdgeInsets.only(right: 12),
+                                        width: 120,
+                                        decoration: BoxDecoration(
+                                          border:
+                                              Border.all(color: _borderColor),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.05),
+                                              blurRadius: 5,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(11),
+                                          child: Image.file(
+                                            _imageFiles[index],
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 14,
+                                        top: 4,
+                                        child: InkWell(
+                                          onTap: () => _removeImage(index),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black26,
+                                                  blurRadius: 3,
+                                                  offset: const Offset(0, 1),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Icon(
+                                              Icons.close,
+                                              size: 16,
+                                              color: _errorColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -1087,6 +1173,29 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
     );
   }
 
+  // Helper method to build elevated button - similar to add_lapor_pkdosen.dart
+  Widget _buildElevatedButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: color,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+    );
+  }
+
   Widget _buildInfoBanner() {
     return Container(
       width: double.infinity,
@@ -1209,69 +1318,6 @@ class _AddLaporPKMendesakDosenState extends State<AddLaporPKMendesakDosen> {
               ),
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildImagePreviewGrid() {
-    return Container(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _selectedImages.length,
-        itemBuilder: (context, index) {
-          return Stack(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(right: 12),
-                width: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    File(_selectedImages[index].path),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 4,
-                right: 16,
-                child: InkWell(
-                  onTap: () => _removeImage(index),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 3,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      size: 16,
-                      color: _errorColor,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
       ),
     );
   }

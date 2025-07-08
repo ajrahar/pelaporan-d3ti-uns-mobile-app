@@ -43,9 +43,9 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
   int? _selectedCategoryId;
   List<Map<String, dynamic>> _categories = [];
 
-  // Image data
+  // Image data - Changed from XFile to File to match add_lapor_kejadiann.dart
   final ImagePicker _picker = ImagePicker();
-  List<XFile> _selectedImages = [];
+  List<File> _imageFiles = []; // Changed from XFile to File
 
   // Agreement checkbox
   bool _isAgreementChecked = false;
@@ -260,22 +260,33 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
     });
   }
 
-  Future<void> _pickImages() async {
+  // Updated to use File instead of XFile, similar to add_lapor_kejadiann.dart
+  Future<void> _pickImage(ImageSource source) async {
     try {
-      final List<XFile> images = await _picker.pickMultiImage();
-      if (images.isNotEmpty) {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 80, // Compression quality
+      );
+
+      if (pickedFile != null) {
         setState(() {
-          _selectedImages.addAll(images);
+          _imageFiles.add(File(pickedFile.path));
         });
       }
     } catch (e) {
-      _showSnackBar('Error saat memilih gambar: $e', isError: true);
+      // Show notification if image picking fails
+      _showNotification(
+        'Peringatan',
+        'Tidak dapat mengambil gambar: ${e.toString()}',
+      );
     }
   }
 
+  // Function to remove image
   void _removeImage(int index) {
     setState(() {
-      _selectedImages.removeAt(index);
+      _imageFiles.removeAt(index);
     });
   }
 
@@ -290,7 +301,7 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
       _errors['tanggal_kejadian'] = ['Tanggal dan waktu kejadian harus diisi'];
     }
 
-    if (_selectedImages.isEmpty) {
+    if (_imageFiles.isEmpty) {
       _errors['image_path'] = ['Lampiran foto harus diisi'];
     }
 
@@ -375,13 +386,16 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
       // Add agreement
       request.fields['agreement'] = '1';
 
-      // Add images
-      for (var i = 0; i < _selectedImages.length; i++) {
-        final file = await http.MultipartFile.fromPath(
-          'image_path[]',
-          _selectedImages[i].path,
-        );
-        request.files.add(file);
+      // Add images - Updated to use File instead of XFile
+      for (int i = 0; i < _imageFiles.length; i++) {
+        final file = _imageFiles[i];
+        final stream = http.ByteStream(file.openRead());
+        final length = await file.length();
+        final fileName = file.path.split('/').last;
+
+        final multipartFile = http.MultipartFile('image_path[]', stream, length,
+            filename: fileName);
+        request.files.add(multipartFile);
       }
 
       // Send the request
@@ -682,7 +696,7 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                     // Real-time Indonesia Time
                     _buildCurrentTimeField(),
 
-                    // Lampiran Foto
+                    // Lampiran Foto - Updated with camera and gallery buttons like add_lapor_kejadiann.dart
                     _buildFormField(
                       label: 'Lampiran Foto',
                       isRequired: true,
@@ -690,20 +704,29 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ElevatedButton.icon(
-                            onPressed: _pickImages,
-                            icon: Icon(Icons.photo_library),
-                            label: Text('Pilih Foto'),
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              backgroundColor: _primaryColor,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          // Upload buttons - Similar to add_lapor_kejadiann.dart
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildElevatedButton(
+                                  onPressed: () =>
+                                      _pickImage(ImageSource.camera),
+                                  icon: Icons.camera_alt,
+                                  label: 'Kamera',
+                                  color: _primaryColor,
+                                ),
                               ),
-                            ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: _buildElevatedButton(
+                                  onPressed: () =>
+                                      _pickImage(ImageSource.gallery),
+                                  icon: Icons.photo_library,
+                                  label: 'Galeri',
+                                  color: Colors.teal,
+                                ),
+                              ),
+                            ],
                           ),
                           SizedBox(height: 8),
                           Row(
@@ -713,17 +736,82 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Anda dapat memilih beberapa foto sekaligus',
+                                  'Anda dapat mengambil foto dengan kamera atau memilih dari galeri',
                                   style: TextStyle(
                                       color: _subTextColor, fontSize: 13),
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: 16),
-                          _selectedImages.isNotEmpty
-                              ? _buildImagePreviewList()
-                              : Container(),
+
+                          // Image previews
+                          if (_imageFiles.isNotEmpty)
+                            Container(
+                              margin: EdgeInsets.only(top: 16),
+                              height: 120,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _imageFiles.length,
+                                itemBuilder: (context, index) {
+                                  return Stack(
+                                    children: [
+                                      Container(
+                                        margin: EdgeInsets.only(right: 12),
+                                        width: 120,
+                                        decoration: BoxDecoration(
+                                          border:
+                                              Border.all(color: _borderColor),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.05),
+                                              blurRadius: 5,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(11),
+                                          child: Image.file(
+                                            _imageFiles[index],
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 14,
+                                        top: 4,
+                                        child: InkWell(
+                                          onTap: () => _removeImage(index),
+                                          child: Container(
+                                            padding: EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black26,
+                                                  blurRadius: 3,
+                                                  offset: Offset(0, 1),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Icon(
+                                              Icons.close,
+                                              size: 16,
+                                              color: _errorColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -982,6 +1070,35 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
     );
   }
 
+  // Helper method to build elevated button - similar to add_lapor_kejadiann.dart
+  Widget _buildElevatedButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.3,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: color,
+        padding: EdgeInsets.symmetric(vertical: 14),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
   // Widget for displaying the Indonesia time (constantly updating)
   Widget _buildCurrentTimeField() {
     return _buildFormField(
@@ -1203,69 +1320,6 @@ class _AddLaporKejadianMendesakState extends State<AddLaporKejadianMendesak> {
               ),
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildImagePreviewList() {
-    return Container(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _selectedImages.length,
-        itemBuilder: (context, index) {
-          return Stack(
-            children: [
-              Container(
-                margin: EdgeInsets.only(right: 12),
-                width: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 5,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    File(_selectedImages[index].path),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 4,
-                right: 16,
-                child: InkWell(
-                  onTap: () => _removeImage(index),
-                  child: Container(
-                    padding: EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 3,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      size: 16,
-                      color: _errorColor,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
       ),
     );
   }
