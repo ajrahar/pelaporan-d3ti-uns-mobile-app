@@ -1180,14 +1180,23 @@ class _DetailLaporanPKDosenState extends State<DetailLaporanPKDosen> {
     }
   }
 
-  String _getImageUrl(String? imagePath, String? fotoKejadian) {
+  String _getImageUrl(dynamic imagePath, String? fotoKejadian) {
     final String baseUrl =
         // 'http://pelaporan-d3ti.my.id/Backend-Port/backend/engine/public/storage/laporan/';
         'https://v3422040.mhs.d3tiuns.com/Backend-Port/backend/engine/public/storage/laporan/';
 
-    // Pilih gambar yang tersedia
-    String? image = imagePath ?? fotoKejadian;
-    if (image == null) return '';
+    String? image;
+
+    // Handle imagePath which can be List<String> or String
+    if (imagePath is List<String> && imagePath.isNotEmpty) {
+      image = imagePath.first;
+    } else if (imagePath is String) {
+      image = imagePath;
+    } else {
+      image = fotoKejadian;
+    }
+
+    if (image == null || image.isEmpty) return '';
 
     // If it contains a comma, it might be a list of images
     if (image.contains(',')) {
