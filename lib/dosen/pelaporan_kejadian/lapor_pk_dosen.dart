@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pelaporan_d3ti/components/sidebar_dosen.dart'; // Import for teacher sidebar
-import 'package:pelaporan_d3ti/dosen/pelaporan_kejadian_dosen/detail_lapor_pk_dosen.dart';
+import 'package:pelaporan_d3ti/dosen/pelaporan_kejadian/detail_lapor_pk_dosen.dart';
 import 'package:pelaporan_d3ti/services/api_service.dart';
 import 'package:pelaporan_d3ti/models/laporan.dart';
 import 'package:shared_preferences/shared_preferences.dart';

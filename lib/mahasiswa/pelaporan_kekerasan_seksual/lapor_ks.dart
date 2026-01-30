@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pelaporan_d3ti/components/sidebar.dart'; // Update the import to match your file structure
-import 'package:pelaporan_d3ti/mahasiswa/pelaporan%20kekerasan%20seksual/detail_lapor_ks.dart';
+import 'package:pelaporan_d3ti/mahasiswa/pelaporan_kekerasan_seksual/detail_lapor_ks.dart';
 import 'package:pelaporan_d3ti/services/api_service.dart';
 import 'package:pelaporan_d3ti/models/laporan_kekerasan.dart';
 import 'package:shared_preferences/shared_preferences.dart';

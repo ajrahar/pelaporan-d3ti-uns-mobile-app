@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pelaporan_d3ti/components/sidebar_dosen.dart';
-import 'package:pelaporan_d3ti/dosen/pelaporan_kekerasan_seksual_dosen/detail_lapor_ks_dosen.dart';
+import 'package:pelaporan_d3ti/dosen/pelaporan_kekerasan_seksual/detail_lapor_ks_dosen.dart';
 import 'package:pelaporan_d3ti/services/api_service.dart';
 import 'package:pelaporan_d3ti/models/laporan_kekerasan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
