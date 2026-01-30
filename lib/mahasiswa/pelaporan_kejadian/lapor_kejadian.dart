@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pelaporan_d3ti/components/sidebar.dart';
-import 'package:pelaporan_d3ti/mahasiswa/pelaporan/detail_lapor_kejadian.dart';
+import 'package:pelaporan_d3ti/mahasiswa/pelaporan_kejadian/detail_lapor_kejadian.dart';
 import 'package:pelaporan_d3ti/services/api_service.dart';
 import 'package:pelaporan_d3ti/models/laporan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
